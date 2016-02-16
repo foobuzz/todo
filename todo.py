@@ -134,8 +134,7 @@ class Task:
 		if self.context != '':
 			string += ' {}{}'.format(CONTEXT_ICON[ascii_], self.context)
 		if self.deadline != INF:
-			remaining = self.deadline - NOW
-			user_friendly = parse_remaining(remaining)
+			user_friendly = parse_remaining(self.remaining)
 			string += ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
 		if self.priority != 1:
 			string += ' {}{}'.format(PRIORITY_ICON[ascii_], self.priority)
