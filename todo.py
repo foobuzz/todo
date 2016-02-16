@@ -206,11 +206,12 @@ class TodoList:
 	def save(self, location):
 		if not op.exists(location):
 			create_data_dir(location)
-		with open(location, 'w') as data_f:
+		with open(location, 'w', encoding='utf8') as data_f:
 			data = {'tasks': [], 'contexts': self.contexts}
 			for task in self.tasks:
 				data['tasks'].append(task.get_dict())
-			json.dump(data, data_f, sort_keys=True, indent=4)
+			json.dump(data, data_f, sort_keys=True, indent=4,
+				ensure_ascii=False)
 
 
 def create_data_dir(data_location):
@@ -261,7 +262,7 @@ def import_data(data_location):
 	if not op.exists(data_location):
 		data = {'tasks': [], 'contexts': {}}
 	else:
-		with open(data_location) as todo_f:
+		with open(data_location, encoding='utf8') as todo_f:
 			data = json.load(todo_f)
 	contexts = data['contexts']
 	tasks = []
