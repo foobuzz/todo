@@ -171,14 +171,4 @@ def get_trace_handler(list_):
 		local = frame.f_locals
 		list_.append((f_name, local))
 	return handler
-
-
-if __name__ == '__main__':
-	calls = []
-	args = todo.parse_args(['-c', 'hello'])
-	todolist = todo.TodoList([], {})
-	sys.settrace(get_trace_handler(calls))
-	todo.dispatch(args, todolist)
-	sys.settrace(None)
-	for c in calls:
-		print(c)
+	
