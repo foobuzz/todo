@@ -274,9 +274,10 @@ def import_data(data_location):
 				dt = datetime.strptime(val, ISO_DATE)
 				dt = dt.replace(tzinfo=timezone.utc)
 				dico[key] = dt
-		if 'context' in dico and dico['context'] in contexts and \
-		'v' in contexts[dico['context']]:
-			dico['visibility'] = contexts[dico['context']]['v']
+		if 'visibility' not in dico:
+			if 'context' in dico and dico['context'] in contexts and \
+			'v' in contexts[dico['context']]:
+				dico['visibility'] = contexts[dico['context']]['v']
 		id_width = len(hex(dico['id_'])) - 2 # 0x...
 		if id_width > max_width:
 			max_width = id_width
