@@ -17,7 +17,7 @@ A simple command line todo list manager which can be as powerful as you want it 
 
 ## Installation
 
-Install the `todocli` package for Python 3 via pip.
+Install the `todocli` package for Python 3 via pip3.
 
 
 ## Basic usage
