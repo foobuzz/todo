@@ -211,3 +211,12 @@ When showing the todolist, tasks are sorted in the following order:
  - Context priority, descending
 
  - Date added, ascending
+
+
+## Contributing
+
+Pull requests related to bugfixes, tests, documentation, security, performance, etc, are welcomed. It might be a good idea to discuss the problem they resolve in an issue beforehand if relevant.
+
+[The Roadmap](https://github.com/foobuzz/todo/blob/master/ROADMAP.md) lists features I plan to work on when I have the time. If you'd like to develop one you can submit a pull request. Pull requests for features not in the Roadmap may or may not be merged.
+
+I like documentation-driven development so in case you want to develop any feature I would like your pull request to be an update of the README in a first place. Once I validate it, you'll have green light for development and the request will be merged when the feature is fully implemented.
