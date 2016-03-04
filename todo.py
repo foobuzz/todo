@@ -16,6 +16,7 @@ else:
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 INF = datetime.max.replace(tzinfo=timezone.utc)
+LONG_AGO = datetime.min.replace(tzinfo=timezone.utc)
 ISO_DATE = '%Y-%m-%dT%H:%M:%SZ'
 USER_DATE_FORMATS = [
 	'%Y-%m-%d',
@@ -46,7 +47,7 @@ class Task:
 		'visibility']
 	date_serial = ['created', 'deadline', 'start']
 	defaults = {
-		'created': NOW,
+		'created': LONG_AGO,
 		'priority': 1,
 		'deadline': INF,
 		'start': NOW,
