@@ -1,8 +1,17 @@
-import unittest, sys
+#! /usr/bin/env python3
+
+import unittest, sys, os, shutil
+import os.path as op
+from importlib import machinery
 from datetime import datetime, timedelta, timezone
 
-import todo
-from todo import Task
+import utils
+
+# import todo
+# from todo import Task
+todo_loader = machinery.SourceFileLoader('todo', 'todo.py')
+todo = todo_loader.load_module()
+Task = getattr(todo, 'Task')
 
 
 NOW = todo.NOW
@@ -126,7 +135,6 @@ class TestTasksSort(unittest.TestCase):
 	def test_task_sort(self):
 		tasks_cpy = sorted(TestTasksSort.tasks,
 			key=lambda t: t.order_infos(TestTasksSort.contexts))
-		#tasks_cpy.sort(key=lambda t: t.order_infos(TestTasksSort.contexts))
 		self.assertEqual(tasks_cpy, TestTasksSort.tasks)
 
 
@@ -151,7 +159,7 @@ class TestDispatch(unittest.TestCase):
 			argv = line.split()
 			args = todo.parse_args(argv)
 			calls = []
-			handler = get_trace_handler(calls)
+			handler = utils.get_trace_handler(calls)
 			sys.settrace(handler)
 			todo.dispatch(args, TestDispatch.todolist)
 			sys.settrace(None)
@@ -163,12 +171,24 @@ class TestDispatch(unittest.TestCase):
 					self.assertEqual(arg_value, e_args[arg_name])
 
 
-def get_trace_handler(list_):
-	def handler(frame, event, arg):
-		if event != 'call':
-			return
-		f_name = frame.f_code.co_name
-		local = frame.f_locals
-		list_.append((f_name, local))
-	return handler
-	
+def test_trace():
+	data_loc = todo.DATA_LOCATION
+	is_loc = op.exists(data_loc)
+	if is_loc:
+		backup_path = data_loc + '-backup-' + str(NOW.timestamp)
+		shutil.copy(data_loc, backup_path)
+		os.remove(data_loc)
+	try:
+		utils.test_trace('tests/cmd_trace', todo.get_datetime)
+	finally:
+		if is_loc:
+			shutil.copy(backup_path, data_loc)
+			os.remove(backup_path)
+
+
+if __name__ == '__main__':
+	print('* Unit and integration tests')
+	unittest.main(buffer=True, exit=False)
+	print('* Fonctional tests')
+	test_trace()
+	print('OK')

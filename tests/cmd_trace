@@ -1,0 +1,88 @@
+$ ./todo.py -a "Do the thing"
+$ ./todo.py 
+ 1 | Do the thing
+$ ./todo.py -a "Fix the stuff"
+$ ./todo.py 
+ 1 | Do the thing
+ 2 | Fix the stuff
+$ ./todo.py -d 1
+$ ./todo.py 
+ 2 | Fix the stuff
+$ ./todo.py -a "Buy the gift for Stefany" --deadline {NOW+16d}
+$ ./todo.py 
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
+$ ./todo.py -a "Send the documents for the house" --deadline 1w
+$ ./todo.py 
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
+$ ./todo.py -a "Buy the fireworks package" --deadline {NOW+105d}
+$ ./todo.py 
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 5 | Buy the fireworks package ⌛ 104 days remaining
+ 2 | Fix the stuff
+$ ./todo.py -t 5 -s 2016-06-15
+$ ./todo.py 
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
+$ ./todo.py -a "Fix the window" -p 3
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
+$ ./todo.py -t 2 -p 2
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+$ ./todo.py -a "Read the article about chemistry" -c culture
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 7 | Read the article about chemistry #culture
+$ ./todo.py -c culture
+ 7 | Read the article about chemistry #culture
+$ ./todo.py -t 7 -c culture.chemistry
+$ ./todo.py -c culture
+ 7 | Read the article about chemistry #culture.chemistry
+$ ./todo.py -a "Listen to the podcast about movies" -c culture.cinema
+$ ./todo.py -c culture
+ 7 | Read the article about chemistry #culture.chemistry
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py -c culture.chemistry
+ 7 | Read the article about chemistry #culture.chemistry
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+$ ./todo.py -c culture
+ 7 | Read the article about chemistry #culture.chemistry
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py -t 7 -v wide
+$ ./todo.py -t 8 -v wide
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 7 | Read the article about chemistry #culture.chemistry
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py -t 7 -v hidden
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py -c culture
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py -c culture.chemistry
+ 7 | Read the article about chemistry #culture.chemistry
