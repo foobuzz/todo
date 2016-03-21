@@ -4,10 +4,6 @@ Roadmap
 
 ## Housekeeping
 
- - Functional tests
-
- - Tables of contents in the README
-
 ## Patches
 
 ## Features

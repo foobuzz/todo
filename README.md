@@ -33,6 +33,7 @@ Install the `todocli` package for Python 3 via pip3.
     * [Context priority](#context-priority)
   * [Sort summary](#sort-summary)
  * [Contributing](#contributing)
+  * [Tests](#tests)
 
 
 # Documentation
@@ -235,3 +236,10 @@ Pull requests related to bugfixes, tests, documentation, security, performance, 
 [The Roadmap](https://github.com/foobuzz/todo/blob/master/ROADMAP.md) lists features I plan to work on when I have the time. If you'd like to develop one you can submit a pull request. Pull requests for features not in the Roadmap may or may not be merged.
 
 I like documentation-driven development so in case you want to develop any feature I would like your pull request to be an update of the README in a first place. Once I validate it, you'll have green light for development and the request will be merged when the feature is fully implemented.
+
+
+## Tests
+
+To test the application, run the following **from the root directory of the project**:
+
+	tests/test.py
