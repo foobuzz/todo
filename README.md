@@ -15,9 +15,27 @@ A simple command line todo list manager which can be as powerful as you want it 
 	    2 | Fix the other thing
 
 
-## Installation
+# Installation
 
 Install the `todocli` package for Python 3 via pip3.
+
+
+# Table of contents
+
+ * [Documentation](#documentation)
+  * [Basic Usage](#basic-usage)
+  * [Deadlines](#deadlines)
+    * [Long-term scheduling](#long-term-scheduling)
+  * [Priority](#priority)
+  * [Contexts](#contexts)
+    * [Subcontexts](#subcontexts)
+    * [Visibility](#visibility)
+    * [Context priority](#context-priority)
+  * [Sort summary](#sort-summary)
+ * [Contributing](#contributing)
+
+
+# Documentation
 
 
 ## Basic usage
@@ -204,16 +222,13 @@ Tasks with this context will always show up before tasks with a lower context pr
 
 When showing the todolist, tasks are sorted in the following order:
 
- - Priority, descending
-
- - Remaining time, ascending
-
- - Context priority, descending
-
- - Date added, ascending
+ * Priority, descending
+ * Remaining time, ascending
+ * Context priority, descending
+ * Date added, ascending
 
 
-## Contributing
+# Contributing
 
 Pull requests related to bugfixes, tests, documentation, security, performance, etc, are welcomed. It might be a good idea to discuss the problem they resolve in an issue beforehand if relevant.
 
