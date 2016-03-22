@@ -14,10 +14,9 @@ Usage:
   todo contexts
   todo history
   todo purge
-  todo (-h | --help)
+  todo help
 
 Options:
-  -h, --help                              Show this help message
   -d MOMENT, --deadline MOMENT            Set the deadline of a task
   -s MOMENT, --start MOMENT               Set the start-line of a task
   -c CONTEXT, --context CONTEXT           Set the context of a task
@@ -358,17 +357,23 @@ def dispatch(args, todolist):
 		print('Not implemented yet.')
 	elif args['purge']:
 		print('Not implemented yet.')
+	elif args['help']:
+		print(__doc__)
 	else:
 		change = False
 		todolist.show()
 	return change
 
 
+def parse_args(argv):
+	return docopt(__doc__, argv=argv, help=False, version='2')
+
+
 def main():
 	tasks, contexts, id_width = import_data(DATA_LOCATION)
 	todolist = TodoList(tasks, contexts, id_width)
 
-	args = docopt(__doc__, version='2')
+	args = parse_args(sys.argv[1:])
 	change = dispatch(args, todolist)
 	if change:
 		todolist.save(DATA_LOCATION)
