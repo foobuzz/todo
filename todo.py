@@ -1,16 +1,16 @@
 #! /usr/bin/env python3
 
-"""todo
+"""todo. CLI todo list manager.
 
 Usage:
   todo
   todo add <content> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority INTEGER] [--visibility VISIBILITY]
+    [--priority PRIORITY] [--visibility VISIBILITY]
   todo done <id>
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority INTEGER] [--visibility VISIBILITY]
+    [--priority PRIORITY] [--visibility VISIBILITY]
   todo rm <id>
-  todo ctx <context> [--priority INTEGER] [--visibility VISIBILITY]
+  todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
   todo contexts
   todo history
   todo purge
@@ -27,7 +27,7 @@ Options:
 
 """
 
-import json, os, re
+import json, os, re, sys
 import os.path as op
 from datetime import datetime, timezone, timedelta
 
@@ -96,24 +96,7 @@ class Task:
 		self.remaining = self.deadline - NOW
 
 	def apply_mutator(self, mutator, value):
-		if mutator == 'priority':
-			self.priority = value
-		elif mutator == 'deadline':
-			dt = get_datetime(value)
-			if dt is None:
-				raise ValueError('Invalid time format')
-			else:
-				self.deadline = dt
-		elif mutator == 'start':
-			dt = get_datetime(value)
-			if dt is None:
-				raise ValueError('Invalid time format')
-			else:
-				self.start = dt
-		elif mutator == 'context':
-			self.context = value
-		elif mutator == 'visibility':
-			self.visibility = value
+		setattr(self, mutator, value)
 
 	def set_done(self):
 		self.done = True
@@ -350,7 +333,7 @@ def dispatch(args, todolist):
 				changed_something = True
 		if not changed_something:
 			change = False
-			todolist.show(args.context)		
+			todolist.show(args['<context>'])
 	elif args['contexts']:
 		print('Not implemented yet.')
 	elif args['history']:
@@ -366,17 +349,40 @@ def dispatch(args, todolist):
 
 
 def parse_args(argv):
-	return docopt(__doc__, argv=argv, help=False, version='2')
+	args = docopt(__doc__, argv=argv, help=False, version='2')
+	report = None
+	if args['--priority'] is not None:
+		try:
+			args['--priority'] = int(args['--priority'])
+		except ValueError:
+			report = 'PRIORITY must be an integer'
+	if args['--visibility'] is not None:
+		if args['--visibility'] not in ['discreet', 'wide', 'hidden']:
+			report = "VISIBILITY must be one of the following: discreet, "+\
+			"wide or hidden"
+	for arg in ['--deadline', '--start']:
+		if args[arg] is not None:
+			dt = get_datetime(args[arg])
+			if dt is None:
+				report = "MOMENT must be in the YYYY-MM-DD format, or the "+\
+				"YYYY-MM-DDTHH:MM:SS format, or a delay in the "+\
+				"([0-9]+)([wdhms]) format"
+			else:
+				args[arg] = dt
+	return args, report
 
 
 def main():
 	tasks, contexts, id_width = import_data(DATA_LOCATION)
 	todolist = TodoList(tasks, contexts, id_width)
 
-	args = parse_args(sys.argv[1:])
-	change = dispatch(args, todolist)
-	if change:
-		todolist.save(DATA_LOCATION)
+	args, report = parse_args(sys.argv[1:])
+	if report is not None:
+		print(report)
+	else:
+		change = dispatch(args, todolist)
+		if change:
+			todolist.save(DATA_LOCATION)
 
 
 if __name__ == '__main__':

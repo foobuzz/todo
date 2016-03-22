@@ -142,13 +142,13 @@ class TestDispatch(unittest.TestCase):
 
 	cases = {
 		'': [('show', {'context': ''})],
-		'-c hello': [('show', {'context': 'hello'})],
-		'-a hello': [('add_task', {'content': 'hello'})],
-		'-t 1 -p 3': [('get_task_by_id', {'id_': '1'}),
+		'ctx hello': [('show', {'context': 'hello'})],
+		'add hello': [('add_task', {'content': 'hello'})],
+		'task 1 -p 3': [('get_task_by_id', {'id_': '1'}),
 			('apply_mutator', {'mutator': 'priority', 'value': 3})],
-		'-d 1': [('get_task_by_id', {'id_': '1'}),
+		'done 1': [('get_task_by_id', {'id_': '1'}),
 			('set_done', {})],
-		'-c hello -p 2': [('apply_context_mutator', {'context': 'hello',
+		'ctx hello -p 2': [('apply_context_mutator', {'context': 'hello',
 			'mutator': 'priority', 'value': 2})]
 	}
 
@@ -157,7 +157,8 @@ class TestDispatch(unittest.TestCase):
 	def test_dispatch(self):
 		for line, sequence in TestDispatch.cases.items():
 			argv = line.split()
-			args = todo.parse_args(argv)
+			args, report = todo.parse_args(argv)
+			self.assertIsNone(report)
 			calls = []
 			handler = utils.get_trace_handler(calls)
 			sys.settrace(handler)
@@ -189,6 +190,6 @@ def test_trace():
 if __name__ == '__main__':
 	print('* Unit and integration tests')
 	unittest.main(buffer=True, exit=False)
-	print('* Fonctional tests')
-	test_trace()
-	print('OK')
+	#print('* Fonctional tests')
+	#test_trace()
+	#print('OK')
