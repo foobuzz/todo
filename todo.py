@@ -1,8 +1,38 @@
 #! /usr/bin/env python3
 
-import argparse, json, os, re, sys
+"""todo
+
+Usage:
+  todo
+  todo add <content> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
+    [--priority INTEGER] [--visibility VISIBILITY]
+  todo done <id>
+  todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
+    [--priority INTEGER] [--visibility VISIBILITY]
+  todo rm <id>
+  todo ctx <context> [--priority INTEGER] [--visibility VISIBILITY]
+  todo contexts
+  todo history
+  todo purge
+  todo (-h | --help)
+
+Options:
+  -h, --help                              Show this help message
+  -d MOMENT, --deadline MOMENT            Set the deadline of a task
+  -s MOMENT, --start MOMENT               Set the start-line of a task
+  -c CONTEXT, --context CONTEXT           Set the context of a task
+  -p INTEGER, --priority INTEGER          Set the priority of a task, or of a
+                                          context
+  -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
+                                          context.
+
+"""
+
+import json, os, re
 import os.path as op
 from datetime import datetime, timezone, timedelta
+
+from docopt import docopt
 
 # We check for the .dev file whose existence indicates that
 # the datafile to use is ~/.doduh/data2.json instead of
@@ -288,72 +318,57 @@ def import_data(data_location):
 
 def dispatch(args, todolist):
 	change = True
-	if args.add is not None or args.task is not None:
-	# Task Edition
-		if args.add is not None:
-		# Task Creation
-			task = todolist.add_task(args.add, NOW)
-		elif args.task is not None:
-		# Task Selection
-			task = todolist.get_task_by_id(args.task)
+	if args['add'] or args['task']:
+	# Task edition
+		if args['add']:
+		# Task creation
+			task = todolist.add_task(args['<content>'], NOW)
+		elif args['task']:
+		# Task selection
+			task = todolist.get_task_by_id(args['<id>'])
 		if task is None:
 			print('Task not found')
 			return False
-		values = vars(args)
 		for mutator in Task.mutators:
-			if values.get(mutator) is not None:
-				task.apply_mutator(mutator, values[mutator])
-	elif args.done is not None:
+			option = '--'+mutator
+			if args.get(option) is not None:
+				task.apply_mutator(mutator, args[option])
+	elif args['done']:
 	# Task ending
-		task = todolist.get_task_by_id(args.done)
+		task = todolist.get_task_by_id(args['<id>'])
 		task.set_done()
-	elif args.context is not None:
+	elif args['rm']:
+	# Task deletion
+		print('Not implemented yet.')
+	elif args['ctx']:
 	# Other context related commands
 		changed_something = False
-		values = vars(args)
+		ctx = args['<context>']
 		for mutator in TodoList.context_mutators:
-			if values.get(mutator) is not None:
-				todolist.apply_context_mutator(args.context, mutator,
-					values[mutator])
+			option = '--'+mutator
+			if args.get(option) is not None:
+				todolist.apply_context_mutator(ctx, mutator, args[option])
 				changed_something = True
 		if not changed_something:
 			change = False
-			todolist.show(args.context)
+			todolist.show(args.context)		
+	elif args['contexts']:
+		print('Not implemented yet.')
+	elif args['history']:
+		print('Not implemented yet.')
+	elif args['purge']:
+		print('Not implemented yet.')
 	else:
 		change = False
 		todolist.show()
 	return change
 
 
-def parse_args(argv):
-	parser = argparse.ArgumentParser(description='CLI todo list manager')
-	parser.add_argument('-a', '--add',
-		help="Add a task to the todo list")
-	parser.add_argument('--deadline',
-		help="Set the deadline of the task")
-	parser.add_argument('-s', '--start',
-		help="Set the date before which the task's remaining time will "
-		"be considered to be infinite")
-	parser.add_argument('-c', '--context',
-		help="Set the context of a task")
-	parser.add_argument('-p', '--priority', type=int,
-		help="Set the priority of a task or a context")
-	parser.add_argument('-d', '--done',
-		help="Set a task as done")
-	parser.add_argument('-t', '--task',
-		help="Select a task to alter")
-	parser.add_argument('-v', '--visibility', choices=['hidden', 'discreet',
-		'wide'],
-		help="Set the visibility of a task: 'hidden', 'discreet' or 'wide'.")
-	args = parser.parse_args(argv)
-	return args
-
-
 def main():
 	tasks, contexts, id_width = import_data(DATA_LOCATION)
 	todolist = TodoList(tasks, contexts, id_width)
 
-	args = parse_args(sys.argv[1:])
+	args = docopt(__doc__, version='2')
 	change = dispatch(args, todolist)
 	if change:
 		todolist.save(DATA_LOCATION)
