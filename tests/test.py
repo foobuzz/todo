@@ -190,6 +190,6 @@ def test_trace():
 if __name__ == '__main__':
 	print('* Unit and integration tests')
 	unittest.main(buffer=True, exit=False)
-	#print('* Fonctional tests')
-	#test_trace()
-	#print('OK')
+	print('* Fonctional tests')
+	test_trace()
+	print('OK')
