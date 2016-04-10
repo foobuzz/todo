@@ -1,17 +1,19 @@
 #! /usr/bin/env python3
 
-import unittest, sys, os, shutil
+import unittest, sys, os, shutil, functools, argparse
 import os.path as op
-from importlib import machinery
 from datetime import datetime, timedelta, timezone
 
 import utils
 
-# import todo
-# from todo import Task
-todo_loader = machinery.SourceFileLoader('todo', 'todo.py')
-todo = todo_loader.load_module()
+# In order for the following manual imports to work properly,
+# this script should be ran from the parent folder
+todo = utils.import_from_file('todo.py')
 Task = getattr(todo, 'Task')
+Context = getattr(todo, 'Context')
+tutils = utils.import_from_file('utils.py')
+# utils is the utils module relative to test
+# tutils is the utils module relative to the program
 
 
 NOW = todo.NOW
@@ -56,7 +58,7 @@ class TestDatetimeParsing(unittest.TestCase):
 
 	def test_parse_user_date(self):
 		for u_input, expected in TestDatetimeParsing.input_cases.items():
-			result = todo.get_datetime(u_input)
+			result = tutils.get_datetime(u_input, NOW)
 			if expected is not None:
 				# Converting expected manually-entered datetime into UTC
 				expected = datetime.utcfromtimestamp(expected.timestamp())
@@ -73,7 +75,7 @@ class TestDatetimeParsing(unittest.TestCase):
 
 	def test_parse_remaining(self):
 		for dt, expected in TestDatetimeParsing.remaining_cases.items():
-			result = todo.parse_remaining(dt)
+			result = tutils.parse_remaining(dt)
 			self.assertEqual(result, expected)
 
 
@@ -102,7 +104,7 @@ class TestContextAnalysis(unittest.TestCase):
 
 	def test_get_namespaces(self):
 		for context, expected in TestContextAnalysis.context_cases.items():
-			result = todo.get_namespaces(context)
+			result = Context(context).get_namespace()
 			self.assertEqual(result, expected)
 
 	def test_relevancy_test(self):
@@ -111,8 +113,8 @@ class TestContextAnalysis(unittest.TestCase):
 			task.visibility = vis
 			for (t_ctx, q_ctx), expected in \
 			TestContextAnalysis.relevancy_cases.items():
-				task.context = t_ctx
-				result = task.is_relevant_to_context(q_ctx)
+				task.context = Context(t_ctx)
+				result = task.is_relevant_to_context(Context(q_ctx))
 				self.assertEqual(result, expected[i_vis])
 
 
@@ -125,71 +127,88 @@ class TestTasksSort(unittest.TestCase):
 		Task(1, '', created=NOW-timedelta(minutes=1), priority=2),
 		Task(2, '', created=NOW-timedelta(minutes=2), deadline=NOW+timedelta(days=3)),
 		Task(3, '', created=NOW-timedelta(minutes=3), deadline=NOW+timedelta(days=4)),
-		Task(4, '', created=NOW-timedelta(minutes=6), context='world'),
+		Task(4, '', created=NOW-timedelta(minutes=6), context=Context('world', priority=2)),
 		Task(5, '', created=NOW-timedelta(minutes=7)),
-		Task(6, '', created=NOW-timedelta(minutes=5), context='hello')
+		Task(6, '', created=NOW-timedelta(minutes=5), context=Context('hello'))
 	]
-
-	contexts = {'world': {'p': 2}}
 
 	def test_task_sort(self):
 		tasks_cpy = sorted(TestTasksSort.tasks,
-			key=lambda t: t.order_infos(TestTasksSort.contexts))
+			key=lambda t: t.order_infos())
 		self.assertEqual(tasks_cpy, TestTasksSort.tasks)
 
 
-class TestDispatch(unittest.TestCase):
+class TestLimitStr(unittest.TestCase):
 
 	cases = {
-		'': [('show', {'context': ''})],
-		'ctx hello': [('show', {'context': 'hello'})],
-		'add hello': [('add_task', {'content': 'hello'})],
-		'task 1 -p 3': [('get_task_by_id', {'id_': '1'}),
-			('apply_mutator', {'mutator': 'priority', 'value': 3})],
-		'done 1': [('get_task_by_id', {'id_': '1'}),
-			('set_done', {})],
-		'ctx hello -p 2': [('apply_context_mutator', {'context': 'hello',
-			'mutator': 'priority', 'value': 2})]
+		('hello', 5): 'hello',
+		('hello', 6): 'hello',
+		('hello', 4): 'h...',
+		('hello', 3): 'hel',
+		('hello', 0): ''
 	}
 
-	todolist = todo.TodoList([Task(id_=1, content='')], {})
-
-	def test_dispatch(self):
-		for line, sequence in TestDispatch.cases.items():
-			argv = line.split()
-			args, report = todo.parse_args(argv)
-			self.assertIsNone(report)
-			calls = []
-			handler = utils.get_trace_handler(calls)
-			sys.settrace(handler)
-			todo.dispatch(args, TestDispatch.todolist)
-			sys.settrace(None)
-			calls = calls[1:]
-			for (name, args), (e_name, e_args) in zip(sequence, calls):
-				self.assertEqual(name, e_name)
-				for arg_name, arg_value in args.items():
-					self.assertIn(arg_name, e_args)
-					self.assertEqual(arg_value, e_args[arg_name])
+	def test_limit_str(self):
+		for args, result in TestLimitStr.cases.items():
+			self.assertEqual(tutils.limit_str(*args), result)
 
 
-def test_trace():
+class TestDefaulting(unittest.TestCase):
+
+	class Dummy(todo.HasDefaults):
+
+		defaults = {
+			'hello': 'world!',
+			'answer': 42,
+			'linux': 'interject'
+		}
+
+		def __init__(self):
+			self.init_defaults()
+
+	def test_defaulting(self):
+		dummy1 = TestDefaulting.Dummy()
+		dummy2 = TestDefaulting.Dummy()
+		dummy2.answer = 43
+		self.assertTrue(dummy1.is_default('hello'))
+		self.assertTrue(dummy1.is_default('answer'))
+		self.assertTrue(dummy1.is_default('linux'))
+		self.assertTrue(dummy2.is_default('hello'))
+		self.assertFalse(dummy2.is_default('answer'))
+		self.assertTrue(dummy2.is_default('linux'))
+
+
+def test_trace(print_commands=False):
 	data_loc = todo.DATA_LOCATION
 	is_loc = op.exists(data_loc)
 	if is_loc:
-		backup_path = data_loc + '-backup-' + str(NOW.timestamp)
+		backup_path = data_loc + '-backup-' + str(NOW.timestamp())
 		shutil.copy(data_loc, backup_path)
 		os.remove(data_loc)
 	try:
-		utils.test_trace('tests/cmd_trace', todo.get_datetime)
+		get_dt = functools.partial(tutils.get_datetime, now=NOW)
+		utils.test_trace('tests/cmd_trace', get_dt, print_commands)
 	finally:
 		if is_loc:
-			shutil.copy(backup_path, data_loc)
-			os.remove(backup_path)
+			os.rename(backup_path, data_loc)
 
 
 if __name__ == '__main__':
-	print('* Unit and integration tests')
-	unittest.main(buffer=True, exit=False)
-	print('* Fonctional tests')
-	test_trace()
-	print('OK')
+	parser = argparse.ArgumentParser(description='todo test suite')
+	parser.add_argument('-a', '--all', action='store_true',
+		help="Run functional test in addition to unit tests")
+	parser.add_argument('-f', '--func', action='store_true',
+		help="Run only functional test")
+	parser.add_argument('-v', '--verbose', action='store_true',
+		help="Prints the commands being ran during functional test")
+	args = parser.parse_args()
+
+	if not args.func:
+		test_loader = unittest.TestLoader()
+		suite = test_loader.loadTestsFromModule(sys.modules[__name__])
+		print('* Unit tests')
+		unittest.TextTestRunner().run(suite)
+	if args.func or args.all:
+		print('* Fonctional tests')
+		test_trace(args.verbose)
+		print('OK')

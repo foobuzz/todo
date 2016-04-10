@@ -47,23 +47,25 @@ $ ./todo.py
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  7 | Read the article about chemistry #culture
+$ ./todo.py culture
+ 7 | Read the article about chemistry #culture
 $ ./todo.py ctx culture
  7 | Read the article about chemistry #culture
 $ ./todo.py task 7 -c culture.chemistry
-$ ./todo.py ctx culture
+$ ./todo.py culture
  7 | Read the article about chemistry #culture.chemistry
 $ ./todo.py add "Listen to the podcast about movies" -c culture.cinema
-$ ./todo.py ctx culture
+$ ./todo.py culture
  7 | Read the article about chemistry #culture.chemistry
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py ctx culture.chemistry
+$ ./todo.py culture.chemistry
  7 | Read the article about chemistry #culture.chemistry
 $ ./todo.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
-$ ./todo.py ctx culture
+$ ./todo.py culture
  7 | Read the article about chemistry #culture.chemistry
  8 | Listen to the podcast about movies #culture.cinema
 $ ./todo.py task 7 -v wide
@@ -82,7 +84,28 @@ $ ./todo.py
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py ctx culture
+$ ./todo.py culture
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py ctx culture.chemistry
+$ ./todo.py culture.chemistry
  7 | Read the article about chemistry #culture.chemistry
+$ ./todo.py ctx culture.cinema -v wide
+$ ./todo.py ctx health -p 10
+$ ./todo.py rm 3
+$ ./todo.py
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py purge
+$ ./todo.py
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py contexts
+context                                         visibility priority undone tasks
+----------------------------------------------- ---------- -------- ------------
+                                                                    4           
+culture.chemistry                                                   1           
+culture.cinema                                  wide                1           
+health                                                     10       0           

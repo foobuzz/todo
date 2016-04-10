@@ -1,7 +1,16 @@
 import subprocess, re
+import os.path as op
+from importlib import machinery
 
 
 COMMAND_W_DT = '{NOW\+(.*)}'
+
+
+def import_from_file(filename):
+	name = op.splitext(op.basename(filename))[0]
+	loader = machinery.SourceFileLoader(name, filename)
+	module = loader.load_module()
+	return module
 
 
 def parse_trace(trace_file, get_datetime):
@@ -25,10 +34,12 @@ def parse_trace(trace_file, get_datetime):
 	return sequence
 
 
-def test_trace(filename, get_datetime):
+def test_trace(filename, get_datetime, print_commands=False):
 	with open(filename) as trace_file:
 		sequence = parse_trace(trace_file, get_datetime)
 	for command, out in sequence:
+		if print_commands:
+			print(command)
 		process = subprocess.Popen(command, shell=True,
 			universal_newlines=True,
 			stdout=subprocess.PIPE,
@@ -38,13 +49,3 @@ def test_trace(filename, get_datetime):
 		assert status == 0
 		assert stderr == ''
 		assert out == stdout
-
-
-def get_trace_handler(list_):
-	def handler(frame, event, arg):
-		if event != 'call':
-			return
-		f_name = frame.f_code.co_name
-		local = frame.f_locals
-		list_.append((f_name, local))
-	return handler
