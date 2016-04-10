@@ -1,108 +1,108 @@
-$ ./todo.py add "Do the thing"
-$ ./todo.py 
+$ todo/__main__.py add "Do the thing"
+$ todo/__main__.py 
  1 | Do the thing
-$ ./todo.py add "Fix the stuff"
-$ ./todo.py 
+$ todo/__main__.py add "Fix the stuff"
+$ todo/__main__.py 
  1 | Do the thing
  2 | Fix the stuff
-$ ./todo.py done 1
-$ ./todo.py 
+$ todo/__main__.py done 1
+$ todo/__main__.py 
  2 | Fix the stuff
-$ ./todo.py add "Buy the gift for Stefany" --deadline {NOW+16d}
-$ ./todo.py 
+$ todo/__main__.py add "Buy the gift for Stefany" --deadline {NOW+16d}
+$ todo/__main__.py 
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  2 | Fix the stuff
-$ ./todo.py add "Send the documents for the house" --deadline 1w
-$ ./todo.py 
+$ todo/__main__.py add "Send the documents for the house" --deadline 1w
+$ todo/__main__.py 
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  2 | Fix the stuff
-$ ./todo.py add "Buy the fireworks package" --deadline {NOW+105d}
-$ ./todo.py 
+$ todo/__main__.py add "Buy the fireworks package" --deadline {NOW+105d}
+$ todo/__main__.py 
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  5 | Buy the fireworks package ⌛ 104 days remaining
  2 | Fix the stuff
-$ ./todo.py task 5 -s 2016-06-15
-$ ./todo.py 
+$ todo/__main__.py task 5 -s 2016-06-15
+$ todo/__main__.py 
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  2 | Fix the stuff
-$ ./todo.py add "Fix the window" -p 3
-$ ./todo.py 
+$ todo/__main__.py add "Fix the window" -p 3
+$ todo/__main__.py 
  6 | Fix the window ★3
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  2 | Fix the stuff
-$ ./todo.py task 2 -p 2
-$ ./todo.py 
+$ todo/__main__.py task 2 -p 2
+$ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
-$ ./todo.py add "Read the article about chemistry" -c culture
-$ ./todo.py 
+$ todo/__main__.py add "Read the article about chemistry" -c culture
+$ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  7 | Read the article about chemistry #culture
-$ ./todo.py culture
+$ todo/__main__.py culture
  7 | Read the article about chemistry #culture
-$ ./todo.py ctx culture
+$ todo/__main__.py ctx culture
  7 | Read the article about chemistry #culture
-$ ./todo.py task 7 -c culture.chemistry
-$ ./todo.py culture
+$ todo/__main__.py task 7 -c culture.chemistry
+$ todo/__main__.py culture
  7 | Read the article about chemistry #culture.chemistry
-$ ./todo.py add "Listen to the podcast about movies" -c culture.cinema
-$ ./todo.py culture
+$ todo/__main__.py add "Listen to the podcast about movies" -c culture.cinema
+$ todo/__main__.py culture
  7 | Read the article about chemistry #culture.chemistry
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py culture.chemistry
+$ todo/__main__.py culture.chemistry
  7 | Read the article about chemistry #culture.chemistry
-$ ./todo.py 
+$ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
-$ ./todo.py culture
+$ todo/__main__.py culture
  7 | Read the article about chemistry #culture.chemistry
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py task 7 -v wide
-$ ./todo.py task 8 -v wide
-$ ./todo.py 
+$ todo/__main__.py task 7 -v wide
+$ todo/__main__.py task 8 -v wide
+$ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  7 | Read the article about chemistry #culture.chemistry
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py task 7 -v hidden
-$ ./todo.py 
+$ todo/__main__.py task 7 -v hidden
+$ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py culture
+$ todo/__main__.py culture
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py culture.chemistry
+$ todo/__main__.py culture.chemistry
  7 | Read the article about chemistry #culture.chemistry
-$ ./todo.py ctx culture.cinema -v wide
-$ ./todo.py ctx health -p 10
-$ ./todo.py rm 3
-$ ./todo.py
+$ todo/__main__.py ctx culture.cinema -v wide
+$ todo/__main__.py ctx health -p 10
+$ todo/__main__.py rm 3
+$ todo/__main__.py
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py purge
-$ ./todo.py
+$ todo/__main__.py purge
+$ todo/__main__.py
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py contexts
+$ todo/__main__.py contexts
 context                                         visibility priority undone tasks
 ----------------------------------------------- ---------- -------- ------------
                                                                     4           

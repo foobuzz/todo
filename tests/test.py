@@ -6,14 +6,11 @@ from datetime import datetime, timedelta, timezone
 
 import utils
 
-# In order for the following manual imports to work properly,
-# this script should be ran from the parent folder
-todo = utils.import_from_file('todo.py')
-Task = getattr(todo, 'Task')
-Context = getattr(todo, 'Context')
-tutils = utils.import_from_file('utils.py')
-# utils is the utils module relative to test
-# tutils is the utils module relative to the program
+sys.path.insert(0, op.abspath('.'))
+
+import todo.__main__ as todo
+from todo.__main__ import Task, Context
+import todo.utils as tutils
 
 
 NOW = todo.NOW

@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 
 from docopt import docopt
 
+sys.path.insert(0, op.abspath(op.dirname(__file__)))
 import utils
 
 # We check for the .dev file whose existence indicates that

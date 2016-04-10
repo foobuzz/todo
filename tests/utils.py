@@ -6,13 +6,6 @@ from importlib import machinery
 COMMAND_W_DT = '{NOW\+(.*)}'
 
 
-def import_from_file(filename):
-	name = op.splitext(op.basename(filename))[0]
-	loader = machinery.SourceFileLoader(name, filename)
-	module = loader.load_module()
-	return module
-
-
 def parse_trace(trace_file, get_datetime):
 	sequence = []
 	command, out = None, None
