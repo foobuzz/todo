@@ -227,7 +227,10 @@ class TodoList:
 				return task
 
 	def add_task(self, content, created):
-		id_ = self.get_next_id()
+		if len(self.tasks) == 0:
+			id_ = 1
+		else:
+			id_ = self.tasks[-1].id_ + 1
 		task = Task(id_, content, created=created)
 		self.tasks.append(task)
 		return task
@@ -240,14 +243,6 @@ class TodoList:
 
 	def __iter__(self):
 		return iter(self.tasks)
-
-	def get_next_id(self):
-		max_ = 0
-		for task in self.tasks:
-			id_ = task.id_
-			if id_ > max_:
-				max_ = id_
-		return max_ + 1
 
 	def show(self, context=EMPTY_CONTEXT):
 		for task in sorted(self.tasks, key=lambda t: t.order_infos()):
