@@ -397,7 +397,7 @@ def dispatch(args, todolist):
 	return change
 
 
-def parse_args(args, contexts):
+def parse_args(args):
 	"""Parse the args dictionary returned by docopt.
 
 	Strings are converted into proper objects. For example, datetime related
@@ -453,6 +453,10 @@ def parse_args(args, contexts):
 			args['<id>'] = int(args['<id>'], 16)
 		except ValueError:
 			report = "Invalid task ID"
+	return report
+
+
+def parse_contexts(args, contexts):
 	for arg in ['--context', '<context>']:
 		if args[arg] is not None:
 			ctx = contexts.get(args[arg])
@@ -460,7 +464,6 @@ def parse_args(args, contexts):
 				ctx = Context(args[arg])
 				contexts[args[arg]] = ctx
 			args[arg] = ctx
-	return report
 
 
 def main():
@@ -477,16 +480,22 @@ def main():
 	elif args['--location']:
 		print(DATA_LOCATION)
 	else:
-		tasks, contexts, id_width = import_data(DATA_LOCATION)
-		todolist = TodoList(tasks, contexts, id_width)
-
-		report = parse_args(args, contexts)
+		# Parsing the command-line
+		report = parse_args(args)
 		if report is not None:
 			print(report)
-		else:
-			change = dispatch(args, todolist)
-			if change:
-				todolist.save(DATA_LOCATION)
+			sys.exit(1)
+
+		# Importing the data
+		tasks, contexts, id_width = import_data(DATA_LOCATION)
+
+		# Creating contexts object for contexts given in the command-line
+		parse_contexts(args, contexts)
+
+		todolist = TodoList(tasks, contexts, id_width)
+		change = dispatch(args, todolist)
+		if change:
+			todolist.save(DATA_LOCATION)
 
 
 if __name__ == '__main__':
