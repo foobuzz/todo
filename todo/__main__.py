@@ -9,6 +9,7 @@ Usage:
   todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY] [--text CONTENT]
+  todo edit <id>
   todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
   todo contexts
@@ -386,6 +387,16 @@ def dispatch(args, todolist):
 			option = '--'+mutator
 			if args.get(option) is not None:
 				task.apply_mutator(mutator, args[option])
+	elif args['edit']:
+		task = todolist.get_task(args['<id>'][0])
+		if task is None:
+			print('Task not found')
+			return False
+		new_content = utils.input_from_editor(task.content)
+		if new_content.endswith('\n'):
+		# hurr durr I'm a text editor I append a newline at the end of files
+			new_content = new_content[:-1]
+		task.content = new_content
 	elif args['done']:
 		todolist.set_done(args['<id>'])
 	elif args['rm']:

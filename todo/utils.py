@@ -1,4 +1,4 @@
-import re
+import os, re, tempfile, subprocess
 from datetime import datetime, timedelta, timezone
 
 
@@ -17,6 +17,8 @@ REMAINING = {
 	's': 1
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
+
+EDITOR = os.environ.get('EDITOR','vim')
 
 
 def get_history_struct(id_width, wide):
@@ -137,3 +139,13 @@ def parse_remaining(delta):
 	if seconds >= 2*60:
 		return '{} minutes'.format(seconds // 60)
 	return '{} seconds'.format(seconds)
+
+
+def input_from_editor(init_content):
+	with tempfile.NamedTemporaryFile(mode='w+') as edit_file:
+		edit_file.write(init_content)
+		edit_file.flush()
+		subprocess.call([EDITOR, edit_file.name])
+		edit_file.seek(0)
+		new_content = edit_file.read()
+	return new_content
