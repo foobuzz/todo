@@ -6,10 +6,10 @@ Usage:
   todo [<context>]
   todo add <content> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
-  todo done <id>
+  todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
-  todo rm <id>
+  todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
   todo contexts
   todo history
@@ -235,8 +235,15 @@ class TodoList:
 		self.tasks.append(task)
 		return task
 
-	def remove_task(self, id_):
-		self.tasks = [t for t in self.tasks if t.id_ != id_]
+	def set_done(self, id_list):
+		id_set = set(id_list)
+		for task in self.tasks:
+			if task.id_ in id_set:
+				task.set_done()
+
+	def remove_tasks(self, id_list):
+		id_set = set(id_list)
+		self.tasks = [t for t in self.tasks if t.id_ not in id_set]
 
 	def purge(self):
 		self.tasks = [t for t in self.tasks if not t.done]
@@ -358,7 +365,7 @@ def dispatch(args, todolist):
 			task = todolist.add_task(args['<content>'], NOW)
 		elif args['task']:
 		# Task selection
-			task = todolist.get_task(args['<id>'])
+			task = todolist.get_task(args['<id>'][0])
 		if task is None:
 			print('Task not found')
 			return False
@@ -367,10 +374,9 @@ def dispatch(args, todolist):
 			if args.get(option) is not None:
 				task.apply_mutator(mutator, args[option])
 	elif args['done']:
-		task = todolist.get_task(args['<id>'])
-		task.set_done()
+		todolist.set_done(args['<id>'])
 	elif args['rm']:
-		todolist.remove_task(args['<id>'])
+		todolist.remove_tasks(args['<id>'])
 	elif args['ctx']:
 		changed_something = False
 		ctx = args['<context>']
@@ -449,10 +455,14 @@ def parse_args(args):
 			else:
 				args[arg] = dt
 	if args['<id>'] is not None:
-		try:
-			args['<id>'] = int(args['<id>'], 16)
-		except ValueError:
-			report = "Invalid task ID"
+		for i in range(len(args['<id>'])):
+		# I prefer not to directly iterate over the list since I'm going to
+		# alter it
+			id_ = args['<id>'][i]
+			try:
+				args['<id>'][i] = int(id_, 16)
+			except ValueError:
+				report = "Invalid task ID: {}".format(id_)
 	return report
 
 
