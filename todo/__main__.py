@@ -8,7 +8,7 @@ Usage:
     [--priority PRIORITY] [--visibility VISIBILITY]
   todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority PRIORITY] [--visibility VISIBILITY]
+    [--priority PRIORITY] [--visibility VISIBILITY] [--text CONTENT]
   todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
   todo contexts
@@ -24,6 +24,7 @@ Options:
   -c CONTEXT, --context CONTEXT           Set the context of a task
   -p INTEGER, --priority INTEGER          Set the priority of a task, or of a
                                           context
+  -t CONTENT, --text CONTENT              Set the text of a task
   -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
                                           context.
 
@@ -75,7 +76,12 @@ class HasDefaults:
 		return p in defaults and self.__dict__[p] == class_.defaults[p]
 
 	def apply_mutator(self, mutator, value):
-		setattr(self, mutator, value)
+		class_ = self.__class__
+		if hasattr(class_, 'bindings') and mutator in class_.bindings:
+			attr = class_.bindings[mutator]
+		else:
+			attr = mutator
+		setattr(self, attr, value)
 
 
 class Context(HasDefaults):
@@ -132,7 +138,14 @@ EMPTY_CONTEXT = Context('')
 
 class Task(HasDefaults):
 
-	mutators = ['priority', 'deadline', 'start', 'context', 'visibility']
+	mutators = ['priority', 'deadline', 'start', 'context', 'visibility',
+		'text']
+	# The look-up table to use to convert command-line arguments name to their
+	# object attribute counterpart. Most arguments have the name of their
+	# corresponding attribute, some others don't.
+	bindings = {
+		'text': 'content'
+	}
 	fast_serial = ['id_', 'content', 'done', 'priority', 'visibility']
 	date_serial = ['created', 'deadline', 'start']
 	defaults = {
