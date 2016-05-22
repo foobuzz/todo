@@ -37,8 +37,8 @@ from datetime import datetime, timezone
 
 from docopt import docopt
 
-sys.path.insert(0, op.abspath(op.dirname(__file__)))
 import utils
+from rainbow import ColoredStr
 
 # We check for the .dev file whose existence indicates that
 # the datafile to use is ~/.doduh/data2.json instead of
@@ -209,15 +209,22 @@ class Task(HasDefaults):
 			return descendant or context == EMPTY_CONTEXT
 
 	def get_string(self, id_width, ascii_=False):
-		string = '{id_:>{width}} | {content}'.format(id_=hex(self.id_)[2:],
-			width=id_width, content=self.content)
+		id_str = ColoredStr(hex(self.id_)[2:], 'yellow', '8')
+		string = '{id_:>{width}} | {content}'.format(
+			id_=id_str,
+			width=id_width + id_str.lenesc,
+			content=self.content
+		)
 		if not self.is_default('context'):
-			string += ' {}{}'.format(CONTEXT_ICON[ascii_], self.context)
+			ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], self.context)
+			string += ColoredStr(ctx_string, 'cyan', '8')
 		if not self.is_default('deadline'):
 			user_friendly = utils.parse_remaining(self.remaining)
-			string += ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
+			remaining_str = ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
+			string += ColoredStr(remaining_str, 'cyan', '8')
 		if not self.is_default('priority'):
-			string += ' {}{}'.format(PRIORITY_ICON[ascii_], self.priority)
+			prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], self.priority)
+			string += ColoredStr(prio_str, 'green', '8')
 		return string
 
 
