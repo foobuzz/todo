@@ -1,6 +1,4 @@
 import subprocess, re
-import os.path as op
-from importlib import machinery
 
 
 COMMAND_W_DT = '{NOW\+(.*)}'

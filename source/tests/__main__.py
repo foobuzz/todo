@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import utils
 
 sys.path.insert(0, op.abspath('.'))
+sys.path.insert(1, op.abspath('./todo'))
 
 import todo.__main__ as todo
 from todo.__main__ import Task, Context

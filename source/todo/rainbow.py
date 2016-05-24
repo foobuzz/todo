@@ -46,6 +46,8 @@ XTERM_GRAY_LEVELS_START = 8
 XTERM_GRAY_LEVELS_OFFSET = 232
 XTERM_COLORS_OFFSET = 16
 
+DEFAULT = 'default'
+
 
 def get_color_values(color, palette):
 	level = PALETTES[palette]
@@ -173,6 +175,8 @@ def rgb_to_xterm_palette(rgb):
 class ColoredStr(str):
 
 	def __new__(cls, string, color, palette='xterm-256'):
+		if color == DEFAULT:
+			return string
 		values = get_color_values(color.lower(), palette)
 		level = PALETTES[palette]
 		ansi_seq = ANSI_TEMPLATES[level].format(*values)

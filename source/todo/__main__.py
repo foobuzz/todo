@@ -39,16 +39,8 @@ from docopt import docopt
 
 import utils
 from rainbow import ColoredStr
+from config import DATA_LOCATION, CONFIG
 
-# We check for the .dev file whose existence indicates that
-# the datafile to use is ~/.doduh/data2.json instead of
-# ~/.toduh/data.json
-project_path = op.dirname(__file__)
-dev_flag = op.join(project_path, '.dev')
-if op.exists(dev_flag) and op.isfile(dev_flag):
-	DATA_LOCATION = op.expanduser('~/.toduh/data2.json')
-else:
-	DATA_LOCATION = op.expanduser('~/.toduh/data.json')
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 INF = datetime.max.replace(tzinfo=timezone.utc)
@@ -209,22 +201,27 @@ class Task(HasDefaults):
 			return descendant or context == EMPTY_CONTEXT
 
 	def get_string(self, id_width, ascii_=False):
-		id_str = ColoredStr(hex(self.id_)[2:], 'yellow', '8')
+		id_str = may_be_colored(hex(self.id_)[2:], CONFIG.get('Colors', 'id'))
+		if isinstance(id_str, ColoredStr):
+			ansi_offset = id_str.lenesc
+		else:
+			ansi_offset = 0
+		content_str = may_be_colored(self.content, CONFIG.get('Colors', 'content'))
 		string = '{id_:>{width}} | {content}'.format(
 			id_=id_str,
-			width=id_width + id_str.lenesc,
-			content=self.content
+			width=id_width + ansi_offset,
+			content=content_str
 		)
 		if not self.is_default('context'):
 			ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], self.context)
-			string += ColoredStr(ctx_string, 'cyan', '8')
+			string += may_be_colored(ctx_string, CONFIG.get('Colors', 'context'))
 		if not self.is_default('deadline'):
 			user_friendly = utils.parse_remaining(self.remaining)
 			remaining_str = ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
-			string += ColoredStr(remaining_str, 'cyan', '8')
+			string += may_be_colored(remaining_str, CONFIG.get('Colors', 'deadline'))
 		if not self.is_default('priority'):
 			prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], self.priority)
-			string += ColoredStr(prio_str, 'green', '8')
+			string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
 		return string
 
 
@@ -313,6 +310,14 @@ class TodoList:
 		with open(location, 'w', encoding='utf8') as data_f:
 			json.dump(data, data_f, sort_keys=True, indent=4,
 				ensure_ascii=False)
+
+
+def may_be_colored(string, color):
+	if CONFIG.getboolean('Colors', 'colors'):
+		palette = CONFIG.get('Colors', 'palette')
+		return ColoredStr(string, color, palette)
+	else:
+		return string
 
 
 def create_data_dir(data_location):
