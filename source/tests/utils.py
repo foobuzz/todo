@@ -1,7 +1,10 @@
-import subprocess, re
+import subprocess, re, os, shutil
+import os.path as op
+from datetime import datetime
 
 
 COMMAND_W_DT = '{NOW\+(.*)}'
+NOW = datetime.now()
 
 
 def parse_trace(trace_file, get_datetime):
@@ -40,3 +43,17 @@ def test_trace(filename, get_datetime, print_commands=False):
 		assert status == 0
 		assert stderr == ''
 		assert out == stdout
+
+
+def backup_and_replace(source, replacement=None):
+	is_loc = op.exists(source)
+	backup_path = None
+	if is_loc:
+		backup_path = source + '-backup-' + str(NOW.timestamp())
+		shutil.copy(source, backup_path)
+	if replacement is not None:
+		shutil.copy(replacement, source)
+	else:
+		if is_loc:
+			os.remove(source)
+	return backup_path

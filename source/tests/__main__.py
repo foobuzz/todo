@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import unittest, sys, os, shutil, functools, argparse
+import unittest, sys, os, functools, argparse
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
@@ -12,9 +12,12 @@ sys.path.insert(1, op.abspath('./todo'))
 import todo.__main__ as todo
 from todo.__main__ import Task, Context
 import todo.utils as tutils
+from todo.config import DATA_LOCATION, CONFIG_FILE
 
 
 NOW = todo.NOW
+
+TEST_CONFIG = 'tests/.toduhrc'
 
 
 class TestDatetimeParsing(unittest.TestCase):
@@ -177,18 +180,18 @@ class TestDefaulting(unittest.TestCase):
 
 
 def test_trace(print_commands=False):
-	data_loc = todo.DATA_LOCATION
-	is_loc = op.exists(data_loc)
-	if is_loc:
-		backup_path = data_loc + '-backup-' + str(NOW.timestamp())
-		shutil.copy(data_loc, backup_path)
-		os.remove(data_loc)
+	# Backuping the datafile and removing the original
+	data_backup = utils.backup_and_replace(DATA_LOCATION)
+	# Backuping the config file and replace it with ours (colors disabled)
+	config_backup = utils.backup_and_replace(CONFIG_FILE, TEST_CONFIG)
 	try:
 		get_dt = functools.partial(tutils.get_datetime, now=NOW)
 		utils.test_trace('tests/cmd_trace', get_dt, print_commands)
 	finally:
-		if is_loc:
-			os.rename(backup_path, data_loc)
+		if data_backup is not None:
+			os.rename(data_backup, DATA_LOCATION)
+		if config_backup is not None:
+			os.rename(config_backup, CONFIG_FILE)
 
 
 if __name__ == '__main__':

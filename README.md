@@ -349,11 +349,20 @@ Pull requests related to bugfixes, tests, documentation, security, performance, 
 I like documentation-driven development so in case you want to develop any feature I would like your pull request to be an update of the README in a first place. Once I validate it, you'll have green light for development and the request will be merged when the feature is fully implemented.
 
 
+## Running a development version
+
+To run the program in development, download the project's zip and go to the `source` directory. You can run the source by executing:
+
+	python todo
+
+If you create a file named `.dev` in the `todo` directory, then a new and independant datafile is used to store the tasks alongside the real application datafile.
+
+
 ## Tests
 
-To test the application, run the following **from the root directory of the project**:
+To run the tests, go the `source` directory and execute:
 
-	tests/test.py
+	python tests
 
 By default, this only launches the unit tests. There is also a functional test. The fonctional test uses the file `tests/cmd_trace`. This file contains a list of commands (lines introduced by `$`), each above the standard output they should produce. The functional test runs each of the commands in a subprocess and compare their output to the expected output. The test is ran on a new datafile each time, which doesn't affect the regular datafile.
 
