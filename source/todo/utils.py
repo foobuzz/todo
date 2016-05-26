@@ -2,6 +2,8 @@ import os, re, tempfile, subprocess, configparser
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
+from config import CONFIG
+
 
 ISO_SHORT = '%Y-%m-%d'
 ISO_DATE = ISO_SHORT+'T%H:%M:%SZ'
@@ -19,7 +21,11 @@ REMAINING = {
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 
-EDITOR = os.environ.get('EDITOR','vim')
+editor = CONFIG.get('App', 'editor', fallback=None)
+if editor is not None:
+	EDITOR = editor
+else:
+	EDITOR = os.environ.get('EDITOR', 'vim')
 
 
 def get_history_struct(id_width, wide):
