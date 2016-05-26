@@ -42,6 +42,8 @@ from rainbow import ColoredStr
 from config import DATA_LOCATION, CONFIG
 
 
+SHOW_AFTER = utils.parse_list(CONFIG.get('App', 'show_after'))
+
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 INF = datetime.max.replace(tzinfo=timezone.utc)
 LONG_AGO = datetime.min.replace(tzinfo=timezone.utc)
@@ -384,6 +386,8 @@ def import_data(data_location):
 
 def dispatch(args, todolist):
 	change = True
+	need_show = any(args[command] for command in SHOW_AFTER)
+	show_ctx = None
 	if args['add'] or args['task']:
 	# Task edition
 		if args['add']:
@@ -432,10 +436,12 @@ def dispatch(args, todolist):
 		todolist.purge()
 	else:
 		change = False
-		ctx = args['<context>']
-		if ctx is None:
-			ctx = EMPTY_CONTEXT
-		todolist.show(ctx)
+		need_show = True
+		show_ctx = args['<context>']
+	if need_show:
+		if show_ctx is None:
+			show_ctx = EMPTY_CONTEXT
+		todolist.show(show_ctx)
 	return change
 
 

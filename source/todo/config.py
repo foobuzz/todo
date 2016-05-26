@@ -36,8 +36,3 @@ CONFIG.read_dict(DEFAULT_CONFIG)
 # Loading the user config. Will complete/overwrite the default config
 # but will keep default config entries that the user might have removed
 CONFIG.read(CONFIG_FILE)
-
-
-def parse_list(string):
-	ls = [e.strip() for e in string.split(',')]
-	return [] if ls[0] == '' else ls

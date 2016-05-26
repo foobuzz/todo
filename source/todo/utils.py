@@ -1,5 +1,4 @@
-import os, re, tempfile, subprocess, configparser
-import os.path as op
+import os, re, tempfile, subprocess
 from datetime import datetime, timedelta, timezone
 
 from config import CONFIG
@@ -156,3 +155,8 @@ def input_from_editor(init_content):
 		edit_file.seek(0)
 		new_content = edit_file.read()
 	return new_content
+
+
+def parse_list(string):
+	ls = [e.strip() for e in string.split(',')]
+	return [] if ls[0] == '' else ls
