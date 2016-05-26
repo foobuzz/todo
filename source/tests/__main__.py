@@ -4,10 +4,10 @@ import unittest, sys, os, functools, argparse
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
-import utils
-
 sys.path.insert(0, op.abspath('.'))
 sys.path.insert(1, op.abspath('./todo'))
+
+import tests.utils as utils
 
 import todo.__main__ as todo
 from todo.__main__ import Task, Context
