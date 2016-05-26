@@ -12,10 +12,20 @@ if op.exists(DATA_FILE_NAME):
 	DATA_LOCATION = DATA_FILE_NAME
 
 CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
-DEFAULT_CONFIG_FILE = op.join(DATA_DIR, '.defaultrc')
 
 DEFAULT_CONFIG = configparser.ConfigParser()
-DEFAULT_CONFIG.read(DEFAULT_CONFIG_FILE)
+DEFAULT_CONFIG['App'] = {
+	'show_after': 'edit'
+}
+DEFAULT_CONFIG['Colors'] = {
+	'colors': 'on',
+	'palette': '8',
+	'id': 'yellow',
+	'content': 'default',
+	'context': 'cyan',
+	'deadline': 'cyan',
+	'priority': 'green'
+}
 
 CONFIG = configparser.ConfigParser(
 	allow_no_value=True,
