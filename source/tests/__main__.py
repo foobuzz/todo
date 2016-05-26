@@ -18,6 +18,7 @@ from todo.config import DATA_LOCATION, CONFIG_FILE
 NOW = todo.NOW
 
 TEST_CONFIG = 'tests/.toduhrc'
+TEST_DATA_FILE = 'tests/.todo_datafile'
 
 
 class TestDatetimeParsing(unittest.TestCase):
@@ -181,7 +182,7 @@ class TestDefaulting(unittest.TestCase):
 
 def test_trace(print_commands=False):
 	# Backuping the datafile and removing the original
-	data_backup = utils.backup_and_replace(DATA_LOCATION)
+	data_backup = utils.backup_and_replace(DATA_LOCATION, TEST_DATA_FILE)
 	# Backuping the config file and replace it with ours (colors disabled)
 	config_backup = utils.backup_and_replace(CONFIG_FILE, TEST_CONFIG)
 	try:

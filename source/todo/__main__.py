@@ -343,7 +343,7 @@ def import_data(data_location):
        used to know how to format the todo list when printing. This kind of
        information should be retrieved at importing to avoid further passes on
        the list of tasks."""
-	if not op.exists(data_location):
+	if not op.exists(data_location) or op.getsize(data_location) == 0:
 		data = {'tasks': [], 'contexts': {}}
 	else:
 		with open(data_location, encoding='utf8') as todo_f:
