@@ -38,7 +38,9 @@ BASIC_RGB = [
 	(255, 255, 255)
 ]
 
+# Python's re doesn't support repeated capture :s
 RGB_REGEX = 'rgb\(([0-9]{1,3}),([0-9]{1,3}),([0-9]{1,3})\)'
+HEXA_REGEX = '#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})'
 
 XTERM_JUMPS = [95, 40, 40, 40, 40]
 XTERM_COEFF = [36, 6, 1]
@@ -69,14 +71,19 @@ def get_color_values(color, palette):
 		if rgb_match is not None:
 			rgb = rgb_match.groups()
 			rgb = tuple(int(c) for c in rgb)
-			if level == 24:
-				return rgb
+		else:
+			hexa_match = re.match(HEXA_REGEX, color)
+			if hexa_match is not None:
+				rgb = hexa_match.groups()
+				rgb = tuple(int(c, 16) for c in rgb)
+		if (rgb_match is not None or hexa_match is not None) and level == 24:
+			return rgb
 	if rgb is not None:
 		if level == 3:
 			return (rgb_to_basic(rgb),)
 		elif level == 8:
 			converter = get_from_rgb_converter(palette)
-			return converter(rgb)
+			return (converter(rgb),)
 		elif level == 24:
 			return rgb
 
@@ -117,7 +124,6 @@ def standard_palette_to_rgb(color):
 def rgb_to_standard_palette(rgb):
 	bits = ''
 	for i, j in zip(rgb, [3, 3, 2]):
-		print(i * (2**j-1) / 255, bin(int(i * (2**j-1) / 255))[2:])
 		bits += bin(int(i * (2**j-1) / 255))[2:].zfill(j)
 	return int(bits, 2)
 
@@ -169,7 +175,7 @@ def rgb_to_xterm_palette(rgb):
 		val = i if abs(tot - c) <= abs(prev_tot - c) else i-1
 		total += val * XTERM_COEFF[index]
 	result = XTERM_COLORS_OFFSET + total
-	return (result,)
+	return result
 
 
 class ColoredStr(str):
