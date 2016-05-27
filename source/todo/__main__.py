@@ -34,6 +34,7 @@ Options:
 import json, os, sys, shutil
 import os.path as op
 from datetime import datetime, timezone
+from collections import OrderedDict, abc
 
 from docopt import docopt
 
@@ -227,7 +228,7 @@ class Task(HasDefaults):
 		return string
 
 
-class TodoList:
+class TodoList(abc.MutableMapping):
 
 	def __init__(self, tasks, contexts, id_width=None):
 		# id_width is the width of the hexa representation of the task's ID. It
@@ -241,38 +242,55 @@ class TodoList:
 		self.tasks = tasks
 		self.contexts = contexts
 
-	def get_task(self, id_):
-		for task in self.tasks:
-			if task.id_ == id_:
-				return task
+	def __getitem__(self, key):
+		return self.tasks[key]
+
+	def __setitem__(self, key, value):
+		self.tasks[key] = value
+
+	def __delitem__(self, key):
+		del self.tasks[key]
+
+	def __contains__(self, key):
+		return key in self.tasks
+
+	def __iter__(self):
+		return self.tasks.__iter__()
+
+	def __len__(self):
+		return len(self.tasks)
+
+	def keys(self):
+		return self.__iter__()
 
 	def add_task(self, content, created):
 		if len(self.tasks) == 0:
 			id_ = 1
 		else:
-			id_ = self.tasks[-1].id_ + 1
+			id_ = next(reversed(self.tasks)) + 1
 		task = Task(id_, content, created=created)
-		self.tasks.append(task)
+		self[id_] = task
 		return task
 
 	def set_done(self, id_list):
-		id_set = set(id_list)
-		for task in self.tasks:
-			if task.id_ in id_set:
-				task.set_done()
+		for id_ in id_list:
+			self[id_].set_done()
 
 	def remove_tasks(self, id_list):
-		id_set = set(id_list)
-		self.tasks = [t for t in self.tasks if t.id_ not in id_set]
+		for id_ in id_list:
+			del self[id_]
 
 	def purge(self):
-		self.tasks = [t for t in self.tasks if not t.done]
-
-	def __iter__(self):
-		return iter(self.tasks)
+		to_rm = []
+		# I prefer not to alter the dict I'm interating over
+		for id_, task in self.items():
+			if task.done:
+				to_rm.append(id_)
+		for id_ in to_rm:
+			del self[id_]
 
 	def show(self, context=EMPTY_CONTEXT):
-		for task in sorted(self.tasks, key=lambda t: t.order_infos()):
+		for task in sorted(self.tasks.values(), key=lambda t: t.order_infos()):
 			if not task.done and task.is_relevant_to_context(context) and \
 			task.has_started():
 				try:
@@ -285,7 +303,7 @@ class TodoList:
 		id_width = max(2, self.id_width) + 1
 		struct = utils.get_history_struct(id_width,
 			term_width > WIDE_HIST_THRESHOLD)
-		utils.print_table(struct, self.tasks, term_width)
+		utils.print_table(struct, self.tasks.values(), term_width)
 
 	def show_contexts(self):
 		contexts = list(self.contexts.values())
@@ -307,7 +325,7 @@ class TodoList:
 			if len(dict_) > 0:
 				contexts[name] = dict_
 		data = {'tasks': [], 'contexts': contexts}
-		for task in self.tasks:
+		for task in self.tasks.values():
 			data['tasks'].append(task.get_dict())
 		with open(location, 'w', encoding='utf8') as data_f:
 			json.dump(data, data_f, sort_keys=True, indent=4,
@@ -353,7 +371,7 @@ def import_data(data_location):
 	contexts = {'': EMPTY_CONTEXT}
 	for name, infos in data['contexts'].items():
 		contexts[name] = Context(name, infos.get('v'), infos.get('p'))
-	tasks = []
+	tasks = OrderedDict()
 	max_width = 0
 	for dico in data['tasks']:
 		for key, val in dico.items():
@@ -380,7 +398,7 @@ def import_data(data_location):
 		id_width = len(hex(dico['id_'])) - 2 # 0x...
 		if id_width > max_width:
 			max_width = id_width
-		tasks.append(Task(**dico))
+		tasks[dico['id_']] = Task(**dico)
 	return tasks, contexts, max_width
 
 
@@ -395,7 +413,7 @@ def dispatch(args, todolist):
 			task = todolist.add_task(args['<content>'], NOW)
 		elif args['task']:
 		# Task selection
-			task = todolist.get_task(args['<id>'][0])
+			task = todolist[args['<id>'][0]]
 		if task is None:
 			print('Task not found')
 			return False
@@ -404,7 +422,7 @@ def dispatch(args, todolist):
 			if args.get(option) is not None:
 				task.apply_mutator(mutator, args[option])
 	elif args['edit']:
-		task = todolist.get_task(args['<id>'][0])
+		task = todolist[args['<id>'][0]]
 		if task is None:
 			print('Task not found')
 			return False
