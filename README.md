@@ -296,10 +296,11 @@ To list all the contexts, use the `contexts` command.
 	$ todo contexts
 	context                                         visibility priority undone tasks
 	----------------------------------------------- ---------- -------- ------------
-	                                                                    4           
+	                                                                    6           
+	culture                                                             2           
 	culture.chemistry                                                   1           
 	culture.cinema                                  wide                1           
-	health                                                     10       0           
+	health                                                     10       0               
 
 The first line is the "empty context", which contains all tasks without any specific context.
 

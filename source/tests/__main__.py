@@ -104,19 +104,16 @@ class TestContextAnalysis(unittest.TestCase):
 		('hello.bonjour', 'hey.bonjour'): (False, False, False)
 	}
 
-	def test_get_namespaces(self):
-		for context, expected in TestContextAnalysis.context_cases.items():
-			result = Context(context).get_namespace()
-			self.assertEqual(result, expected)
-
 	def test_relevancy_test(self):
+		root_ctx = todo.ROOT_CTX
 		task = Task(1, '')
 		for i_vis, vis in enumerate(['hidden', 'discreet', 'wide']):
 			task.visibility = vis
 			for (t_ctx, q_ctx), expected in \
 			TestContextAnalysis.relevancy_cases.items():
-				task.context = Context(t_ctx)
-				result = task.is_relevant_to_context(Context(q_ctx))
+				task.context = root_ctx.add_contexts(t_ctx)
+				root_ctx.add_contexts(q_ctx)
+				result = task.is_relevant_to_context(root_ctx.get_context(q_ctx))
 				self.assertEqual(result, expected[i_vis])
 
 
@@ -129,9 +126,9 @@ class TestTasksSort(unittest.TestCase):
 		Task(1, '', created=NOW-timedelta(minutes=1), priority=2),
 		Task(2, '', created=NOW-timedelta(minutes=2), deadline=NOW+timedelta(days=3)),
 		Task(3, '', created=NOW-timedelta(minutes=3), deadline=NOW+timedelta(days=4)),
-		Task(4, '', created=NOW-timedelta(minutes=6), context=Context('world', priority=2)),
+		Task(4, '', created=NOW-timedelta(minutes=6), context=Context('world', None, priority=2)),
 		Task(5, '', created=NOW-timedelta(minutes=7)),
-		Task(6, '', created=NOW-timedelta(minutes=5), context=Context('hello'))
+		Task(6, '', created=NOW-timedelta(minutes=5), context=Context('hello', None))
 	]
 
 	def test_task_sort(self):

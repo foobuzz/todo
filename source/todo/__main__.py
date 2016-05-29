@@ -88,37 +88,89 @@ class Context(HasDefaults):
 		'priority': 1
 	}
 
-	def __init__(self, name, visibility=None, priority=None):
+	def __init__(self, name, parent, visibility=None, priority=None):
+		if '.' in name:
+			raise Exception('Oh my god!')
 		self.name = name
+		self.parent = parent
+		self.children = {}
+		self.population = 0
+		if parent is None:
+			self.path = ''
+		else:
+			dot = parent != ROOT_CTX
+			self.path = parent.path + '.'*dot + self.name
 		if visibility is not None:
 			self.visibility = visibility
 		if priority is not None:
 			self.priority = priority
 		self.init_defaults()
-		self.namespace = self.get_namespace()
-		self.population = 0
 
 	def __eq__(self, other):
-		return self.name == other.name
+		return self is other
 
 	def __str__(self):
-		return self.name
+		return self.path
 
-	def get_namespace(self):
-		splat = self.name.split('.')
-		if splat == ['']:
-			splat = []
-		return splat
+	def is_leaf(self):
+		return len(self.children) == 0
 
 	def is_subcontext(self, other):
-		my_namespaces = self.namespace
-		their_namespaces = other.namespace
-		len_theirs = len(their_namespaces)
-		if len_theirs != 0:
-			descendant = my_namespaces[:len_theirs] == their_namespaces
-		else:
-			descendant = len(my_namespaces) == 1
-		return descendant
+		if self == other:
+			return True
+		for child in other.children.values():
+			if child.is_leaf() and child == self:
+				return True
+			if not child.is_leaf():
+				if self.is_subcontext(child):
+					return True
+		return False
+
+	def get_population(self):
+		children = sum(c.get_population() for c in self.children.values())
+		return self.population + children
+
+	def get_context(self, path):
+		if path == '':
+			return self
+		components = path.split('.')
+		pointer = self
+		for name in components:
+			if name not in pointer.children:
+				return None
+			pointer = pointer.children[name]
+		return pointer
+
+	def add_contexts(self, path):
+		if path == '':
+			return self
+		components = path.split('.')
+		pointer = self
+		for name in components:
+			if name in pointer.children:
+				pointer = pointer.children[name]
+			else:
+				new_ctx = Context(name, pointer)
+				pointer.children[name] = new_ctx
+				pointer = new_ctx
+		return pointer
+
+	def items(self):
+		yield self.path, self
+		for child in self.children.values():
+			for item in child.items():
+				yield item
+
+	def show_contexts(self):
+		paths = [i[1] for i in self.items()]
+		paths.sort(key=lambda c: c.path)
+		struct = [
+			('context', lambda a: a, '<', 'path', lambda a: a),
+			('visibility', 10, '<', 'visibility', lambda a: a),
+			('priority', 8, '<', 'priority', lambda a: str(a)),
+			('undone tasks', 12, '<', None, lambda a: str(a.get_population()))
+		]
+		utils.print_table(struct, paths, 80)
 
 	def get_dict(self):
 		skelet = {}
@@ -129,7 +181,7 @@ class Context(HasDefaults):
 		return skelet
 
 
-EMPTY_CONTEXT = Context('')
+ROOT_CTX = Context('', None)
 
 
 class Task(HasDefaults):
@@ -149,7 +201,7 @@ class Task(HasDefaults):
 		'priority': 1,
 		'deadline': INF,
 		'start': NOW,
-		'context': EMPTY_CONTEXT,
+		'context': ROOT_CTX,
 		'done': False,
 		'visibility': 'discreet'
 	}
@@ -161,6 +213,12 @@ class Task(HasDefaults):
 			setattr(self, key, val)
 		self.init_defaults()
 		self.remaining = self.deadline - NOW
+
+	def apply_mutator(self, mutator, value):
+		if mutator == 'context':
+			self.context = ROOT_CTX.add_contexts(value)
+		else:
+			super().apply_mutator(mutator, value)
 
 	def get_visibility(self):
 		if self.is_default('visibility'):
@@ -180,7 +238,7 @@ class Task(HasDefaults):
 			if p in self.__dict__ and not self.is_default(p):
 				skelet[p] = self.__dict__[p].strftime(utils.ISO_DATE)
 		if not self.is_default('context'):
-			skelet['context'] = self.context.name
+			skelet['context'] = self.context.path
 		return skelet
 
 	def has_started(self):
@@ -199,9 +257,12 @@ class Task(HasDefaults):
 		if self.get_visibility() == 'hidden':
 			return self.context == context
 		elif self.get_visibility() == 'discreet':
-			return descendant
+			if context == ROOT_CTX:
+				return self.context.parent == ROOT_CTX
+			else:
+				return descendant
 		elif self.get_visibility() == 'wide':
-			return descendant or context == EMPTY_CONTEXT
+			return descendant or context == ROOT_CTX
 
 	def get_string(self, id_width, ascii_=False):
 		id_str = may_be_colored(hex(self.id_)[2:], CONFIG.get('Colors', 'id'))
@@ -230,7 +291,7 @@ class Task(HasDefaults):
 
 class TodoList(abc.MutableMapping):
 
-	def __init__(self, tasks, contexts, id_width=None):
+	def __init__(self, tasks, id_width=None):
 		# id_width is the width of the hexa representation of the task's ID. It
 		# can be optionaly given to us so that we don't have to iterate over
 		# the tasks ourselves. In this case, it's computed by import_data when
@@ -240,7 +301,6 @@ class TodoList(abc.MutableMapping):
 		else:
 			self.id_width = max(len(hex(t.id_)) - 2 for t in tasks)
 		self.tasks = tasks
-		self.contexts = contexts
 
 	def __getitem__(self, key):
 		return self.tasks[key]
@@ -289,7 +349,8 @@ class TodoList(abc.MutableMapping):
 		for id_ in to_rm:
 			del self[id_]
 
-	def show(self, context=EMPTY_CONTEXT):
+	def show(self, path=''):
+		context = ROOT_CTX.get_context(path)
 		for task in sorted(self.tasks.values(), key=lambda t: t.order_infos()):
 			if not task.done and task.is_relevant_to_context(context) and \
 			task.has_started():
@@ -305,25 +366,14 @@ class TodoList(abc.MutableMapping):
 			term_width > WIDE_HIST_THRESHOLD)
 		utils.print_table(struct, self.tasks.values(), term_width)
 
-	def show_contexts(self):
-		contexts = list(self.contexts.values())
-		contexts.sort(key=lambda c: c.name)
-		struct = [
-			('context', lambda a: a, '<', 'name', lambda a: a),
-			('visibility', 10, '<', 'visibility', lambda a: a),
-			('priority', 8, '<', 'priority', lambda a: str(a)),
-			('undone tasks', 12, '<', 'population', lambda a: str(a))
-		]
-		utils.print_table(struct, contexts, 80)
-
 	def save(self, location):
 		if not op.exists(location):
 			create_data_dir(location)
 		contexts = {}
-		for name, ctx in self.contexts.items():
+		for path, ctx in ROOT_CTX.items():
 			dict_ = ctx.get_dict()
 			if len(dict_) > 0:
-				contexts[name] = dict_
+				contexts[path] = dict_
 		data = {'tasks': [], 'contexts': contexts}
 		for task in self.tasks.values():
 			data['tasks'].append(task.get_dict())
@@ -368,9 +418,6 @@ def import_data(data_location):
 	else:
 		with open(data_location, encoding='utf8') as todo_f:
 			data = json.load(todo_f)
-	contexts = {'': EMPTY_CONTEXT}
-	for name, infos in data['contexts'].items():
-		contexts[name] = Context(name, infos.get('v'), infos.get('p'))
 	tasks = OrderedDict()
 	max_width = 0
 	for dico in data['tasks']:
@@ -380,26 +427,24 @@ def import_data(data_location):
 				dt = dt.replace(tzinfo=timezone.utc)
 				dico[key] = dt
 		if 'context' in dico:
-			ctx_name = dico['context']
-			if ctx_name in contexts:
-				ctx = contexts[ctx_name]
-				dico['context'] = ctx
-			else:
-				ctx = Context(ctx_name)
-				dico['context'] = ctx
-				contexts[ctx_name] = ctx
+			path = dico['context']
+			ctx = ROOT_CTX.add_contexts(path)
 		else:
-			ctx = EMPTY_CONTEXT
-			# Let's remember that we manipulate the same EMPTY_CONTEXT object
-			# in the whole program. So in this case the ctx variable does
-			# reference the object in the contexts dict
+			ctx = ROOT_CTX
+		dico['context'] = ctx
 		if 'done' not in dico or not dico['done']:
 			ctx.population += 1
 		id_width = len(hex(dico['id_'])) - 2 # 0x...
 		if id_width > max_width:
 			max_width = id_width
 		tasks[dico['id_']] = Task(**dico)
-	return tasks, contexts, max_width
+	for path in data['contexts']:
+		ctx = ROOT_CTX.add_contexts(path)
+		if 'v' in data['contexts'][path]:
+			ctx.visibility = data['contexts'][path]['v']
+		if 'p' in data['contexts'][path]:
+			ctx.priority = data['contexts'][path]['p']
+	return tasks, max_width
 
 
 def dispatch(args, todolist):
@@ -437,7 +482,7 @@ def dispatch(args, todolist):
 		todolist.remove_tasks(args['<id>'])
 	elif args['ctx']:
 		changed_something = False
-		ctx = args['<context>']
+		ctx = ROOT_CTX.add_contexts(args['<context>'])
 		for mutator in Context.mutators:
 			option = '--'+mutator
 			if args.get(option) is not None:
@@ -445,9 +490,9 @@ def dispatch(args, todolist):
 				changed_something = True
 		if not changed_something:
 			change = False
-			todolist.show(ctx)
+			todolist.show(args['<context>'])
 	elif args['contexts']:
-		todolist.show_contexts()
+		ROOT_CTX.show_contexts()
 	elif args['history']:
 		todolist.show_history()
 	elif args['purge']:
@@ -458,7 +503,7 @@ def dispatch(args, todolist):
 		show_ctx = args['<context>']
 	if need_show:
 		if show_ctx is None:
-			show_ctx = EMPTY_CONTEXT
+			show_ctx = ''
 		todolist.show(show_ctx)
 	return change
 
@@ -526,16 +571,6 @@ def parse_args(args):
 	return report
 
 
-def parse_contexts(args, contexts):
-	for arg in ['--context', '<context>']:
-		if args[arg] is not None:
-			ctx = contexts.get(args[arg])
-			if ctx is None:
-				ctx = Context(args[arg])
-				contexts[args[arg]] = ctx
-			args[arg] = ctx
-
-
 def main():
 	argv = sys.argv[1:]
 	if len(argv) == 1 and argv[0] == 'doduh':
@@ -557,12 +592,9 @@ def main():
 			sys.exit(1)
 
 		# Importing the data
-		tasks, contexts, id_width = import_data(DATA_LOCATION)
+		tasks, id_width = import_data(DATA_LOCATION)
 
-		# Creating contexts object for contexts given in the command-line
-		parse_contexts(args, contexts)
-
-		todolist = TodoList(tasks, contexts, id_width)
+		todolist = TodoList(tasks, id_width)
 		change = dispatch(args, todolist)
 		if change:
 			todolist.save(DATA_LOCATION)

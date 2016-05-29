@@ -105,7 +105,8 @@ $ todo/__main__.py
 $ todo/__main__.py contexts
 context                                         visibility priority undone tasks
 ----------------------------------------------- ---------- -------- ------------
-                                                                    4           
+                                                                    6           
+culture                                                             2           
 culture.chemistry                                                   1           
 culture.cinema                                  wide                1           
 health                                                     10       0           
