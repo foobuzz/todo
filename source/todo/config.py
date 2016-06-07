@@ -1,15 +1,17 @@
-import configparser, os, platform
+import configparser, platform
 import os.path as op
 
 
-DATA_DIR = op.expanduser(op.join('~', '.toduh'))
-DATA_LOCATION = op.join(DATA_DIR, 'data.json')
-DATA_FILE_NAME = op.abspath(op.join(os.getcwd(), '.todo_datafile'))
+DATA_DIR_NAME = '.toduh'
+DATA_FILE_NAME = 'data.json'
 
-# We check for a .todo_datafile in the current working directory that is to be
-# used in place of the default ~/.toduh/data.json
-if op.exists(DATA_FILE_NAME):
-	DATA_LOCATION = DATA_FILE_NAME
+# If a .toduh exists in the current working directory, it's used by the
+# program. Otherwise the one in the home is used.
+if op.exists(DATA_DIR_NAME) and op.isdir(DATA_DIR_NAME):
+	DATA_DIR = DATA_DIR_NAME
+else:
+	DATA_DIR = op.expanduser(op.join('~', '.toduh'))
+DATA_LOCATION = op.join(DATA_DIR, DATA_FILE_NAME)
 
 CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
 

@@ -444,8 +444,6 @@ class TodoList(abc.MutableMapping):
 		utils.print_table(struct, self.tasks.values(), term_width)
 
 	def save(self, location):
-		if not op.exists(location):
-			create_data_dir(location)
 		contexts = {}
 		for path, ctx in self.root_ctx.items():
 			dict_ = ctx.get_dict()
@@ -493,6 +491,8 @@ def open_data(data_location):
 
 
 def save_data(data, location):
+	if not op.exists(location):
+		create_data_dir(location)
 	with open(location, 'w', encoding='utf8') as data_f:
 		json.dump(data, data_f, sort_keys=True, indent=4,
 			ensure_ascii=False)	
