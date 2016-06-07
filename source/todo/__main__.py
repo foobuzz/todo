@@ -43,6 +43,9 @@ from rainbow import ColoredStr
 from config import DATA_LOCATION, CONFIG
 
 
+COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
+	'purge'}
+
 SHOW_AFTER = utils.parse_list(CONFIG.get('App', 'show_after'))
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
@@ -533,26 +536,7 @@ def parse_args(args):
 	If one of the conversion fails, a report is written about the fail. This
 	report is None if no failure has been encountered. The report is returned
 	by the function"""
-	# The command-line interface is ambiguous. There is `todo [<context>]` to
-	# only show the tasks of a specific context. There's also all other
-	# commands such as `todo history`. The desired behavior is that an
-	# existing command always wins over a context's name. If a user has a
-	# context which happens to have the name of a command, he can still do
-	# `todo ctx history` for example.
-
-	# docopt has no problem making a command win over a context's name *if
-	# there are parameters or option accompanying the command*. This means
-	# that for parameters-free commands such as `todo history`, docopt thinks
-	# that it's `todo <context>` with <context> = 'history'. To make up for
-	# such behavior, what I do is that I look if there's a <context> value
-	# given for a command which doesn't accept context, this context value
-	# being the name of a command. In such case, I set the corresponding
-	# command flag to True and the context value to None. Actually, the only
-	# command accepting a context value is `ctx`.
-	if not args['ctx'] and args['<context>'] in {'contexts', 'history',
-	'purge'}:
-		args[args['<context>']] = True
-		args['<context>'] = None
+	fix_args(args)
 	report = None
 	if args['--priority'] is not None:
 		try:
@@ -582,6 +566,29 @@ def parse_args(args):
 			except ValueError:
 				report = "Invalid task ID: {}".format(id_)
 	return report
+
+
+def fix_args(args):
+	# The command-line interface is ambiguous. There is `todo [<context>]` to
+	# only show the tasks of a specific context. There's also all other
+	# commands such as `todo history`. The desired behavior is that an
+	# existing command always wins over a context's name. If a user has a
+	# context which happens to have the name of a command, he can still do
+	# `todo ctx history` for example.
+
+	# docopt has no problem making a command win over a context's name *if
+	# there are parameters or option accompanying the command*. This means
+	# that for parameters-free commands such as `todo history`, docopt thinks
+	# that it's `todo <context>` with <context> = 'history'. To make up for
+	# such behavior, what I do is that I look if there's a <context> value
+	# given for a command which doesn't accept context, this context value
+	# being the name of a command. In such case, I set the corresponding
+	# command flag to True and the context value to None.
+	if any(args[c] for c in COMMANDS):
+		return
+	if args['<context>'] in COMMANDS:
+		args[args['<context>']] = True
+		args['<context>'] = None
 
 
 def main():
