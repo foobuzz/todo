@@ -335,6 +335,7 @@ class TodoList(abc.MutableMapping):
 		self.tasks = tasks
 		self.last_task = last_task
 		self.last_context = last_context
+		self.updated_last = False
 
 	def __getitem__(self, key):
 		return self.tasks[key]
@@ -368,6 +369,16 @@ class TodoList(abc.MutableMapping):
 
 	def keys(self):
 		return self.__iter__()
+
+	def update_last_task(self, id_):
+		if id_ != self.last_task:
+			self.last_task = id_
+			self.updated_last = True
+
+	def update_last_context(self, path):
+		if path != self.last_context:
+			self.last_context = path
+			self.updated_last = True
 
 	def add_task(self, content, created):
 		if len(self.tasks) == 0:
@@ -612,14 +623,11 @@ def dispatch(args, todolist):
 			return False, False
 		last_ctx = ctx
 	tasks = args.get('<id>', None)
-	updated_lasts = False
 	if last_task is not None:
-		todolist.last_task = last_task.id_
-		updated_lasts = True
+		todolist.update_last_task(last_task.id_)
 	if last_ctx is not None:
-		todolist.last_context = last_ctx.path
-		updated_lasts = True
-	return change, updated_lasts
+		todolist.update_last_context(last_ctx.path)
+	return change
 
 
 def parse_args(args):
@@ -712,10 +720,10 @@ def main():
 
 		data = open_data(DATA_LOCATION)
 		todolist = import_data(data)
-		change, updated_lasts = dispatch(args, todolist)
+		change = dispatch(args, todolist)
 		if change:
 			todolist.save(DATA_LOCATION)
-		elif updated_lasts:
+		elif todolist.updated_last:
 			data['last_task'] = todolist.last_task
 			data['last_context'] = todolist.last_context
 			save_data(data, DATA_LOCATION)
