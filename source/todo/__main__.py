@@ -112,6 +112,14 @@ class Context(HasDefaults):
 	def __str__(self):
 		return self.path
 
+	def path_from(self, context):
+		pointer = self
+		path = ''
+		while pointer != context:
+			path = '.' + pointer.name + path
+			pointer = pointer.parent
+		return path[1:] if len(path) > 0 else path
+
 	def is_leaf(self):
 		return len(self.children) == 0
 
@@ -264,7 +272,7 @@ class Task(HasDefaults):
 		elif self.get_visibility() == 'wide':
 			return descendant or context == ROOT_CTX
 
-	def get_string(self, id_width, ascii_=False):
+	def get_string(self, id_width, from_context=ROOT_CTX, ascii_=False):
 		id_str = may_be_colored(hex(self.id_)[2:], CONFIG.get('Colors', 'id'))
 		if isinstance(id_str, ColoredStr):
 			ansi_offset = id_str.lenesc
@@ -276,8 +284,9 @@ class Task(HasDefaults):
 			width=id_width + ansi_offset,
 			content=content_str
 		)
-		if not self.is_default('context'):
-			ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], self.context)
+		ctx_path = self.context.path_from(from_context)
+		if ctx_path != '':
+			ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
 			string += may_be_colored(ctx_string, CONFIG.get('Colors', 'context'))
 		if not self.is_default('deadline'):
 			user_friendly = utils.parse_remaining(self.remaining)
@@ -355,9 +364,9 @@ class TodoList(abc.MutableMapping):
 			if not task.done and task.is_relevant_to_context(context) and \
 			task.has_started():
 				try:
-					print(task.get_string(self.id_width + 1))
+					print(task.get_string(self.id_width + 1, context))
 				except UnicodeEncodeError:
-					print(task.get_string(self.id_width + 1, ascii_=True))
+					print(task.get_string(self.id_width + 1, context, ascii_=True))
 
 	def show_history(self):
 		term_width = shutil.get_terminal_size().columns

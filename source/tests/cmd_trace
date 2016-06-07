@@ -48,26 +48,26 @@ $ todo/__main__.py
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  7 | Read the article about chemistry #culture
 $ todo/__main__.py culture
- 7 | Read the article about chemistry #culture
+ 7 | Read the article about chemistry
 $ todo/__main__.py ctx culture
- 7 | Read the article about chemistry #culture
+ 7 | Read the article about chemistry
 $ todo/__main__.py task 7 -c culture.chemistry
 $ todo/__main__.py culture
- 7 | Read the article about chemistry #culture.chemistry
+ 7 | Read the article about chemistry #chemistry
 $ todo/__main__.py add "Listen to the podcast about movies" -c culture.cinema
 $ todo/__main__.py culture
- 7 | Read the article about chemistry #culture.chemistry
- 8 | Listen to the podcast about movies #culture.cinema
+ 7 | Read the article about chemistry #chemistry
+ 8 | Listen to the podcast about movies #cinema
 $ todo/__main__.py culture.chemistry
- 7 | Read the article about chemistry #culture.chemistry
+ 7 | Read the article about chemistry
 $ todo/__main__.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
 $ todo/__main__.py culture
- 7 | Read the article about chemistry #culture.chemistry
- 8 | Listen to the podcast about movies #culture.cinema
+ 7 | Read the article about chemistry #chemistry
+ 8 | Listen to the podcast about movies #cinema
 $ todo/__main__.py task 7 -v wide
 $ todo/__main__.py task 8 -v wide
 $ todo/__main__.py 
@@ -85,9 +85,9 @@ $ todo/__main__.py
  3 | Buy the gift for Stefany ⌛ 15 days remaining
  8 | Listen to the podcast about movies #culture.cinema
 $ todo/__main__.py culture
- 8 | Listen to the podcast about movies #culture.cinema
+ 8 | Listen to the podcast about movies #cinema
 $ todo/__main__.py culture.chemistry
- 7 | Read the article about chemistry #culture.chemistry
+ 7 | Read the article about chemistry
 $ todo/__main__.py ctx culture.cinema -v wide
 $ todo/__main__.py ctx health -p 10
 $ todo/__main__.py rm 3

@@ -156,13 +156,13 @@ You can define contexts within contexts using the dot notation:
 
 	$ todo task 7 -c culture.chemistry
 	$ todo ctx culture
-	    7 | Read the article about chemistry #culture.chemistry
+	    7 | Read the article about chemistry #chemistry
 	$ todo add "Listen to the podcast about movies" -c culture.cinema
 	$ todo ctx culture
-	    7 | Read the article about chemistry #culture.chemistry
-	    8 | Listen to the podcast about movies #culture.cinema
+	    7 | Read the article about chemistry #chemistry
+	    8 | Listen to the podcast about movies #cinema
 	$ todo ctx culture.chemistry
-	    7 | Read the article about chemistry #culture.chemistry
+	    7 | Read the article about chemistry
 
 ### Visibility
 
@@ -210,9 +210,9 @@ On the opposite, if you want a task to appear only if you query the todolist wit
 	    3 | Buy the gift for Stefany ⌛ 11 days remaining
 	    8 | Listen to the podcast about movies #culture.cinema
 	$ todo culture
-	    8 | Listen to the podcast about movies #culture.cinema
+	    8 | Listen to the podcast about movies #cinema
 	$ todo culture.chemistry
-	    7 | Read the article about chemistry #culture.chemistry
+	    7 | Read the article about chemistry
 
 You can specify the visibility of a context. This visibility will apply to all tasks belonging to the context that have the default visibility (discreet). If a task has a non-default visibility, it'll override the visibility of its context.
 
