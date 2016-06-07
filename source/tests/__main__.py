@@ -9,8 +9,8 @@ sys.path.insert(1, op.abspath('./todo'))
 
 import tests.utils as utils
 
-import todo.__main__ as todo
-from todo.__main__ import Task, Context
+import todo.todo as todo
+from todo.todo import Task, Context
 import todo.utils as tutils
 from todo.config import DATA_LOCATION, CONFIG_FILE
 
