@@ -1,4 +1,4 @@
-import os, re, tempfile, subprocess
+import os, re
 from datetime import datetime, timedelta, timezone
 
 from config import CONFIG
@@ -148,6 +148,7 @@ def parse_remaining(delta):
 
 
 def input_from_editor(init_content):
+	import tempfile, subprocess
 	with tempfile.NamedTemporaryFile(mode='w+') as edit_file:
 		edit_file.write(init_content)
 		edit_file.flush()

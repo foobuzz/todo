@@ -31,7 +31,7 @@ Options:
 
 """
 
-import json, os, sys, shutil
+import json, os, sys
 import os.path as op
 from datetime import datetime, timezone
 from collections import OrderedDict, abc
@@ -437,7 +437,7 @@ class TodoList(abc.MutableMapping):
 		return context
 
 	def show_history(self):
-		term_width = shutil.get_terminal_size().columns
+		term_width = os.get_terminal_size().columns
 		id_width = max(2, self.id_width) + 1
 		struct = utils.get_history_struct(id_width,
 			term_width > WIDE_HIST_THRESHOLD)

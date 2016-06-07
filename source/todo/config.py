@@ -1,4 +1,4 @@
-import configparser, platform
+import configparser, os
 import os.path as op
 
 
@@ -17,7 +17,7 @@ DATA_CTX = op.join(DATA_DIR, DATA_CTX_NAME)
 
 CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
 
-if platform.system() == 'Windows':
+if os.name == 'posix':
 	COLORS = 'on'
 else:
 	COLORS = 'off'
