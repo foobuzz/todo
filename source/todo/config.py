@@ -4,6 +4,7 @@ import os.path as op
 
 DATA_DIR_NAME = '.toduh'
 DATA_FILE_NAME = 'data.json'
+DATA_CTX_NAME = 'contexts'
 
 # If a .toduh exists in the current working directory, it's used by the
 # program. Otherwise the one in the home is used.
@@ -12,6 +13,7 @@ if op.exists(DATA_DIR_NAME) and op.isdir(DATA_DIR_NAME):
 else:
 	DATA_DIR = op.expanduser(op.join('~', '.toduh'))
 DATA_LOCATION = op.join(DATA_DIR, DATA_FILE_NAME)
+DATA_CTX = op.join(DATA_DIR, DATA_CTX_NAME)
 
 CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
 

@@ -40,7 +40,7 @@ from docopt import docopt
 
 import utils
 from rainbow import ColoredStr
-from config import DATA_LOCATION, CONFIG
+from config import DATA_LOCATION, DATA_CTX, CONFIG
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
@@ -445,10 +445,12 @@ class TodoList(abc.MutableMapping):
 
 	def save(self, location):
 		contexts = {}
-		for path, ctx in self.root_ctx.items():
-			dict_ = ctx.get_dict()
-			if len(dict_) > 0:
-				contexts[path] = dict_
+		with open(DATA_CTX, 'w') as ctx_file:
+			for path, ctx in self.root_ctx.items():
+				dict_ = ctx.get_dict()
+				if len(dict_) > 0:
+					contexts[path] = dict_
+				ctx_file.write(path+'\n')
 		data = {
 			'tasks': [],
 			'contexts': contexts,
