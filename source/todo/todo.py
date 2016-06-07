@@ -615,14 +615,15 @@ def dispatch(args, todolist):
 		change = False
 		need_show = True
 		show_ctx = args['<context>']
-	if need_show:
 		if show_ctx is None:
 			show_ctx = ''
+	if need_show:
+		if show_ctx is None:
+			show_ctx = todolist.last_context
 		ctx = todolist.show(show_ctx)
 		if check_none(ctx, CTX404):
 			return False, False
 		last_ctx = ctx
-	tasks = args.get('<id>', None)
 	if last_task is not None:
 		todolist.update_last_task(last_task.id_)
 	if last_ctx is not None:
