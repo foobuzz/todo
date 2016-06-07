@@ -46,6 +46,18 @@ from config import DATA_LOCATION, CONFIG
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge'}
 
+EMPTY_DATA = {
+	'last_task': None,
+	'last_context': None,
+	'tasks': [],
+	'contexts': {}
+}
+
+LAST = 'LAST'
+
+TASK404 = 'Task not found.'
+CTX404 = 'Context not found.'
+
 SHOW_AFTER = utils.parse_list(CONFIG.get('App', 'show_after'))
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
@@ -101,7 +113,7 @@ class Context(HasDefaults):
 		if parent is None:
 			self.path = ''
 		else:
-			dot = parent != ROOT_CTX
+			dot = not parent.is_root()
 			self.path = parent.path + '.'*dot + self.name
 		if visibility is not None:
 			self.visibility = visibility
@@ -122,6 +134,9 @@ class Context(HasDefaults):
 			path = '.' + pointer.name + path
 			pointer = pointer.parent
 		return path[1:] if len(path) > 0 else path
+
+	def is_root(self):
+		return self.parent is None
 
 	def is_leaf(self):
 		return len(self.children) == 0
@@ -192,9 +207,6 @@ class Context(HasDefaults):
 		return skelet
 
 
-ROOT_CTX = Context('', None)
-
-
 class Task(HasDefaults):
 
 	mutators = ['priority', 'deadline', 'start', 'context', 'visibility',
@@ -212,24 +224,18 @@ class Task(HasDefaults):
 		'priority': 1,
 		'deadline': INF,
 		'start': NOW,
-		'context': ROOT_CTX,
 		'done': False,
 		'visibility': 'discreet'
 	}
 
-	def __init__(self, id_, content, **kwargs):
+	def __init__(self, id_, content, context, **kwargs):
 		self.id_ = id_
 		self.content = content
+		self.context = context
 		for key, val in kwargs.items():
 			setattr(self, key, val)
 		self.init_defaults()
 		self.remaining = self.deadline - NOW
-
-	def apply_mutator(self, mutator, value):
-		if mutator == 'context':
-			self.context = ROOT_CTX.add_contexts(value)
-		else:
-			super().apply_mutator(mutator, value)
 
 	def get_visibility(self):
 		if self.is_default('visibility'):
@@ -268,14 +274,14 @@ class Task(HasDefaults):
 		if self.get_visibility() == 'hidden':
 			return self.context == context
 		elif self.get_visibility() == 'discreet':
-			if context == ROOT_CTX:
-				return self.context.parent == ROOT_CTX
+			if context.is_root():
+				return self.context.parent.is_root()
 			else:
 				return descendant
 		elif self.get_visibility() == 'wide':
-			return descendant or context == ROOT_CTX
+			return descendant or context.is_root()
 
-	def get_string(self, id_width, from_context=ROOT_CTX, ascii_=False):
+	def get_string(self, id_width, from_context, ascii_=False):
 		id_str = may_be_colored(hex(self.id_)[2:], CONFIG.get('Colors', 'id'))
 		if isinstance(id_str, ColoredStr):
 			ansi_offset = id_str.lenesc
@@ -301,18 +307,34 @@ class Task(HasDefaults):
 		return string
 
 
+def check_last(fallback):
+	def decorator(function):
+		def substitute(todolist, identifier):
+			if identifier == LAST:
+				identifier = getattr(todolist, fallback)
+				if identifier is None:
+					return None
+			return function(todolist, identifier)
+		return substitute
+	return decorator
+
+
 class TodoList(abc.MutableMapping):
 
-	def __init__(self, tasks, id_width=None):
+	def __init__(self, context, tasks, id_width=None, last_task=None,
+		last_context=None):
 		# id_width is the width of the hexa representation of the task's ID. It
 		# can be optionaly given to us so that we don't have to iterate over
 		# the tasks ourselves. In this case, it's computed by import_data when
 		# it iterates over the tasks
+		self.root_ctx = context
 		if id_width is not None:
 			self.id_width = id_width
 		else:
 			self.id_width = max(len(hex(t.id_)) - 2 for t in tasks)
 		self.tasks = tasks
+		self.last_task = last_task
+		self.last_context = last_context
 
 	def __getitem__(self, key):
 		return self.tasks[key]
@@ -332,6 +354,18 @@ class TodoList(abc.MutableMapping):
 	def __len__(self):
 		return len(self.tasks)
 
+	@check_last('last_task')
+	def get_task(self, key):
+		return self.get(key, None)
+
+	@check_last('last_context')
+	def get_context(self, path):
+		return self.root_ctx.get_context(path)
+
+	@check_last('last_context')
+	def add_contexts(self, path):
+		return self.root_ctx.add_contexts(path)
+
 	def keys(self):
 		return self.__iter__()
 
@@ -340,17 +374,27 @@ class TodoList(abc.MutableMapping):
 			id_ = 1
 		else:
 			id_ = next(reversed(self.tasks)) + 1
-		task = Task(id_, content, created=created)
+		task = Task(id_, content, self.root_ctx, created=created)
 		self[id_] = task
 		return task
 
 	def set_done(self, id_list):
+		task = None
 		for id_ in id_list:
-			self[id_].set_done()
+			task = self.get_task(id_)
+			if task is not None:
+				task.set_done()
+		return task
 
 	def remove_tasks(self, id_list):
+		task = None
 		for id_ in id_list:
-			del self[id_]
+			if id_ == LAST:
+				id_ = self.last_task
+			if id_ in self:
+				task = self[id_]
+				del self[id_]
+		return task
 
 	def purge(self):
 		to_rm = []
@@ -361,8 +405,17 @@ class TodoList(abc.MutableMapping):
 		for id_ in to_rm:
 			del self[id_]
 
+	def apply_task_mutator(self, id_, mutator, value):
+		if mutator == 'context':
+			ctx = self.add_contexts(value)
+			self[id_].context = ctx
+		else:
+			self[id_].apply_mutator(mutator, value)
+
 	def show(self, path=''):
-		context = ROOT_CTX.get_context(path)
+		context = self.get_context(path)
+		if context is None:
+			return None
 		for task in sorted(self.tasks.values(), key=lambda t: t.order_infos()):
 			if not task.done and task.is_relevant_to_context(context) and \
 			task.has_started():
@@ -370,6 +423,7 @@ class TodoList(abc.MutableMapping):
 					print(task.get_string(self.id_width + 1, context))
 				except UnicodeEncodeError:
 					print(task.get_string(self.id_width + 1, context, ascii_=True))
+		return context
 
 	def show_history(self):
 		term_width = shutil.get_terminal_size().columns
@@ -382,16 +436,19 @@ class TodoList(abc.MutableMapping):
 		if not op.exists(location):
 			create_data_dir(location)
 		contexts = {}
-		for path, ctx in ROOT_CTX.items():
+		for path, ctx in self.root_ctx.items():
 			dict_ = ctx.get_dict()
 			if len(dict_) > 0:
 				contexts[path] = dict_
-		data = {'tasks': [], 'contexts': contexts}
+		data = {
+			'tasks': [],
+			'contexts': contexts,
+			'last_task': self.last_task,
+			'last_context': self.last_context
+		}
 		for task in self.tasks.values():
 			data['tasks'].append(task.get_dict())
-		with open(location, 'w', encoding='utf8') as data_f:
-			json.dump(data, data_f, sort_keys=True, indent=4,
-				ensure_ascii=False)
+		save_data(data, location)
 
 
 def may_be_colored(string, color):
@@ -408,7 +465,29 @@ def create_data_dir(data_location):
 		os.makedirs(dirname)
 
 
-def import_data(data_location):
+def check_none(var, message):
+	if var is None:
+		print(message)
+		return True
+	return False
+
+
+def open_data(data_location):
+	if not op.exists(data_location) or op.getsize(data_location) == 0:
+		data = EMPTY_DATA
+	else:
+		with open(data_location, encoding='utf8') as todo_f:
+			data = json.load(todo_f)
+	return data
+
+
+def save_data(data, location):
+	with open(location, 'w', encoding='utf8') as data_f:
+		json.dump(data, data_f, sort_keys=True, indent=4,
+			ensure_ascii=False)	
+
+
+def import_data(data):
 	"""Import the tasks from file whose path is data_location.
 
 	Once the JSON data is loaded, stuff is converted into proper objects. This
@@ -425,44 +504,47 @@ def import_data(data_location):
        used to know how to format the todo list when printing. This kind of
        information should be retrieved at importing to avoid further passes on
        the list of tasks."""
-	if not op.exists(data_location) or op.getsize(data_location) == 0:
-		data = {'tasks': [], 'contexts': {}}
-	else:
-		with open(data_location, encoding='utf8') as todo_f:
-			data = json.load(todo_f)
+	root_ctx = Context('', None)
 	tasks = OrderedDict()
 	max_width = 0
 	for dico in data['tasks']:
-		for key, val in dico.items():
+		dtask = dico.copy()
+		for key, val in dtask.items():
 			if key in Task.date_serial:
 				dt = datetime.strptime(val, utils.ISO_DATE)
 				dt = dt.replace(tzinfo=timezone.utc)
-				dico[key] = dt
-		if 'context' in dico:
-			path = dico['context']
-			ctx = ROOT_CTX.add_contexts(path)
+				dtask[key] = dt
+		if 'context' in dtask:
+			path = dtask['context']
+			ctx = root_ctx.add_contexts(path)
 		else:
-			ctx = ROOT_CTX
-		dico['context'] = ctx
-		if 'done' not in dico or not dico['done']:
+			ctx = root_ctx
+		dtask['context'] = ctx
+		if 'done' not in dtask or not dtask['done']:
 			ctx.population += 1
-		id_width = len(hex(dico['id_'])) - 2 # 0x...
+		id_width = len(hex(dtask['id_'])) - 2 # 0x...
 		if id_width > max_width:
 			max_width = id_width
-		tasks[dico['id_']] = Task(**dico)
+		tasks[dtask['id_']] = Task(**dtask)
 	for path in data['contexts']:
-		ctx = ROOT_CTX.add_contexts(path)
+		ctx = root_ctx.add_contexts(path)
 		if 'v' in data['contexts'][path]:
 			ctx.visibility = data['contexts'][path]['v']
 		if 'p' in data['contexts'][path]:
 			ctx.priority = data['contexts'][path]['p']
-	return tasks, max_width
+	meta = {
+		'id_width': max_width,
+		'last_task': data.get('last_task', None),
+		'last_context': data.get('last_context', None)
+	}
+	return TodoList(root_ctx, tasks, **meta)
 
 
 def dispatch(args, todolist):
 	change = True
 	need_show = any(args[command] for command in SHOW_AFTER)
 	show_ctx = None
+	last_ctx, last_task = None, None
 	if args['add'] or args['task']:
 	# Task edition
 		if args['add']:
@@ -470,44 +552,49 @@ def dispatch(args, todolist):
 			task = todolist.add_task(args['<content>'], NOW)
 		elif args['task']:
 		# Task selection
-			task = todolist[args['<id>'][0]]
-		if task is None:
-			print('Task not found')
-			return False
+			task = todolist.get_task(args['<id>'][0])
+		if check_none(task, TASK404):
+			return False, False
 		for mutator in Task.mutators:
 			option = '--'+mutator
 			if args.get(option) is not None:
-				task.apply_mutator(mutator, args[option])
+				todolist.apply_task_mutator(task.id_, mutator, args[option])
+		last_task = task
 	elif args['edit']:
-		task = todolist[args['<id>'][0]]
-		if task is None:
-			print('Task not found')
-			return False
+		task = todolist.get_task(args['<id>'][0])
+		if check_none(task, TASK404):
+			return False, False
 		new_content = utils.input_from_editor(task.content)
 		if new_content.endswith('\n'):
 		# hurr durr I'm a text editor I append a newline at the end of files
 			new_content = new_content[:-1]
 		task.content = new_content
+		last_task = task
 	elif args['done']:
-		todolist.set_done(args['<id>'])
+		last_task = todolist.set_done(args['<id>'])
 	elif args['rm']:
-		todolist.remove_tasks(args['<id>'])
+		last_task = todolist.remove_tasks(args['<id>'])
 	elif args['ctx']:
 		changed_something = False
-		ctx = ROOT_CTX.add_contexts(args['<context>'])
+		ctx = todolist.add_contexts(args['<context>'])
+		if check_none(ctx, CTX404):
+			return False, False
 		for mutator in Context.mutators:
 			option = '--'+mutator
 			if args.get(option) is not None:
 				ctx.apply_mutator(mutator, args[option])
 				changed_something = True
 		if not changed_something:
-			change = False
 			todolist.show(args['<context>'])
+			change = True
+		last_ctx = ctx
 	elif args['contexts']:
 		path = args['<context>']
 		if path is None:
 			path = ''
-		root = ROOT_CTX.get_context(path)
+		root = todolist.get_context(path)
+		if check_none(root, CTX404):
+			return False, False
 		root.show_contexts()
 	elif args['history']:
 		todolist.show_history()
@@ -520,8 +607,19 @@ def dispatch(args, todolist):
 	if need_show:
 		if show_ctx is None:
 			show_ctx = ''
-		todolist.show(show_ctx)
-	return change
+		ctx = todolist.show(show_ctx)
+		if check_none(ctx, CTX404):
+			return False, False
+		last_ctx = ctx
+	tasks = args.get('<id>', None)
+	updated_lasts = False
+	if last_task is not None:
+		todolist.last_task = last_task.id_
+		updated_lasts = True
+	if last_ctx is not None:
+		todolist.last_context = last_ctx.path
+		updated_lasts = True
+	return change, updated_lasts
 
 
 def parse_args(args):
@@ -561,6 +659,8 @@ def parse_args(args):
 		# I prefer not to directly iterate over the list since I'm going to
 		# alter it
 			id_ = args['<id>'][i]
+			if id_ == LAST:
+				continue
 			try:
 				args['<id>'][i] = int(id_, 16)
 			except ValueError:
@@ -605,19 +705,20 @@ def main():
 	elif args['--location']:
 		print(DATA_LOCATION)
 	else:
-		# Parsing the command-line
 		report = parse_args(args)
 		if report is not None:
 			print(report)
 			sys.exit(1)
 
-		# Importing the data
-		tasks, id_width = import_data(DATA_LOCATION)
-
-		todolist = TodoList(tasks, id_width)
-		change = dispatch(args, todolist)
+		data = open_data(DATA_LOCATION)
+		todolist = import_data(data)
+		change, updated_lasts = dispatch(args, todolist)
 		if change:
 			todolist.save(DATA_LOCATION)
+		elif updated_lasts:
+			data['last_task'] = todolist.last_task
+			data['last_context'] = todolist.last_context
+			save_data(data, DATA_LOCATION)
 
 
 if __name__ == '__main__':

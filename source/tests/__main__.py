@@ -105,8 +105,8 @@ class TestContextAnalysis(unittest.TestCase):
 	}
 
 	def test_relevancy_test(self):
-		root_ctx = todo.ROOT_CTX
-		task = Task(1, '')
+		root_ctx = Context('', None)
+		task = Task(1, '', root_ctx)
 		for i_vis, vis in enumerate(['hidden', 'discreet', 'wide']):
 			task.visibility = vis
 			for (t_ctx, q_ctx), expected in \
@@ -121,14 +121,15 @@ class TestTasksSort(unittest.TestCase):
 
 	# A list of correctly sorted tasks. The test consists in sorting them
 	# and checking that the sorted list is the same as the original
+	ctx = Context('', None)
 	tasks = [
-		Task(0, '', created=NOW, priority=3),
-		Task(1, '', created=NOW-timedelta(minutes=1), priority=2),
-		Task(2, '', created=NOW-timedelta(minutes=2), deadline=NOW+timedelta(days=3)),
-		Task(3, '', created=NOW-timedelta(minutes=3), deadline=NOW+timedelta(days=4)),
-		Task(4, '', created=NOW-timedelta(minutes=6), context=Context('world', None, priority=2)),
-		Task(5, '', created=NOW-timedelta(minutes=7)),
-		Task(6, '', created=NOW-timedelta(minutes=5), context=Context('hello', None))
+		Task(0, '', ctx, created=NOW, priority=3),
+		Task(1, '', ctx, created=NOW-timedelta(minutes=1), priority=2),
+		Task(2, '', ctx, created=NOW-timedelta(minutes=2), deadline=NOW+timedelta(days=3)),
+		Task(3, '', ctx, created=NOW-timedelta(minutes=3), deadline=NOW+timedelta(days=4)),
+		Task(4, '', Context('world', None, priority=2), created=NOW-timedelta(minutes=6)),
+		Task(5, '', ctx, created=NOW-timedelta(minutes=7)),
+		Task(6, '', Context('hello', None), created=NOW-timedelta(minutes=5))
 	]
 
 	def test_task_sort(self):
