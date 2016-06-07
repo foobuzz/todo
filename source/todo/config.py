@@ -1,4 +1,4 @@
-import configparser, os
+import configparser, os, platform
 import os.path as op
 
 
@@ -13,12 +13,17 @@ if op.exists(DATA_FILE_NAME):
 
 CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
 
+if platform.system() == 'Windows':
+	COLORS = 'on'
+else:
+	COLORS = 'off'
+
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
 	'show_after': 'edit'
 }
 DEFAULT_CONFIG['Colors'] = {
-	'colors': 'on',
+	'colors': COLORS,
 	'palette': '8',
 	'id': 'yellow',
 	'content': 'default',
