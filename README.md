@@ -302,7 +302,7 @@ To list all the contexts, use the `contexts` command.
 	culture.cinema                                  wide                1           
 	health                                                     10       0               
 
-The first line is the "empty context", which contains all tasks without any specific context.
+The first line is the "root context", which contains all tasks without any specific context and is the father of all contexts. The number of undone tasks shown include tasks in subcontexts, which means the first line displays the total number of undone tasks.
 
 todo remembers a context if it meets one of the following conditions:
 

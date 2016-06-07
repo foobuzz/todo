@@ -12,7 +12,7 @@ Usage:
   todo edit <id>
   todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
-  todo contexts
+  todo contexts [<context>]
   todo history
   todo purge
   todo --help
@@ -501,7 +501,11 @@ def dispatch(args, todolist):
 			change = False
 			todolist.show(args['<context>'])
 	elif args['contexts']:
-		ROOT_CTX.show_contexts()
+		path = args['<context>']
+		if path is None:
+			path = ''
+		root = ROOT_CTX.get_context(path)
+		root.show_contexts()
 	elif args['history']:
 		todolist.show_history()
 	elif args['purge']:
