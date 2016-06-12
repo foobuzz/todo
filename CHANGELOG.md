@@ -1,3 +1,35 @@
+### 2.1
+
+#### Features & behaviour
+
+ - Multiples task IDs can be used with the commands `done` and `rm` to respectively set done and remove multiple tasks at once. Example: `todo done 11 1f 2a`
+
+ - The text describing a task can be modified either using the `-t/--text` option followed by the new text, or by using the new `edit` command which opens a text editor loaded with the task's content. In such case, the task's content is updated upon closing the editor (assuming the changes has been saved). Examples: `todo task 42 --text "This is a new text for task 42"` or `todo edit 42` to use the text editor
+
+ - The todolist is now printed with colors for IDs, contexts, priorities and deadlines (only on Linux)
+
+ - The application can be customized using a configuration file which is searched at `~/.toduhrc`. This file is in the INI format and can be edited to specify what editor to use with the `edit` command and to customize the colors used for printing the todolist (or disabling colors altogether).
+
+ - It's possible to use independant todolists for specific directories by creating a folder `.toduh` inside such directory. If such a folder is found in the current working directory, then it'll be used to store the data of the todolist specific to this directory. Otherwise, `~/.toduh` is used.
+
+ - When printing the todolist for a specific context, contexts of tasks are printed relatively to the given context. For example, if the tasks 42 has a context `watchlist.movies` and the command is `todo watchlist` then the task 42 will show a context of `movies`, in contrary to the whole `watchlist.movies` in the previous versions.
+
+ - It's possible to show all the subcontexts of a specific context by giving the context's name to the `context` command
+
+ - The `LAST` identifier for tasks (resp. contexts) keeps a reference to the last used tasks (resp. context)
+
+ - It's possible to configure the application so that the todolist is printed again after a command such as `done`. In this case, the LAST context is used to print the todolist
+
+ - Auto-completion in the terminal is supported for commands, contexts and values of visibility (only on Linux)
+
+
+#### Implementation
+
+ - The TodoList class now supports the mapping protocol and internally uses an OrderedDict to store the tasks (with tasks' ID as keys)
+
+ - The Context object is now a tree. The TodoList has a reference to the root of the main context tree.
+
+
 ## 2
 
 New template for command-line interface: `todo <command> <value> [<options>]`. The features of v1 are usable thanks to the following commands:
