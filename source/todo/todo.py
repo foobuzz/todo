@@ -337,6 +337,7 @@ class TodoList(abc.MutableMapping):
 		self.last_context = last_context
 		self.updated_last = False
 
+	@check_last('last_task')
 	def __getitem__(self, key):
 		return self.tasks[key]
 
@@ -354,10 +355,6 @@ class TodoList(abc.MutableMapping):
 
 	def __len__(self):
 		return len(self.tasks)
-
-	@check_last('last_task')
-	def get_task(self, key):
-		return self.get(key, None)
 
 	@check_last('last_context')
 	def get_context(self, path):
@@ -392,7 +389,7 @@ class TodoList(abc.MutableMapping):
 	def set_done(self, id_list):
 		task = None
 		for id_ in id_list:
-			task = self.get_task(id_)
+			task = self.get(id_, None)
 			if task is not None:
 				task.set_done()
 		return task
@@ -565,7 +562,7 @@ def dispatch(args, todolist):
 			task = todolist.add_task(args['<content>'], NOW)
 		elif args['task']:
 		# Task selection
-			task = todolist.get_task(args['<id>'][0])
+			task = todolist.get(args['<id>'][0], None)
 		if check_none(task, TASK404):
 			return False, False
 		for mutator in Task.mutators:
@@ -574,7 +571,7 @@ def dispatch(args, todolist):
 				todolist.apply_task_mutator(task.id_, mutator, args[option])
 		last_task = task
 	elif args['edit']:
-		task = todolist.get_task(args['<id>'][0])
+		task = todolist.get(args['<id>'][0], None)
 		if check_none(task, TASK404):
 			return False, False
 		new_content = utils.input_from_editor(task.content)
