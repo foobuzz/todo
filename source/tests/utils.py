@@ -31,6 +31,7 @@ def parse_trace(trace_file, get_datetime):
 def test_trace(filename, get_datetime, print_commands=False):
 	with open(filename) as trace_file:
 		sequence = parse_trace(trace_file, get_datetime)
+	errors = {'crash': 0, 'clash': 0}
 	for command, out in sequence:
 		if print_commands:
 			print(command)
@@ -40,9 +41,22 @@ def test_trace(filename, get_datetime, print_commands=False):
 			stderr=subprocess.PIPE)
 		stdout, stderr = process.communicate()
 		status = process.returncode
-		assert status == 0
-		assert stderr == ''
-		assert out == stdout
+		try:
+			assert status == 0
+			assert stderr == ''
+		except AssertionError:
+			print('[cRash] >', command)
+			print('[stderr]:\n'+stderr)
+			errors['crash'] += 1
+		try:
+			assert out == stdout
+		except AssertionError:
+			print('[cLash]', command)
+			print('[output]:\n'+stdout)
+			print('[expected]:\n'+out)
+			errors['clash'] += 1
+	return errors
+
 
 
 def backup_and_replace(source, replacement=None):

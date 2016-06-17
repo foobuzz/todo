@@ -185,7 +185,11 @@ def test_trace(print_commands=False):
 	config_backup = utils.backup_and_replace(CONFIG_FILE, TEST_CONFIG)
 	try:
 		get_dt = functools.partial(tutils.get_datetime, now=NOW)
-		utils.test_trace('tests/cmd_trace', get_dt, print_commands)
+		errors = utils.test_trace('tests/cmd_trace', get_dt, print_commands)
+		if errors['clash'] == 0 and errors['crash'] == 0:
+			print('OK')
+		else:
+			print('FAIL')
 	finally:
 		if data_backup is not None:
 			os.rename(data_backup, DATA_LOCATION)
@@ -211,4 +215,3 @@ if __name__ == '__main__':
 	if args.func or args.all:
 		print('* Fonctional tests')
 		test_trace(args.verbose)
-		print('OK')
