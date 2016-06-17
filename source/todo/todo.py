@@ -97,6 +97,22 @@ class HasDefaults:
 
 class Context(HasDefaults):
 
+	"""The tree of contexts. Each context has a name and its children are
+	represented using a dictionary where the keys are the names of the
+	children and the values are references to the children. Each context keeps
+	a reference to its parent context. The root context is defined by having a
+	None parent and, by conventation, has the empty string as name.
+
+	The path of a context is represented using a dot to separate different
+	contexts' name accross the tree, which means that a context's name cannot
+	contain a dot. The dot leading from the root context to its children is
+	skipped so that paths don't starts with a dot. The str representation of a
+	context is its path.
+
+	While this class represent any node in the tree, most of its method will
+	be called on the root context, which might make recursive calls to
+	subcontexts"""
+
 	mutators = ['visibility', 'priority']
 	defaults = {
 		'visibility': 'discreet',
@@ -104,8 +120,7 @@ class Context(HasDefaults):
 	}
 
 	def __init__(self, name, parent, visibility=None, priority=None):
-		if '.' in name:
-			raise Exception('Oh my god!')
+		assert '.' not in name
 		self.name = name
 		self.parent = parent
 		self.children = {}
@@ -128,6 +143,9 @@ class Context(HasDefaults):
 		return self.path
 
 	def path_from(self, context):
+		"""Return the path leading to the context given an ancestor context.
+		e.g. "watchlist.movies".path_from("watchlist") = "movies" (str
+		representation used for convenience)"""
 		pointer = self
 		path = ''
 		while pointer != context:
@@ -153,10 +171,17 @@ class Context(HasDefaults):
 		return False
 
 	def get_population(self):
+		"""The population of a context is the number of tasks this context is
+		associated to. Each context has a count of the number of tasks that
+		references exactly this context. This methods also counts tasks
+		associated to subcontexts."""
 		children = sum(c.get_population() for c in self.children.values())
 		return self.population + children
 
 	def get_context(self, path):
+		"""Search for the context having the given path. Most of the time will
+		be called on the root context with an absolute path. Returns the found
+		context, or None"""
 		if path == '':
 			return self
 		components = path.split('.')
@@ -168,6 +193,8 @@ class Context(HasDefaults):
 		return pointer
 
 	def add_contexts(self, path):
+		"""Add the context represented by the given path, creating all
+		intermediary nessecary contexts. Returns the newly created context."""
 		if path == '':
 			return self
 		components = path.split('.')
@@ -182,12 +209,15 @@ class Context(HasDefaults):
 		return pointer
 
 	def items(self):
+		"""Iterates over the tuples (path, context) by doing a depth-first
+		traversal over the tree."""
 		yield self.path, self
 		for child in self.children.values():
 			for item in child.items():
 				yield item
 
 	def show_contexts(self):
+		"""Pretty print all contexts and their properties."""
 		paths = [i[1] for i in self.items()]
 		paths.sort(key=lambda c: c.path)
 		struct = [
@@ -199,6 +229,7 @@ class Context(HasDefaults):
 		utils.print_table(struct, paths, 80)
 
 	def get_dict(self):
+		"""Creates a dictionary for serialization."""
 		skelet = {}
 		if not self.is_default('visibility'):
 			skelet['v'] = self.visibility
@@ -308,6 +339,11 @@ class Task(HasDefaults):
 
 
 def check_last(fallback):
+	"""Return a decorator for a method of the TodoList which accepts an
+	identifier as only explicit argument. The returned decorator alters the
+	method so that LAST is accepted as an identifier, in which case the value
+	corresponding to the identifier should be given by the attribute of the
+	TodoList named `fallback`."""
 	def decorator(function):
 		def substitute(todolist, identifier):
 			if identifier == LAST:
@@ -320,6 +356,24 @@ def check_last(fallback):
 
 
 class TodoList(abc.MutableMapping):
+
+	"""The TodoList supports the mapping protocol. Keys are tasks' ID and
+	values are tasks themselves.
+
+	Adding a new task should be done via the `add_task` method which takes
+	care of finding the next available ID and building a new task from minimum
+	requirements (content of the task and date of creation).
+
+	The TodoList has a reference to a context tree via its `root_ctx`
+	attribute. The tree should not be accessed itself but by methods defined
+	in the TodoList to manipulate it.
+
+	The special ID LAST can be used to retrieve the last referenced task
+	(resp. context) of the TodoList (retrieved, added or modified), although
+	the TodoList object itself does not support updating of the last
+	referenced task (resp. context) upon calls on related methods; the manager
+	of the TodoList should do it itself by updating the `last_task` (resp.
+	`last_context`) attributes"""
 
 	def __init__(self, context, tasks, id_width=None, last_task=None,
 		last_context=None):
@@ -460,6 +514,7 @@ class TodoList(abc.MutableMapping):
 
 
 def may_be_colored(string, color):
+	"""Return a string, colored or not, depending on the CONFIG variable"""
 	if CONFIG.getboolean('Colors', 'colors'):
 		palette = CONFIG.get('Colors', 'palette')
 		return ColoredStr(string, color, palette)
@@ -467,13 +522,8 @@ def may_be_colored(string, color):
 		return string
 
 
-def create_data_dir(data_location):
-	dirname = op.dirname(data_location)
-	if not op.exists(dirname):
-		os.makedirs(dirname)
-
-
 def check_none(var, message):
+	"""Return a boolean indicating whether `var` is None or not, and print the given `message` if it's None"""
 	if var is None:
 		print(message)
 		return True
@@ -481,6 +531,8 @@ def check_none(var, message):
 
 
 def open_data(data_location):
+	"""Load the dictionary from the JSON file at `data_location`, or return
+	todo specific empty data if the file doesn't exist"""
 	if not op.exists(data_location) or op.getsize(data_location) == 0:
 		data = EMPTY_DATA
 	else:
@@ -490,6 +542,9 @@ def open_data(data_location):
 
 
 def save_data(data, location):
+	"""Save the object `data` to the file at `location` in JSON format. The
+	file and the directories leading to it will be created if not already
+	existing."""
 	if not op.exists(location):
 		create_data_dir(location)
 	with open(location, 'w', encoding='utf8') as data_f:
@@ -497,23 +552,16 @@ def save_data(data, location):
 			ensure_ascii=False)	
 
 
+def create_data_dir(data_location):
+	"""Creates the directory whose path is `data_location` if it doesn't
+	already exist"""
+	dirname = op.dirname(data_location)
+	if not op.exists(dirname):
+		os.makedirs(dirname)
+
+
 def import_data(data):
-	"""Import the tasks from file whose path is data_location.
-
-	Once the JSON data is loaded, stuff is converted into proper objects. This
-	includes:
-	 - Conversion of datetime strings to datetime objects
-	 - Conversion of context strings to context objects
-	 - Conversion of a task's dictionary to a task object
-
-	Returns: a 3-tuple containing:
-	 - The list of tasks
-	 - A dictionary which is the "contexts table". This dictionary associates
-       context's strings to their corresponding context object.
-	 - The maximum width of a task's ID in hexadecimal representation. This is
-       used to know how to format the todo list when printing. This kind of
-       information should be retrieved at importing to avoid further passes on
-       the list of tasks."""
+	"""Build and return a TodoList object from the raw data found in `data`"""
 	root_ctx = Context('', None)
 	tasks = OrderedDict()
 	max_width = 0
@@ -551,6 +599,8 @@ def import_data(data):
 
 
 def dispatch(args, todolist):
+	"""Apply the commands described by the dictionary `args` to the
+	`todolist`. Return whether data was modified/updated."""
 	change = True
 	need_show = any(args[command] for command in SHOW_AFTER)
 	show_ctx = None
@@ -636,8 +686,7 @@ def parse_args(args):
 	Strings are converted into proper objects. For example, datetime related
 	strings are converted into datetime objects, hexadecimal task's
 	identifiers are converted to integer and context names are converted into
-	context objects. The `contexts` argument is the contexts table used to
-	retrieve contexts thanks to their names
+	context objects.
 
 	If one of the conversion fails, a report is written about the fail. This
 	report is None if no failure has been encountered. The report is returned
