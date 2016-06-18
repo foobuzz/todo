@@ -1,6 +1,49 @@
 import re
 
 
+""" This module deals with support of the color in the terminal through ANSI
+escape codes. It defines the high level class ColoredStr which is a string
+containing color escape codes ready to be printed in color to the terminal.
+"""
+
+
+# There are three possible types of ANSI escape codes to print text in colors:
+# - the first one accepts an integer in the range [0;7] which indicates one of
+#   the primary colors among black, red, green, yellow, blue, magenta, cyan,
+#   and white, in order. This escape code can actually be mixed with another
+#   one that put the text in bold and which has the side effect of making the
+#   color brighter (the normal 8 colors are quite dark). I chose not to deal
+#   with this second code.
+# - the second one accepts an integer in the range [0;255] indicating a color
+#   among a specific palette of 256 colors. In the UNIX world, most terminals
+#   work with the x-term palette. Such a palette follows a specific pattern
+#   and conversions between RGB and code-point in the palette can be computed
+#   without carying a whole lookup table.
+# - the third one accepts three integers in the range [0;255] defining the
+#   color in RGB coordinates.
+
+# Support of these codes varies from one terminal to another. Most program
+# that prints stuff in color stick to the 8 basic colors, which are widely
+# supported. I prefer to let the user chose what he wants to use via a
+# configuration file. Using an unsupported escape code can result in no color
+# at all, a wrong color, or the escape code being printed literally.
+# I designate each of these codes respectively by 3, 8 and 24 which is the
+# number bits necessary to represent their integer code(s).
+
+
+ANSI_TEMPLATES = {
+	3:  '\33[3{}m',          # Basic 8 colors
+	8:  '\33[38;5;{}m',      # 256 colors
+	24: '\33[38;2;{};{};{}m' # 24-bit RGB true colors
+}
+
+# Those are the user-friendly names of the "palettes" supported by the module.
+# A palette corresponds to one of the possible ANSI escape code. Two palettes
+# map to the same escape code. That's the escape code for 256 colors, which
+# itself should be interpreted according to a 256-color palette.
+# The palette named "256" uses 3 bits for red, 3 bits for green and 2 bits for
+# blue, storing the integer value as a RRRGGGBB byte.
+# The palette named "xterm-256" uses the specific x-term palette.
 PALETTES = {
 	'8': 3,
 	'256': 8,
@@ -8,14 +51,12 @@ PALETTES = {
 	'rgb': 24
 }
 
-ANSI_TEMPLATES = {
-	3:  '\33[3{}m',          # Basic 8 colors
-	8:  '\33[38;5;{}m',      # 256 colors palette
-	24: '\33[38;2;{};{};{}m' # 24-bit RGB true colors
-}
-
+# ANSI escape codes are switches, turning on a given behaviour for all the
+# text following it. This escape code resets all previous things turned on,
+# making the text normal again
 ANSI_RESET = '\33[0m'
 
+# The 8 basic colors for the most basic escape code
 BASIC_COLORS = [
 	'black',
 	'red',
@@ -27,6 +68,10 @@ BASIC_COLORS = [
 	'white'
 ]
 
+# Their RGB equivalent. A bit of cheating is involved here. As I said, the 8
+# basic colors (not mixed with bold font) are quite dark. That's because their
+# equivalent RGB colors are made of coordinates set at value 128, not 255.
+# Here I use 255 for convenience with the rest of the program.
 BASIC_RGB = [
 	(0, 0, 0),
 	(255, 0, 0),
@@ -42,8 +87,39 @@ BASIC_RGB = [
 RGB_REGEX = 'rgb\(([0-9]{1,3}),([0-9]{1,3}),([0-9]{1,3})\)'
 HEXA_REGEX = '#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})'
 
+
+# The following constants deals with the nature of the x-term 256 colors
+# palette:
+# http://www.calmar.ws/vim/256-xterm-24bit-rgb-color-chart.html
+# The x-term palette is structured as follows:
+#  - Codes in [0;7] are the 8 primary colors (the same supported by the most
+#    basic escape code)
+#  - Codes in [9;15] are also the primary colors, but the bright version (the
+#    same supported by the most basic escape code when combined with bold)
+#  - Codes in [16;231] are all the various colors constructed as follows: (R,
+#    G, B) coordinates are incremented by regular steps. The first step is a
+#    95 increment. the 4 following steps are 40 increments. (95+4*40 = 255).
+#    So, for example, 16 = (0, 0, 0), 17 = (0, 0, 95), 18 = (0, 0, 135), ...,
+#    21 = (0, 0, 255), 22 = (0, 95, 0), 23 = (0, 95, 95), and so on all the
+#    way up to 231 = (255, 255, 255)
+#  - Codes in [232;255] are gray levels (R = G = B). It starts at (8, 8, 8)
+#    and increments by steps of 10, arriving at (238, 238, 238) after 23
+#    steps.
+
+# The steps
 XTERM_JUMPS = [95, 40, 40, 40, 40]
+
+# The number of code values between an increments for each of the coordinates.
+# For example, 36 code values separate (0, 0, 0) from (95, 0, 0), 6 code
+# values separate (0, 0, 0) from (0, 95, 0) and, of course, 1 code value
+# separate (0, 0, 0) from (0, 0, 95).
+# To convert an x-term code value to RGB (after having removed the
+# 16-offset), you first divide by 36. The quotient gives you the number of
+# steps to apply to R. You then divide the remainder by 6, which gives you the
+# number of steps to apply to G. The final remainder is the number of steps to
+# apply yo B.
 XTERM_COEFF = [36, 6, 1]
+
 XTERM_GRAY_LEVELS_START = 8
 XTERM_GRAY_LEVELS_OFFSET = 232
 XTERM_COLORS_OFFSET = 16
@@ -51,7 +127,33 @@ XTERM_COLORS_OFFSET = 16
 DEFAULT = 'default'
 
 
+# The goal of this module is to allow the user to chose the palette he wants
+# to use, without requiring consistency between the palette and the way the
+# color is specified. For example, the user might use the x-term 256 palette
+# and give a color in RGB. The module automatically makes the conversion from
+# RGB to the corresponding value between 0 and 255.
+# This function, given a color and a palette, returns the values to be
+# inserted into the escape code corresponding to the given palette.
+# It applies the following strategy: if the color is given in a format
+# consistant with the palette, then it directly extracts the values from the
+# color and return them. Otherwise, it converts the color to RGB and then
+# converts the RGB to the format suited for the palette (or just stops at RGB
+# if RGB is the format suited).
 def get_color_values(color, palette):
+	"""Returns a tuple of values to be inserted into the escape code
+	corresponding to `palette`.
+
+		color: a string describing a color. Accepted formats are:
+		 - one of the string in `BASIC_COLORS`
+		 - the decimal representation of a number between 0 and 255 (for 256
+           colors palettes)
+		 - a string in the form "rgb(R,G,B)" where R, G and B are integers
+           between 0 and 255
+		 - a string in the form "#aabbcc" where aa, bb, and cc are the
+           hexadecimal representation of integers between 0 and 255
+
+		palette: one of the keys of `PALETTES`
+	"""
 	level = PALETTES[palette]
 	rgb = None
 	if color in BASIC_COLORS:
@@ -132,9 +234,9 @@ def xterm_palette_to_rgb(color):
 	color = int(color)
 	# Basic colors
 	if color <= 7:
-		return BASIC_RGB[color]
+		return tuple(c - 128 for c in BASIC_RGB[color])
 	if 8 <= color <= 15:
-		return tuple(c + 128 for c in BASIC_RGB[color-8])
+		return BASIC_RGB[color-8]
 	# Gray levels
 	if XTERM_GRAY_LEVELS_OFFSET <= color <= 255:
 		return (8 * (color - XTERM_GRAY_LEVELS_OFFSET + 1),) * 3
@@ -155,14 +257,15 @@ def rgb_to_xterm_palette(rgb):
 	if r == g == b:
 		if r < 4:
 			result = 0
-		if r > 246:
+		elif r > 246:
 			result = 15
-		if 238 <= r <= 246:
+		elif 238 <= r <= 246:
 			result = 255
-		value, mod = divmod(r - XTERM_GRAY_LEVELS_START, 10)
-		if mod > 4:
-			value += 1
-		result = XTERM_GRAY_LEVELS_OFFSET + value
+		else:
+			value, mod = divmod(r - XTERM_GRAY_LEVELS_START, 10)
+			if mod > 4:
+				value += 1
+			result = XTERM_GRAY_LEVELS_OFFSET + value
 	# Other colors
 	total = 0
 	for index, c in enumerate(rgb):

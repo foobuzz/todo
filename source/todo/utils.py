@@ -20,10 +20,9 @@ REMAINING = {
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 
-editor = CONFIG.get('App', 'editor', fallback=None)
-if editor is not None:
-	EDITOR = editor
-else:
+# Editor election: in config file? No -> in OS EDITOR variable? No -> vim
+EDITOR = CONFIG.get('App', 'editor', fallback=None)
+if EDITOR is None:
 	EDITOR = os.environ.get('EDITOR', 'vim')
 
 
@@ -148,7 +147,7 @@ def parse_remaining(delta):
 
 
 def input_from_editor(init_content):
-	import tempfile, subprocess
+	import tempfile, subprocess # Tempfile being slow to import
 	with tempfile.NamedTemporaryFile(mode='w+') as edit_file:
 		edit_file.write(init_content)
 		edit_file.flush()
@@ -159,5 +158,6 @@ def input_from_editor(init_content):
 
 
 def parse_list(string):
+	""" "foo, bar" => ["foo", "bar"]"""
 	ls = [e.strip() for e in string.split(',')]
 	return [] if ls[0] == '' else ls
