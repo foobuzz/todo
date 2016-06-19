@@ -163,11 +163,10 @@ class Context(HasDefaults):
 		if self == other:
 			return True
 		for child in other.children.values():
-			if child.is_leaf() and child == self:
+			if child == self:
 				return True
-			if not child.is_leaf():
-				if self.is_subcontext(child):
-					return True
+			if self.is_subcontext(child):
+				return True
 		return False
 
 	def get_population(self):
