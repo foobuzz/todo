@@ -2,7 +2,7 @@ import unittest, sys
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
-sys.path.insert(0, op.abspath('.'))
+
 sys.path.insert(1, op.abspath('./todo'))
 
 import todo.todo as todo

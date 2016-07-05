@@ -7,7 +7,7 @@ sys.path.insert(0, op.abspath('.'))
 sys.path.insert(1, op.abspath('./todo'))
 
 import tests.utils as utils
-import test_todo, test_utils # pylint: disable=W0611
+import test_todo, test_utils, test_rainbow # pylint: disable=W0611
 
 import todo.todo as todo
 import todo.utils as tutils
@@ -21,7 +21,8 @@ TEST_DATA_FILE = 'tests/.todo_datafile'
 
 UNIT_TESTS = [
 	'test_todo',
-	'test_utils'
+	'test_utils',
+	'test_rainbow'
 ]
 
 
