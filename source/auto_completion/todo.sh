@@ -4,7 +4,7 @@ _todo()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="add done task edit rm ctx contexts history purge"
+    commands="add done task edit rm ctx contexts history purge --location --help"
 
     data_dir="$HOME/.toduh"
     if [ -d '.toduh' ]; then
@@ -16,7 +16,7 @@ _todo()
     fi
 
     if [ ${prev} = 'todo' ]; then
-        COMPREPLY=( $(compgen -W "${commands} ${contexts} LAST" ${cur}) )
+        COMPREPLY=( $(compgen -W "${commands} ${contexts} LAST" -- ${cur}) )
         return 0
     fi
 
