@@ -1,0 +1,41 @@
+$ todo add "Task 1"
+$ todo add "Task 2"
+$ todo add "Task 3"
+$ todo
+ 1 | Task 1
+ 2 | Task 2
+ 3 | Task 3
+$ todo rm 1 3
+$ todo
+ 2 | Task 2
+$ todo task 2 --text "This is the second task"
+$ todo
+ 2 | This is the second task
+$ todo add "hello world" -c subcontext
+$ todo add "foobar" -c subcontext.child
+$ todo add "foobaz" -c subcontext.child2
+$ todo add "hmmm" -c subcontext2
+$ todo contexts
+context                                         visibility priority undone tasks
+----------------------------------------------- ---------- -------- ------------
+                                                                    5           
+subcontext                                                          3           
+subcontext.child                                                    1           
+subcontext.child2                                                   1           
+subcontext2                                                         1           
+$ todo contexts subcontext
+context                                         visibility priority undone tasks
+----------------------------------------------- ---------- -------- ------------
+subcontext                                                          3           
+subcontext.child                                                    1           
+subcontext.child2                                                   1           
+$ todo contexts subcontext2
+context                                         visibility priority undone tasks
+----------------------------------------------- ---------- -------- ------------
+subcontext2                                                         1           
+$ todo task 6
+$ todo task LAST -p 3
+$ todo
+ 6 | hmmm #subcontext2 ★3
+ 2 | This is the second task
+ 3 | hello world #subcontext

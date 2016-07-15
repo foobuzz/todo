@@ -67,7 +67,7 @@ if __name__ == '__main__':
 		unittest.TextTestRunner().run(suite)
 	if args.func or args.all:
 		print('* Fonctional tests')
-		for filename in os.listdir(TRACES_DIR):
+		for filename in sorted(os.listdir(TRACES_DIR)):
 			path = op.join(TRACES_DIR, filename)
 			print('[{}]'.format(filename))
 			test_trace(path, args.verbose)
