@@ -25,15 +25,17 @@ UNIT_TESTS = [
 	'test_rainbow'
 ]
 
+TRACES_DIR = 'tests/traces'
 
-def test_trace(print_commands=False):
+
+def test_trace(trace_file, print_commands=False):
 	# Backuping the datafile and removing the original
 	data_backup = utils.backup_and_replace(DATA_LOCATION, TEST_DATA_FILE)
 	# Backuping the config file and replace it with ours (colors disabled)
 	config_backup = utils.backup_and_replace(CONFIG_FILE, TEST_CONFIG)
 	try:
 		get_dt = functools.partial(tutils.get_datetime, now=NOW)
-		errors = utils.test_trace('tests/cmd_trace', get_dt, print_commands)
+		errors = utils.test_trace(trace_file, get_dt, print_commands)
 		if errors['clash'] == 0 and errors['crash'] == 0:
 			print('OK')
 		else:
@@ -61,8 +63,11 @@ if __name__ == '__main__':
 		for module in UNIT_TESTS:
 			mod_suite = test_loader.loadTestsFromModule(sys.modules[module])
 			suite.addTests(mod_suite)
-		print('* Unit tests'.format(module))
+		print('* Unit tests')
 		unittest.TextTestRunner().run(suite)
 	if args.func or args.all:
 		print('* Fonctional tests')
-		test_trace(args.verbose)
+		for filename in os.listdir(TRACES_DIR):
+			path = op.join(TRACES_DIR, filename)
+			print('[{}]'.format(filename))
+			test_trace(path, args.verbose)
