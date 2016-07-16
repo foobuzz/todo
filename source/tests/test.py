@@ -3,11 +3,10 @@
 import unittest, sys, os, functools, argparse
 import os.path as op
 
-sys.path.insert(0, op.abspath('.'))
-sys.path.insert(1, op.abspath('./todo'))
+from . import utils
+from . import test_todo, test_utils, test_rainbow # pylint: disable=W0611
 
-import tests.utils as utils
-import test_todo, test_utils, test_rainbow # pylint: disable=W0611
+sys.path.insert(0, op.abspath('.'))
 
 import todo.todo as todo
 import todo.utils as tutils
@@ -20,9 +19,9 @@ TEST_CONFIG = 'tests/.toduhrc'
 TEST_DATA_FILE = 'tests/.todo_datafile'
 
 UNIT_TESTS = [
-	'test_todo',
-	'test_utils',
-	'test_rainbow'
+	'tests.test_todo',
+	'tests.test_utils',
+	'tests.test_rainbow'
 ]
 
 TRACES_DIR = 'tests/traces'
@@ -47,7 +46,7 @@ def test_trace(trace_file, print_commands=False):
 			os.rename(config_backup, CONFIG_FILE)
 
 
-if __name__ == '__main__':
+def main():
 	parser = argparse.ArgumentParser(description='todo test suite')
 	parser.add_argument('-a', '--all', action='store_true',
 		help="Run functional test in addition to unit tests")
@@ -71,3 +70,7 @@ if __name__ == '__main__':
 			path = op.join(TRACES_DIR, filename)
 			print('[{}]'.format(filename))
 			test_trace(path, args.verbose)
+
+
+if __name__ == '__main__':
+	main()

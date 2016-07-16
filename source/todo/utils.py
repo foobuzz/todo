@@ -1,7 +1,7 @@
 import os, re
 from datetime import datetime, timedelta, timezone
 
-from config import CONFIG
+from .config import CONFIG
 
 
 ISO_SHORT = '%Y-%m-%d'

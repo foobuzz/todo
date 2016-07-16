@@ -38,9 +38,9 @@ from collections import OrderedDict, abc
 
 from docopt import docopt
 
-import utils
-from rainbow import ColoredStr
-from config import DATA_LOCATION, DATA_CTX, CONFIG
+from . import utils
+from .rainbow import ColoredStr
+from .config import DATA_LOCATION, DATA_CTX, CONFIG
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',

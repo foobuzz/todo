@@ -1,7 +1,6 @@
 User guide
 ==========
 
- * [Documentation](#documentation)
   * [Basic Usage](#basic-usage)
   * [Deadlines](#deadlines)
     * [Long-term scheduling](#long-term-scheduling)
@@ -12,9 +11,9 @@ User guide
     * [Context priority](#context-priority)
   * [Sort summary](#sort-summary)
   * [History](#history)
- * [Reference](#reference)
- * [Contributing](#contributing)
-  * [Tests](#tests)
+  * [Configuration](#configuration)
+    * [App](#app)
+    * [Colors](#colors)
 
 
 ## Basic usage
@@ -342,3 +341,19 @@ Support for these palettes varies among terminals. `8` is supported virtually ev
 
 The following keys can be used to customize the color of the different parts of the `todo` command output: `id`, `context`, `deadline` and `priority`.
 
+Here's an example of a complete configuration file:
+
+**.toduhrc**
+
+	[App]
+	editor = emacs
+	show_after = edit, done
+
+	[Colors]
+	colors = on
+	palette = xterm-256
+
+	id = yellow
+	context = cyan
+	deadline = cyan
+	priority = green

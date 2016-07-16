@@ -17,7 +17,12 @@ A simple command line todo list manager which can be as powerful as you want it 
 
 ## Installation
 
-Install the `todocli` package for Python 3 via pip3.
+	pip3 install todocli
+
+`sudo` would be needed for:
+
+ * a system-wide installation (that is, without the `--user` flag)
+ * the installation of auto-completion for the `todo` command
 
 
 ## Documentation
@@ -32,7 +37,7 @@ Install the `todocli` package for Python 3 via pip3.
 
 To run the program in development, clone the project (or download its zip) and go to the `source` directory. You can run the source by executing:
 
-	python3 todo
+	./todo.py
 
 You can create a directory named `.toduh` in the `source` directory which will carry development-specific data as long as you run `python3 todo` from the `source` directory.
 
@@ -40,7 +45,7 @@ You can create a directory named `.toduh` in the `source` directory which will c
 
 To run the tests, go the `source` directory and execute:
 
-	python3 tests
+	./test.py
 
 By default, this only launches the unit tests. There are also functional tests. The fonctional tests uses the files in `tests/traces`. These files contain a list of commands (lines introduced by `$`), each above the standard output they should produce. The functional tests run each of the commands in a subprocess and compare their output to the expected output. The test is ran on a new datafile each time, which doesn't affect the regular datafile.
 
