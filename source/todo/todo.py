@@ -43,6 +43,9 @@ from .rainbow import ColoredStr
 from .config import DATA_LOCATION, DATA_CTX, CONFIG
 
 
+__version__ = '2.1'
+
+
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge'}
 
@@ -752,12 +755,12 @@ def main():
 	if len(argv) == 1 and argv[0] == 'doduh':
 		print('Beethoven - Symphony No. 5')
 		sys.exit(0)
-	args = docopt(__doc__, argv=argv, help=False, version='2')
+	args = docopt(__doc__, argv=argv, help=False, version=__version__)
 
 	if args['--help']:
 		print(__doc__)
 	elif args['--version']:
-		print('2')
+		print(__version__)
 	elif args['--location']:
 		print(DATA_LOCATION)
 	else:
