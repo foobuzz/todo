@@ -39,7 +39,7 @@ To run the program in development, clone the project (or download its zip) and g
 
 	./todo.py
 
-You can create a directory named `.toduh` in the `source` directory which will carry development-specific data as long as you run `python3 todo` from the `source` directory.
+You can create a directory named `.toduh` in the `source` directory which will carry development-specific data as long as you run `./todo.py` from the `source` directory.
 
 ### Tests
 

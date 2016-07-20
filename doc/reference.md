@@ -116,6 +116,11 @@ If no option is given, has the same effect of `todo <context>`.
 If at least one option is given, apply the option to the context. `--priority` sets the priority of the context (an integer). `--visibility` set the visibility of a context. The visibility of a context serves as the visibility of all the tasks belonging to this context in the case that the task has a default visibility.
 
 
+### `todo --version`
+
+Print current version.
+
+
 ### `todo --help`
 
 Print basic help.
