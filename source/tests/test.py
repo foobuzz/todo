@@ -10,13 +10,14 @@ sys.path.insert(0, op.abspath('.'))
 
 import todo.todo as todo
 import todo.utils as tutils
-from todo.config import DATA_LOCATION, CONFIG_FILE
+from todo.data_access import DB_PATH as DATA_LOCATION
+from todo.todo import CONFIG_FILE
 
 
 NOW = todo.NOW
 
 TEST_CONFIG = 'tests/.toduhrc'
-TEST_DATA_FILE = 'tests/.todo_datafile'
+TEST_DATA_FILE = 'tests/empty_data.sqlite'
 
 UNIT_TESTS = [
 	'tests.test_todo',

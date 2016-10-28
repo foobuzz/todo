@@ -46,18 +46,21 @@ $ ./todo.py
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
- 7 | Read the article about chemistry #culture
+----------------------------------------
+ # | culture (1)
 $ ./todo.py culture
  7 | Read the article about chemistry
 $ ./todo.py ctx culture
  7 | Read the article about chemistry
 $ ./todo.py task 7 -c culture.chemistry
 $ ./todo.py culture
- 7 | Read the article about chemistry #chemistry
+----------------------------------------
+ # | chemistry (1)
 $ ./todo.py add "Listen to the podcast about movies" -c culture.cinema
 $ ./todo.py culture
- 7 | Read the article about chemistry #chemistry
- 8 | Listen to the podcast about movies #cinema
+----------------------------------------
+ # | chemistry (1)
+ # | cinema (1)
 $ ./todo.py culture.chemistry
  7 | Read the article about chemistry
 $ ./todo.py 
@@ -65,48 +68,15 @@ $ ./todo.py
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
  3 | Buy the gift for Stefany ⌛ 15 days remaining
-$ ./todo.py culture
- 7 | Read the article about chemistry #chemistry
- 8 | Listen to the podcast about movies #cinema
-$ ./todo.py task 7 -v wide
-$ ./todo.py task 8 -v wide
-$ ./todo.py 
- 6 | Fix the window ★3
- 2 | Fix the stuff ★2
- 4 | Send the documents for the house ⌛ 6 days remaining
- 3 | Buy the gift for Stefany ⌛ 15 days remaining
- 7 | Read the article about chemistry #culture.chemistry
- 8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py task 7 -v hidden
-$ ./todo.py 
- 6 | Fix the window ★3
- 2 | Fix the stuff ★2
- 4 | Send the documents for the house ⌛ 6 days remaining
- 3 | Buy the gift for Stefany ⌛ 15 days remaining
- 8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py culture
- 8 | Listen to the podcast about movies #cinema
-$ ./todo.py culture.chemistry
- 7 | Read the article about chemistry
-$ ./todo.py ctx culture.cinema -v wide
+----------------------------------------
+ # | culture (2)
 $ ./todo.py ctx health -p 10
 $ ./todo.py rm 3
-$ ./todo.py
+$ ./todo.py 
  6 | Fix the window ★3
  2 | Fix the stuff ★2
  4 | Send the documents for the house ⌛ 6 days remaining
- 8 | Listen to the podcast about movies #culture.cinema
+----------------------------------------
+ # | culture (2)
 $ ./todo.py purge
-$ ./todo.py
- 6 | Fix the window ★3
- 2 | Fix the stuff ★2
- 4 | Send the documents for the house ⌛ 6 days remaining
- 8 | Listen to the podcast about movies #culture.cinema
-$ ./todo.py contexts
-context                                         visibility priority undone tasks
------------------------------------------------ ---------- -------- ------------
-                                                                    6           
-culture                                                             2           
-culture.chemistry                                                   1           
-culture.cinema                                  wide                1           
-health                                                     10       0           
+1 task deleted

@@ -4,14 +4,14 @@
 
 Usage:
   todo [<context>]
-  todo add <content> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
+  todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
   todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority PRIORITY] [--visibility VISIBILITY] [--text CONTENT]
+    [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]
   todo edit <id>
   todo rm <id>...
-  todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY]
+  todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
   todo contexts [<context>]
   todo history
   todo purge
@@ -25,22 +25,22 @@ Options:
   -c CONTEXT, --context CONTEXT           Set the context of a task
   -p INTEGER, --priority INTEGER          Set the priority of a task, or of a
                                           context
-  -t CONTENT, --text CONTENT              Set the text of a task
+  -t TITLE, --title TITLE                 Set the title of a task
   -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
                                           context.
+  --name NAME                             Rename a context
 
 """
 
-import json, os, sys
+import os, sys, sqlite3, functools, configparser
 import os.path as op
 from datetime import datetime, timezone
-from collections import OrderedDict, abc
 
 from docopt import docopt
 
-from . import utils
+from . import utils, data_access
 from .rainbow import ColoredStr
-from .config import DATA_LOCATION, DATA_CTX, CONFIG
+from .data_access import DataAccess, DATA_DIR
 
 
 __version__ = '2.1'
@@ -49,23 +49,7 @@ __version__ = '2.1'
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge'}
 
-EMPTY_DATA = {
-	'last_task': None,
-	'last_context': None,
-	'tasks': [],
-	'contexts': {}
-}
-
-LAST = 'LAST'
-
-TASK404 = 'Task not found.'
-CTX404 = 'Context not found.'
-
-SHOW_AFTER = utils.parse_list(CONFIG.get('App', 'show_after'))
-
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
-INF = datetime.max.replace(tzinfo=timezone.utc)
-LONG_AGO = datetime.min.replace(tzinfo=timezone.utc)
 
 # Icons used to print tasks' properties in the terminal.
 # True is the ASCII version for challenged terminals.
@@ -76,654 +60,179 @@ PRIORITY_ICON = {True: '!', False: '★'}
 
 WIDE_HIST_THRESHOLD = 120
 
-
-class HasDefaults:
-
-	def init_defaults(self):
-		for key, val in self.__class__.defaults.items():
-			if not hasattr(self, key):
-				setattr(self, key, val)
-
-	def is_default(self, p):
-		class_ = self.__class__
-		defaults = class_.defaults
-		return p in defaults and self.__dict__[p] == class_.defaults[p]
-
-	def apply_mutator(self, mutator, value):
-		class_ = self.__class__
-		if hasattr(class_, 'bindings') and mutator in class_.bindings:
-			attr = class_.bindings[mutator]
-		else:
-			attr = mutator
-		setattr(self, attr, value)
-
-
-class Context(HasDefaults):
-
-	"""The tree of contexts. Each context has a name and its children are
-	represented using a dictionary where the keys are the names of the
-	children and the values are references to the children. Each context keeps
-	a reference to its parent context. The root context is defined by having a
-	None parent and, by conventation, has the empty string as name.
-
-	The path of a context is represented using a dot to separate different
-	contexts' name accross the tree, which means that a context's name cannot
-	contain a dot. The dot leading from the root context to its children is
-	skipped so that paths don't starts with a dot. The str representation of a
-	context is its path.
-
-	While this class represent any node in the tree, most of its method will
-	be called on the root context, which might make recursive calls to
-	subcontexts"""
-
-	mutators = ['visibility', 'priority']
-	defaults = {
-		'visibility': 'discreet',
-		'priority': 1
-	}
-
-	def __init__(self, name, parent, visibility=None, priority=None):
-		assert '.' not in name
-		self.name = name
-		self.parent = parent
-		self.children = {}
-		self.population = 0
-		if parent is None:
-			self.path = ''
-		else:
-			dot = not parent.is_root()
-			self.path = parent.path + '.'*dot + self.name
-		if visibility is not None:
-			self.visibility = visibility
-		if priority is not None:
-			self.priority = priority
-		self.init_defaults()
-
-	def __eq__(self, other):
-		return self is other
-
-	def __str__(self):
-		return self.path
-
-	def path_from(self, context):
-		"""Return the path leading to the context given an ancestor context.
-		e.g. "watchlist.movies".path_from("watchlist") = "movies" (str
-		representation used for convenience)"""
-		pointer = self
-		path = ''
-		while pointer != context:
-			path = '.' + pointer.name + path
-			pointer = pointer.parent
-		return path[1:] if len(path) > 0 else path
-
-	def is_root(self):
-		return self.parent is None
-
-	def is_leaf(self):
-		return len(self.children) == 0
-
-	def is_subcontext(self, other):
-		if self == other:
-			return True
-		for child in other.children.values():
-			if child == self:
-				return True
-			if self.is_subcontext(child):
-				return True
-		return False
-
-	def get_population(self):
-		"""The population of a context is the number of tasks this context is
-		associated to. Each context has a count of the number of tasks that
-		references exactly this context. This methods also counts tasks
-		associated to subcontexts."""
-		children = sum(c.get_population() for c in self.children.values())
-		return self.population + children
-
-	def get_context(self, path):
-		"""Search for the context having the given path. Most of the time will
-		be called on the root context with an absolute path. Returns the found
-		context, or None"""
-		if path == '':
-			return self
-		components = path.split('.')
-		pointer = self
-		for name in components:
-			if name not in pointer.children:
-				return None
-			pointer = pointer.children[name]
-		return pointer
-
-	def add_contexts(self, path):
-		"""Add the context represented by the given path, creating all
-		intermediary nessecary contexts. Returns the newly created context."""
-		if path == '':
-			return self
-		components = path.split('.')
-		pointer = self
-		for name in components:
-			if name in pointer.children:
-				pointer = pointer.children[name]
-			else:
-				new_ctx = Context(name, pointer)
-				pointer.children[name] = new_ctx
-				pointer = new_ctx
-		return pointer
-
-	def items(self):
-		"""Iterates over the tuples (path, context) by doing a depth-first
-		traversal over the tree."""
-		yield self.path, self
-		for child in self.children.values():
-			for item in child.items():
-				yield item
-
-	def show_contexts(self):
-		"""Pretty print all contexts and their properties."""
-		paths = [i[1] for i in self.items()]
-		paths.sort(key=lambda c: c.path)
-		struct = [
-			('context', lambda a: a, '<', 'path', lambda a: a),
-			('visibility', 10, '<', 'visibility', lambda a: a),
-			('priority', 8, '<', 'priority', lambda a: str(a)),
-			('undone tasks', 12, '<', None, lambda a: str(a.get_population()))
-		]
-		utils.print_table(struct, paths, 80)
-
-	def get_dict(self):
-		"""Creates a dictionary for serialization."""
-		skelet = {}
-		if not self.is_default('visibility'):
-			skelet['v'] = self.visibility
-		if not self.is_default('priority'):
-			skelet['p'] = self.priority
-		return skelet
-
-
-class Task(HasDefaults):
-
-	mutators = ['priority', 'deadline', 'start', 'context', 'visibility',
-		'text']
-	# The look-up table to use to convert command-line arguments name to their
-	# object attribute counterpart. Most arguments have the name of their
-	# corresponding attribute, some others don't.
-	bindings = {
-		'text': 'content'
-	}
-	fast_serial = ['id_', 'content', 'done', 'priority', 'visibility']
-	date_serial = ['created', 'deadline', 'start']
-	defaults = {
-		'created': LONG_AGO,
-		'priority': 1,
-		'deadline': INF,
-		'start': NOW,
-		'done': False,
-		'visibility': 'discreet'
-	}
-
-	def __init__(self, id_, content, context, **kwargs):
-		self.id_ = id_
-		self.content = content
-		self.context = context
-		for key, val in kwargs.items():
-			setattr(self, key, val)
-		self.init_defaults()
-		self.remaining = self.deadline - NOW
-
-	def get_visibility(self):
-		if self.is_default('visibility'):
-			return self.context.visibility
-		else:
-			return self.visibility
-
-	def set_done(self):
-		self.done = True
-
-	def get_dict(self):
-		skelet = {}
-		for p in Task.fast_serial:
-			if p in self.__dict__ and not self.is_default(p):
-				skelet[p] = self.__dict__[p]
-		for p in Task.date_serial:
-			if p in self.__dict__ and not self.is_default(p):
-				skelet[p] = self.__dict__[p].strftime(utils.ISO_DATE)
-		if not self.is_default('context'):
-			skelet['context'] = self.context.path
-		return skelet
-
-	def has_started(self):
-		return NOW >= self.start
-
-	def order_infos(self):
-		return (-self.priority,
-			self.remaining,
-			-self.context.priority,
-			self.created)
-
-	def is_relevant_to_context(self, context):
-		if self.context == context:
-			return True
-		descendant = self.context.is_subcontext(context)
-		if self.get_visibility() == 'hidden':
-			return self.context == context
-		elif self.get_visibility() == 'discreet':
-			if context.is_root():
-				return self.context.parent.is_root()
-			else:
-				return descendant
-		elif self.get_visibility() == 'wide':
-			return descendant or context.is_root()
-
-	def get_string(self, id_width, from_context, ascii_=False):
-		id_str = may_be_colored(hex(self.id_)[2:], CONFIG.get('Colors', 'id'))
-		if isinstance(id_str, ColoredStr):
-			ansi_offset = id_str.lenesc
-		else:
-			ansi_offset = 0
-		content_str = may_be_colored(self.content, CONFIG.get('Colors', 'content'))
-		string = '{id_:>{width}} | {content}'.format(
-			id_=id_str,
-			width=id_width + ansi_offset,
-			content=content_str
-		)
-		ctx_path = self.context.path_from(from_context)
-		if ctx_path != '':
-			ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
-			string += may_be_colored(ctx_string, CONFIG.get('Colors', 'context'))
-		if not self.is_default('deadline'):
-			user_friendly = utils.parse_remaining(self.remaining)
-			remaining_str = ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
-			string += may_be_colored(remaining_str, CONFIG.get('Colors', 'deadline'))
-		if not self.is_default('priority'):
-			prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], self.priority)
-			string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
-		return string
-
-
-def check_last(fallback):
-	"""Return a decorator for a method of the TodoList which accepts an
-	identifier as only explicit argument. The returned decorator alters the
-	method so that LAST is accepted as an identifier, in which case the value
-	corresponding to the identifier should be given by the attribute of the
-	TodoList named `fallback`."""
-	def decorator(function):
-		def substitute(todolist, identifier):
-			if identifier == LAST:
-				identifier = getattr(todolist, fallback)
-				if identifier is None:
-					return None
-			return function(todolist, identifier)
-		return substitute
-	return decorator
-
-
-class TodoList(abc.MutableMapping):
-
-	"""The TodoList supports the mapping protocol. Keys are tasks' ID and
-	values are tasks themselves.
-
-	Adding a new task should be done via the `add_task` method which takes
-	care of finding the next available ID and building a new task from minimum
-	requirements (content of the task and date of creation).
-
-	The TodoList has a reference to a context tree via its `root_ctx`
-	attribute. The tree should not be accessed itself but by methods defined
-	in the TodoList to manipulate it.
-
-	The special ID LAST can be used to retrieve the last referenced task
-	(resp. context) of the TodoList (retrieved, added or modified), although
-	the TodoList object itself does not support updating of the last
-	referenced task (resp. context) upon calls on related methods; the manager
-	of the TodoList should do it itself by updating the `last_task` (resp.
-	`last_context`) attributes"""
-
-	def __init__(self, context, tasks, id_width=None, last_task=None,
-		last_context=None):
-		# id_width is the width of the hexa representation of the task's ID. It
-		# can be optionaly given to us so that we don't have to iterate over
-		# the tasks ourselves. In this case, it's computed by import_data when
-		# it iterates over the tasks
-		self.root_ctx = context
-		if id_width is not None:
-			self.id_width = id_width
-		else:
-			self.id_width = max(len(hex(t.id_)) - 2 for t in tasks)
-		self.tasks = tasks
-		self.last_task = last_task
-		self.last_context = last_context
-		self.updated_last = False
-
-	@check_last('last_task')
-	def __getitem__(self, key):
-		return self.tasks[key]
-
-	def __setitem__(self, key, value):
-		self.tasks[key] = value
-
-	def __delitem__(self, key):
-		del self.tasks[key]
-
-	def __contains__(self, key):
-		return key in self.tasks
-
-	def __iter__(self):
-		return self.tasks.__iter__()
-
-	def __len__(self):
-		return len(self.tasks)
-
-	@check_last('last_context')
-	def get_context(self, path):
-		return self.root_ctx.get_context(path)
-
-	@check_last('last_context')
-	def add_contexts(self, path):
-		return self.root_ctx.add_contexts(path)
-
-	def keys(self):
-		return self.__iter__()
-
-	def update_last_task(self, id_):
-		if id_ != self.last_task:
-			self.last_task = id_
-			self.updated_last = True
-
-	def update_last_context(self, path):
-		if path != self.last_context:
-			self.last_context = path
-			self.updated_last = True
-
-	def add_task(self, content, created):
-		if len(self.tasks) == 0:
-			id_ = 1
-		else:
-			id_ = next(reversed(self.tasks)) + 1
-		task = Task(id_, content, self.root_ctx, created=created)
-		self[id_] = task
-		return task
-
-	def set_done(self, id_list):
-		task = None
-		for id_ in id_list:
-			task = self.get(id_, None)
-			if task is not None:
-				task.set_done()
-		return task
-
-	def remove_tasks(self, id_list):
-		task = None
-		for id_ in id_list:
-			if id_ == LAST:
-				id_ = self.last_task
-			if id_ in self:
-				task = self[id_]
-				del self[id_]
-		return task
-
-	def purge(self):
-		to_rm = []
-		# I prefer not to alter the dict I'm interating over
-		for id_, task in self.items():
-			if task.done:
-				to_rm.append(id_)
-		for id_ in to_rm:
-			del self[id_]
-
-	def apply_task_mutator(self, id_, mutator, value):
-		if mutator == 'context':
-			ctx = self.add_contexts(value)
-			self[id_].context = ctx
-		else:
-			self[id_].apply_mutator(mutator, value)
-
-	def show(self, path=''):
-		context = self.get_context(path)
-		if context is None:
-			return None
-		for task in sorted(self.tasks.values(), key=lambda t: t.order_infos()):
-			if not task.done and task.is_relevant_to_context(context) and \
-			task.has_started():
-				try:
-					print(task.get_string(self.id_width + 1, context))
-				except UnicodeEncodeError:
-					print(task.get_string(self.id_width + 1, context, ascii_=True))
-		return context
-
-	def show_history(self):
-		term_width = os.get_terminal_size().columns
-		id_width = max(2, self.id_width) + 1
-		struct = utils.get_history_struct(id_width,
-			term_width > WIDE_HIST_THRESHOLD)
-		utils.print_table(struct, self.tasks.values(), term_width)
-
-	def save(self, location):
-		contexts = {}
-		with open(DATA_CTX, 'w') as ctx_file:
-			for path, ctx in self.root_ctx.items():
-				dict_ = ctx.get_dict()
-				if len(dict_) > 0:
-					contexts[path] = dict_
-				ctx_file.write(path+'\n')
-		data = {
-			'tasks': [],
-			'contexts': contexts,
-			'last_task': self.last_task,
-			'last_context': self.last_context
-		}
-		for task in self.tasks.values():
-			data['tasks'].append(task.get_dict())
-		save_data(data, location)
-
-
-def may_be_colored(string, color):
-	"""Return a string, colored or not, depending on the CONFIG variable"""
-	if CONFIG.getboolean('Colors', 'colors'):
-		palette = CONFIG.get('Colors', 'palette')
-		return ColoredStr(string, color, palette)
+TASK_MUTATORS = {
+	'deadline': datetime.max,
+	'start': None,
+	'priority': 1,
+	'title': None
+}
+
+CONTEXT_MUTATORS = {
+	'priority': 1,
+	'visibility': 'normal'
+}
+
+
+CONFIG_FILE = op.expanduser(op.join('~', '.toduhrc'))
+
+if os.name == 'posix':
+	COLORS = 'on'
+else:
+	COLORS = 'off'
+
+DEFAULT_CONFIG = configparser.ConfigParser()
+DEFAULT_CONFIG['App'] = {
+	'show_after': 'edit'
+}
+DEFAULT_CONFIG['Colors'] = {
+	'colors': COLORS,
+	'palette': '8',
+	'id': 'yellow',
+	'content': 'default',
+	'context': 'cyan',
+	'deadline': 'cyan',
+	'priority': 'green'
+}
+
+CONFIG = configparser.ConfigParser(
+	allow_no_value=True,
+	strict=True
+	)
+# Loading the config with the default config
+CONFIG.read_dict(DEFAULT_CONFIG)
+# Loading the user config. Will complete/overwrite the default config
+# but will keep default config entries that the user might have removed
+CONFIG.read(CONFIG_FILE)
+
+# Editor election: in config file? No -> in OS EDITOR variable? No -> vim
+EDITOR = CONFIG.get('App', 'editor', fallback=None)
+if EDITOR is None:
+	EDITOR = os.environ.get('EDITOR', 'vim')
+
+
+def main():
+	argv = sys.argv[1:]
+	if len(argv) == 1 and argv[0] == 'doduh':
+		print('Beethoven - Symphony No. 5')
+		sys.exit(0)
+	args = docopt(__doc__, argv=argv, help=False, version=__version__)
+
+	if args['--help']:
+		print(__doc__)
+	elif args['--version']:
+		print(__version__)
+	elif args['--location']:
+		print(DATA_DIR)
 	else:
-		return string
+		report = parse_args(args)
+		if len(report) > 0:
+			for error in report:
+				print(error)
+			sys.exit(1)
+
+		daccess = get_data_access()
+		result = dispatch(args, daccess)
+		if result is not None:
+			feedback_code, *data = result
+			globals()['feedback_'+feedback_code](*data)
+		daccess.exit()
 
 
-def check_none(var, message):
-	"""Return a boolean indicating whether `var` is None or not, and print the given `message` if it's None"""
-	if var is None:
-		print(message)
-		return True
-	return False
+## Argument parsing error messages
+
+INCORRECT_PRIORITY = 'PRIORITY must be an integer.'
+INCORRECT_VISIBILITY = "VISIBILITY must be 'normal' or 'hidden'."
+INCORRECT_MOMENT = "MOMENT must be in the YYYY-MM-DD format, or the "+\
+                   "YYYY-MM-DD HH:MM:SS format, or a delay in the "+\
+                   "([0-9]+)([wdhms]) forma."
+INCORRECT_CTX_RENAME = "Can't use '.' in context new name "+\
+                       "(only right-most context name is updated)."
+CANT_RENAME_ROOT = "Can't rename root context."
+INVALID_TID = "Invalid task{} ID: {}"
 
 
-def open_data(data_location):
-	"""Load the dictionary from the JSON file at `data_location`, or return
-	todo specific empty data if the file doesn't exist"""
-	if not op.exists(data_location) or op.getsize(data_location) == 0:
-		data = EMPTY_DATA
+# Argument parsers. Each function should return a 2-tuple where the first
+# component is a boolean indicating whether the value of the argument is
+# correct and has been successfully parsed. The second component contains
+# either the parsed value (if success) or an error message.
+
+def parse_id(tid_list):
+	valid = []
+	invalid = []
+	for tid in tid_list:
+		try:
+			valid.append(int(tid, 16))
+		except ValueError:
+			invalid.append(tid)
+	if len(invalid) == 0:
+		return True, valid
 	else:
-		with open(data_location, encoding='utf8') as todo_f:
-			data = json.load(todo_f)
-	return data
+		s = 's' if len(invalid) > 1 else ''
+		string = ', '.join(invalid)
+		error = INVALID_TID.format(s, string)
+		return False, error
 
 
-def save_data(data, location):
-	"""Save the object `data` to the file at `location` in JSON format. The
-	file and the directories leading to it will be created if not already
-	existing."""
-	if not op.exists(location):
-		create_data_dir(location)
-	with open(location, 'w', encoding='utf8') as data_f:
-		json.dump(data, data_f, sort_keys=True, indent=4,
-			ensure_ascii=False)	
-
-
-def create_data_dir(data_location):
-	"""Creates the directory whose path is `data_location` if it doesn't
-	already exist"""
-	dirname = op.dirname(data_location)
-	if not op.exists(dirname):
-		os.makedirs(dirname)
-
-
-def import_data(data):
-	"""Build and return a TodoList object from the raw data found in `data`"""
-	root_ctx = Context('', None)
-	tasks = OrderedDict()
-	max_width = 0
-	for dico in data['tasks']:
-		dtask = dico.copy()
-		for key, val in dtask.items():
-			if key in Task.date_serial:
-				dt = datetime.strptime(val, utils.ISO_DATE)
-				dt = dt.replace(tzinfo=timezone.utc)
-				dtask[key] = dt
-		if 'context' in dtask:
-			path = dtask['context']
-			ctx = root_ctx.add_contexts(path)
-		else:
-			ctx = root_ctx
-		dtask['context'] = ctx
-		if 'done' not in dtask or not dtask['done']:
-			ctx.population += 1
-		id_width = len(hex(dtask['id_'])) - 2 # 0x...
-		if id_width > max_width:
-			max_width = id_width
-		tasks[dtask['id_']] = Task(**dtask)
-	for path in data['contexts']:
-		ctx = root_ctx.add_contexts(path)
-		if 'v' in data['contexts'][path]:
-			ctx.visibility = data['contexts'][path]['v']
-		if 'p' in data['contexts'][path]:
-			ctx.priority = data['contexts'][path]['p']
-	meta = {
-		'id_width': max_width,
-		'last_task': data.get('last_task', None),
-		'last_context': data.get('last_context', None)
-	}
-	return TodoList(root_ctx, tasks, **meta)
-
-
-def dispatch(args, todolist):
-	"""Apply the commands described by the dictionary `args` to the
-	`todolist`. Return whether data was modified/updated."""
-	change = True
-	need_show = any(args[command] for command in SHOW_AFTER)
-	show_ctx = None
-	last_ctx, last_task = None, None
-	if args['add'] or args['task']:
-	# Task edition
-		if args['add']:
-		# Task creation
-			task = todolist.add_task(args['<content>'], NOW)
-		elif args['task']:
-		# Task selection
-			task = todolist.get(args['<id>'][0], None)
-		if check_none(task, TASK404):
-			return False, False
-		for mutator in Task.mutators:
-			option = '--'+mutator
-			if args.get(option) is not None:
-				todolist.apply_task_mutator(task.id_, mutator, args[option])
-		last_task = task
-	elif args['edit']:
-		task = todolist.get(args['<id>'][0], None)
-		if check_none(task, TASK404):
-			return False, False
-		new_content = utils.input_from_editor(task.content)
-		if new_content.endswith('\n'):
-		# hurr durr I'm a text editor I append a newline at the end of files
-			new_content = new_content[:-1]
-		task.content = new_content
-		last_task = task
-	elif args['done']:
-		last_task = todolist.set_done(args['<id>'])
-	elif args['rm']:
-		last_task = todolist.remove_tasks(args['<id>'])
-	elif args['ctx']:
-		changed_something = False
-		ctx = todolist.add_contexts(args['<context>'])
-		if check_none(ctx, CTX404):
-			return False, False
-		for mutator in Context.mutators:
-			option = '--'+mutator
-			if args.get(option) is not None:
-				ctx.apply_mutator(mutator, args[option])
-				changed_something = True
-		if not changed_something:
-			todolist.show(args['<context>'])
-			change = True
-		last_ctx = ctx
-	elif args['contexts']:
-		path = args['<context>']
-		if path is None:
-			path = ''
-		root = todolist.get_context(path)
-		if check_none(root, CTX404):
-			return False, False
-		root.show_contexts()
-	elif args['history']:
-		todolist.show_history()
-	elif args['purge']:
-		todolist.purge()
+def parse_priority(p):
+	try:
+		p_ = int(p)
+	except ValueError:
+		return False, INCORRECT_PRIORITY
 	else:
-		change = False
-		need_show = True
-		show_ctx = args['<context>']
-		if show_ctx is None:
-			show_ctx = ''
-	if need_show:
-		if show_ctx is None:
-			show_ctx = todolist.last_context
-		ctx = todolist.show(show_ctx)
-		if check_none(ctx, CTX404):
-			return False, False
-		last_ctx = ctx
-	if last_task is not None:
-		todolist.update_last_task(last_task.id_)
-	if last_ctx is not None:
-		todolist.update_last_context(last_ctx.path)
-	return change
+		return True, p_
+
+
+def parse_visibility(v):
+	if v not in ['normal', 'hidden']:
+		return False, INCORRECT_VISIBILITY
+	else:
+		return True, v
+
+
+def parse_context(ctx):
+	return True, data_access.dbfy_context(ctx)
+
+
+def parse_moment(moment):
+	dt = utils.get_datetime(moment, NOW)
+	if dt is None:
+		return False, INCORRECT_MOMENT
+	else:
+		return True, dt.strftime(utils.SQLITE_DT_FORMAT)
+
+
+def parse_new_context_name(name):
+	if '.' in name:
+		return False, INCORRECT_CTX_RENAME
+	elif name == '':
+		return False, CANT_RENAME_ROOT
+	else:
+		return True, name
+
+
+PARSERS = [
+	('<id>', parse_id),
+	('--priority', parse_priority),
+	('--visibility', parse_visibility),
+	('--context', parse_context),
+	('<context>', parse_context),
+	('--deadline', parse_moment),
+	('--start', parse_moment),
+	('--name', parse_new_context_name)
+]
 
 
 def parse_args(args):
-	"""Parse the args dictionary returned by docopt.
-
-	Strings are converted into proper objects. For example, datetime related
-	strings are converted into datetime objects, hexadecimal task's
-	identifiers are converted to integer and context names are converted into
-	context objects.
-
-	If one of the conversion fails, a report is written about the fail. This
-	report is None if no failure has been encountered. The report is returned
-	by the function"""
 	fix_args(args)
-	report = None
-	if args['--priority'] is not None:
-		try:
-			args['--priority'] = int(args['--priority'])
-		except ValueError:
-			report = 'PRIORITY must be an integer'
-	if args['--visibility'] is not None:
-		if args['--visibility'] not in ['discreet', 'wide', 'hidden']:
-			report = "VISIBILITY must be one of the following: discreet, "+\
-			"wide or hidden"
-	for arg in ['--deadline', '--start']:
-		if args[arg] is not None:
-			dt = utils.get_datetime(args[arg], NOW)
-			if dt is None:
-				report = "MOMENT must be in the YYYY-MM-DD format, or the "+\
-				"YYYY-MM-DDTHH:MM:SS format, or a delay in the "+\
-				"([0-9]+)([wdhms]) format"
+	report = []
+	for arg_name, parser in PARSERS:
+		value = args.get(arg_name)
+		if value is not None:
+			success, result = parser(value)
+			if success:
+				args[arg_name] = result
 			else:
-				args[arg] = dt
-	if args['<id>'] is not None:
-		for i in range(len(args['<id>'])):
-		# I prefer not to directly iterate over the list since I'm going to
-		# alter it
-			id_ = args['<id>'][i]
-			if id_ == LAST:
-				continue
-			try:
-				args['<id>'][i] = int(id_, 16)
-			except ValueError:
-				report = "Invalid task ID: {}".format(id_)
+				report.append(result)
 	return report
 
 
@@ -750,35 +259,326 @@ def fix_args(args):
 		args['<context>'] = None
 
 
-def main():
-	argv = sys.argv[1:]
-	if len(argv) == 1 and argv[0] == 'doduh':
-		print('Beethoven - Symphony No. 5')
-		sys.exit(0)
-	args = docopt(__doc__, argv=argv, help=False, version=__version__)
+def get_data_access():
+	db_path = data_access.setup_data_access()
+	connection = sqlite3.connect(db_path)
+	return DataAccess(connection)
 
-	if args['--help']:
-		print(__doc__)
-	elif args['--version']:
-		print(__version__)
-	elif args['--location']:
-		print(DATA_LOCATION)
+
+## HANDLERS
+
+# Do something with the args dictionary and the data access object then return
+# a feedback code as well as some data about how things went. Feedback
+# functions (whose names are feedback_<feedback_code>) will then be passed the
+# data and should print some feedback based on the data. A handler can also
+# return nothing (or None) if no feedback is intended.
+
+def add_task(args, daccess):
+	context = args.get('--context')
+	options = get_options(args, TASK_MUTATORS)
+	if context is None:
+		context = ''
+	id_ = daccess.add_task(args['<title>'], context, options)
+	return 'add_task', id_
+
+
+def update_task(args, daccess):
+	tid = args['<id>'][0]
+	context = args.get('--context')
+	options = get_options(args, TASK_MUTATORS)
+	if context is None:
+		context = ''
+	upt_count = daccess.update_task(tid, context, options)
+	return 'single_task_update', tid, upt_count != 0
+
+
+def edit_task(args, daccess):
+	tid = args['<id>'][0]
+	task = daccess.get_task(tid, 'title')
+	new_content = utils.input_from_editor(task['title'], EDITOR)
+	if new_content.endswith('\n'):
+	# hurr durr I'm a text editor I append a newline at the end of files
+		new_content = new_content[:-1]
+	upt_count = daccess.update_task(tid, options=[('title', new_content)])
+	return 'single_task_update', upt_count != 0
+
+
+def do_task(args, daccess):
+	not_found = daccess.set_done_many(args['<id>'])
+	return 'multiple_tasks_update', not_found
+
+
+def remove_task(args, daccess):
+	not_found = daccess.remove_many(args['<id>'])
+	return 'multiple_tasks_update', not_found
+
+
+def manage_context(args, daccess):
+	path = args['<context>']
+	name = args.get('--name')
+	options = get_options(args, CONTEXT_MUTATORS)
+	exists = True
+	if len(options) == 0 and name is None:
+		return todo(args, daccess)
 	else:
-		report = parse_args(args)
-		if report is not None:
-			print(report)
-			sys.exit(1)
-
-		data = open_data(DATA_LOCATION)
-		todolist = import_data(data)
-		change = dispatch(args, todolist)
-		if change:
-			todolist.save(DATA_LOCATION)
-		elif todolist.updated_last:
-			data['last_task'] = todolist.last_task
-			data['last_context'] = todolist.last_context
-			save_data(data, DATA_LOCATION)
+		if name is not None:
+			renamed = data_access.rename_context(args['<context>'], name)
+			rcount = daccess.rename_context(args['<context>'], name)
+			if rcount is None:
+				return 'target_name_exists', renamed
+			else:
+				path = renamed
+				exists = rcount != 0
+		if len(options) > 0:
+			daccess.set_context(path, options)
+		elif not exists:
+			return 'not_exists_no_options'
 
 
-if __name__ == '__main__':
-	main()
+def todo(args, daccess):
+	ctx = args.get('<context>', '')
+	if ctx is None:
+		ctx = ''
+	tasks = daccess.todo(ctx)
+	subcontexts = daccess.get_subcontexts(ctx)
+	return 'todo', ctx, tasks, subcontexts
+
+
+def get_contexts(args, daccess):
+	path = args['<context>']
+	if path is None:
+		path = ''
+	contexts = daccess.get_descendants(path)
+	return 'contexts', contexts
+
+
+def get_history(args, daccess):
+	tasks = daccess.history()
+	gid = daccess.get_greatest_id()
+	return 'history', tasks, gid
+
+
+def purge(args, daccess):
+	count = daccess.purge()
+	return 'purge', count
+
+## DISPATCHING
+
+# A dictionary is used to map the name of commands to handlers defined above.
+
+DISPATCHER = [
+	('add', add_task),
+	('task', update_task),
+	('edit', edit_task),
+	('done', do_task),
+	('rm', remove_task),
+	('ctx', manage_context),
+	('contexts', get_contexts),
+	('history', get_history),
+	('purge', purge)
+]
+
+
+def dispatch(args, daccess):
+	for command, handler in DISPATCHER:
+		if args[command]:
+			return handler(args, daccess)
+	return todo(args, daccess)
+
+
+def get_options(args, mutators):
+	options = []
+	for mutator in mutators:
+		cl_opt = '--' + mutator
+		if cl_opt in args and args[cl_opt] is not None:
+			options.append((mutator, args[cl_opt]))
+	return options
+
+
+## FEEDBACK FUNCTIONS 
+
+TASK_SUBCTX_SEP = '-'*40
+
+
+def feedback_add_task(id_):
+	pass
+	#print('Added task {}'.format(id_))
+
+
+def feedback_single_task_update(tid, found):
+	if not found:
+		print('Task {} not found'.format(tid))
+
+
+def feedback_multiple_tasks_update(not_found):
+	if len(not_found) > 0:
+		s = 's' if len(not_found) > 1 else ''
+		string = ', '.join(utils.to_hex(tid) for tid in not_found)
+		print('Task{} not found: {}'.format(s, string))
+
+
+def feedback_todo(context, tasks, subcontexts):
+	if len(tasks) != 0:
+		id_width = max(len(utils.to_hex(task['id'])) for task in tasks)
+	else:
+		id_width = 1
+	for task in tasks:
+		partial = functools.partial(get_task_string, context, id_width, task)
+		safe_print(partial)
+	if len(subcontexts) > 0:				
+		print(TASK_SUBCTX_SEP)
+	for ctx in subcontexts:
+		partial = functools.partial(get_context_string, context, id_width, ctx)
+		safe_print(partial)
+
+
+def feedback_target_name_exists(renamed):
+	print('Context {} already exists.'.format(
+		utils.get_relative_path('', renamed)
+		)
+	)
+
+
+def feedback_not_exists_no_options(path, found):
+	print("Context does not exist and no option provided. No action done.")
+
+
+def feedback_contexts(contexts):
+	def get_tally(ctx):
+		return '{} ({})'.format(ctx['total_tasks'], ctx['own_tasks'])
+	struct = [
+		('context', lambda a: a, '<', 'path', lambda a: a[1:]),
+		('visibility', 10, '<', 'visibility', None),
+		('priority', 8, '<', 'priority', None),
+		('undone tasks', 12, '<', None, get_tally)
+	]	
+	utils.print_table(struct, contexts, is_context_default)
+
+
+def feedback_history(tasks, gid):
+	if gid is None:
+		print('No history.')
+	else:
+		struct = get_history_struct(gid)
+		utils.print_table(struct, tasks, is_task_default)
+
+
+def feedback_purge(count):
+	s = 's' if count > 1 else ''
+	print('{} task{} deleted'.format(count, s))
+
+
+def get_task_string(context, id_width, task, ascii_=False):
+	id_str = may_be_colored(
+		utils.to_hex(task['id']),
+		CONFIG.get('Colors', 'id')
+	)
+	if isinstance(id_str, ColoredStr):
+		ansi_offset = id_str.lenesc
+	else:
+		ansi_offset = 0
+	content_str = may_be_colored(task['title'], CONFIG.get('Colors', 'content'))
+	string = '{id_:>{width}} | {content}'.format(
+		id_=id_str,
+		width=id_width + ansi_offset + 1,
+		content=content_str
+	)
+
+	ctx_path = utils.get_relative_path(context, task['ctx_path'])
+	if ctx_path != '':
+		ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
+		string += may_be_colored(ctx_string, CONFIG.get('Colors', 'context'))
+
+	deadline = get_datetime(task['deadline'])
+	if deadline is not None:
+		remaining = deadline - NOW
+		user_friendly = utils.parse_remaining(remaining)
+		remaining_str = ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
+		string += may_be_colored(remaining_str, CONFIG.get('Colors', 'deadline'))
+
+	priority = task['priority']
+	if not is_task_default(task, 'priority'):
+		prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], priority)
+		string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
+	return string
+
+
+def get_context_string(context, id_width, ctx, ascii_=False):
+	hash_str = may_be_colored('#', CONFIG.get('Colors', 'id'))
+	if isinstance(hash_str, ColoredStr):
+		ansi_offset = hash_str.lenesc
+	else:
+		ansi_offset = 0
+	path = utils.get_relative_path(context, ctx['path'])
+	string = '{hash:>{width}} | {path} ({nbr})'.format(
+		hash=hash_str,
+		width=id_width + ansi_offset + 1,
+		path=path,
+		nbr=ctx['total_tasks']
+	)
+	priority = ctx['priority']
+	if not is_task_default(ctx, 'priority'):
+		prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], priority)
+		string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
+	return string
+
+
+def safe_print(partial):
+	try:
+		print(partial(ascii_=False))
+	except UnicodeEncodeError:
+		print(partial(ascii_=True))
+
+
+def get_datetime(db_dt):
+	if db_dt is None:
+		return None
+	return datetime\
+		.strptime(db_dt, utils.SQLITE_DT_FORMAT)\
+		.replace(tzinfo=timezone.utc)
+
+
+def is_task_default(task, prop):
+	if prop == 'start':
+		return task['start'] == task['created']
+	return is_default(task, prop, TASK_MUTATORS)
+
+
+def is_context_default(ctx, prop):
+	return is_default(ctx, prop, CONTEXT_MUTATORS)
+
+
+def is_default(dico, prop, defaults):
+	default = defaults.get(prop, None)
+	if default is None:
+		return False
+	else:
+		return dico[prop] == default
+
+
+def get_history_struct(gid):
+	struct = [
+		('id', gid, '>', 'id', utils.to_hex),
+		('title', lambda a: 3 * (a//4), '<', 'title', None),
+		('created', 19, '<', 'created', None),
+	]
+	if utils.get_terminal_width() > WIDE_HIST_THRESHOLD:
+		struct += [
+			('start', 19, '<', 'start', None),
+			('deadline', 19, '<', 'deadline', None),
+			('priority', 8, '>', 'priority', None)
+		]
+	struct += [
+		('context', lambda a: a//4 + a%4, '<', 'ctx_path', lambda a: a[1:]),
+		('status', 7, '<', 'done', lambda a: 'DONE' if a is not None else '')
+	]
+	return struct
+
+
+def may_be_colored(string, color):
+	"""Return a string, colored or not, depending on the CONFIG variable"""
+	if CONFIG.getboolean('Colors', 'colors'):
+		palette = CONFIG.get('Colors', 'palette')
+		return ColoredStr(string, color, palette)
+	else:
+		return string

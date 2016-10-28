@@ -1,7 +1,5 @@
-import os, re
+import re
 from datetime import datetime, timedelta, timezone
-
-from .config import CONFIG
 
 
 ISO_SHORT = '%Y-%m-%d'
@@ -20,33 +18,10 @@ REMAINING = {
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 
-# Editor election: in config file? No -> in OS EDITOR variable? No -> vim
-EDITOR = CONFIG.get('App', 'editor', fallback=None)
-if EDITOR is None:
-	EDITOR = os.environ.get('EDITOR', 'vim')
+SQLITE_DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
-def get_history_struct(id_width, wide):
-	struct = [
-		('id', id_width, '>', 'id_', lambda a: hex(a)[2:]),
-		('content', lambda a: 3 * (a//4), '<', 'content', lambda a: a),
-		('created', 10, '<', 'created', lambda a: a.strftime(ISO_SHORT)),
-	]
-	if wide:
-		struct += [
-			('start', 10, '<', 'start', lambda a: a.strftime(ISO_SHORT)),
-			('deadline', 10, '<', 'deadline', lambda a: a.strftime(ISO_SHORT)),
-			('priority', 8, '>', 'priority', lambda a: str(a)),
-			('visibility', 10, '<', None, lambda a: a.get_visibility())
-		]
-	struct += [
-		('context', lambda a: a//4 + a%4, '<', 'context', lambda a: a.name),
-		('status', 7, '<', 'done', lambda a: 'DONE' if a else '')
-	]
-	return struct
-
-
-def print_table(struct, iterable, term_width):
+def print_table(struct, iterable, is_default=lambda a: False):
 	"""This function, which is responsible for printing tables to the
 	terminal, awaits a "structure", an iterable and the width of the display.
 	The structure describes the columns of the table and their properties.
@@ -72,6 +47,7 @@ def print_table(struct, iterable, term_width):
         previous element and return the string to finally print.
 
     See the function get_history_struct to have an example of structure."""
+	term_width = get_terminal_width()
 	occupied = sum(w if isinstance(w, int) else 0 for _, w, *_ in struct)
 	available = term_width - occupied - (len(struct) - 1)
 	template, separator = '', ''
@@ -88,13 +64,18 @@ def print_table(struct, iterable, term_width):
 	for obj in iterable:
 		values = []
 		for h, _, _, a, f in struct:
-			if a is None:
-				value = f(obj)
-			elif hasattr(obj, 'is_default') and obj.is_default(a):
+			f = f if f is not None else lambda a: a
+			if is_default(obj, a):
 				value = ''
 			else:
-				value = f(getattr(obj, a))
-			value = limit_str(value, widths[h])
+				if a is None:
+					value = obj
+				else:
+					value = obj[a]
+				value = f(value)
+			if value is None:
+				value = ''
+			value = limit_str(str(value), widths[h])
 			values.append(value)
 		line = template.format(*values)
 		table = '\n'.join([table, line])
@@ -146,12 +127,12 @@ def parse_remaining(delta):
 	return '{} seconds'.format(seconds)
 
 
-def input_from_editor(init_content):
+def input_from_editor(init_content, editor):
 	import tempfile, subprocess # Tempfile being slow to import
 	with tempfile.NamedTemporaryFile(mode='w+') as edit_file:
 		edit_file.write(init_content)
 		edit_file.flush()
-		subprocess.call([EDITOR, edit_file.name])
+		subprocess.call([editor, edit_file.name])
 		edit_file.seek(0)
 		new_content = edit_file.read()
 	return new_content
@@ -161,3 +142,37 @@ def parse_list(string):
 	""" "foo, bar" => ["foo", "bar"]"""
 	ls = [e.strip() for e in string.split(',')]
 	return [] if ls[0] == '' else ls
+
+
+def get_relative_path(parent, desc):
+	rel = desc[len(parent):]
+	if rel.startswith('.'):
+		rel = rel[1:]
+	return rel
+
+
+def to_hex(integer):
+	return hex(integer)[2:] # 0x...
+
+
+def get_terminal_width():
+	fallback = 80
+	import subprocess
+	process = subprocess.Popen('stty size', shell=True,
+		universal_newlines=True,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE
+	)
+	stdout, stderr = process.communicate()
+	status = process.returncode
+	if status != 0 or stderr != '':
+		return fallback
+	result = stdout.split()
+	if len(result) != 2:
+		return fallback
+	cols = result[1]
+	try:
+		cols = int(cols)
+	except ValueError:
+		return fallback
+	return cols
