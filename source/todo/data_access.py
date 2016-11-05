@@ -105,14 +105,6 @@ def iso2sqlite(iso_date):
 	return dt.strftime(utils.SQLITE_DT_FORMAT)
 
 
-def row_iterator(cursor):
-	many = cursor.fetchmany()
-	while len(many) > 0:
-		for row in many:
-			yield row
-		many = cursor.fetchmany()
-
-
 def get_insert_components(options):
 	col_names = ','.join(opt[0] for opt in options)
 	placeholders = ','.join('?' for i in range(len(options)))
@@ -406,7 +398,7 @@ class DataAccess():
 			ORDER BY
 			  c.path
 		""", ('{}%'.format(path),))
-		return row_iterator(c)
+		return c
 
 	def history(self):
 		c = self.connection.cursor()
@@ -416,7 +408,7 @@ class DataAccess():
 			ON t.context = c.id
 			ORDER BY t.created
 		""")
-		return row_iterator(c)
+		return c
 
 	def get_greatest_id(self):
 		c = self.connection.cursor()
@@ -457,7 +449,7 @@ class DataAccess():
 				""")
 				data_ctx = op.join(DATA_DIR, DATA_CTX_NAME)
 				with open(data_ctx, 'w') as ctx_file:
-					for row in row_iterator(c):
+					for row in c:
 						ctx = userify_context(row[0])
 						ctx_file.write(ctx + '\n')
 		self.connection.close()
