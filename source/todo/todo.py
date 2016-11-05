@@ -204,6 +204,13 @@ def parse_moment(moment, direction=1):
 		return True, dt.strftime(utils.SQLITE_DT_FORMAT)
 
 
+def parse_deadline(moment):
+	if moment.lower() == 'none':
+		return True, 'None'
+	else:
+		return parse_moment(moment)
+
+
 def parse_new_context_name(name):
 	if '.' in name:
 		return False, INCORRECT_CTX_RENAME
@@ -221,7 +228,7 @@ PARSERS = [
 	('<context>', parse_context),
 	('<ctx1>', parse_context),
 	('<ctx2>', parse_context),
-	('--deadline', parse_moment),
+	('--deadline', parse_deadline),
 	('--start', parse_moment),
 	('--before', functools.partial(parse_moment, direction=-1)),
 	('--name', parse_new_context_name)
@@ -281,7 +288,7 @@ def get_data_access():
 
 def add_task(args, daccess):
 	context = args.get('--context')
-	options = get_options(args, TASK_MUTATORS)
+	options = get_options(args, TASK_MUTATORS, {'--deadline': {'None': None}})
 	if context is None:
 		context = ''
 	id_ = daccess.add_task(args['<title>'], context, options)
@@ -291,7 +298,7 @@ def add_task(args, daccess):
 def update_task(args, daccess):
 	tid = args['<id>'][0]
 	context = args.get('--context')
-	options = get_options(args, TASK_MUTATORS)
+	options = get_options(args, TASK_MUTATORS, {'--deadline': {'None': None}})
 	if context is None:
 		context = ''
 	upt_count = daccess.update_task(tid, context, options)
@@ -436,12 +443,16 @@ def dispatch(args, daccess):
 	return todo(args, daccess)
 
 
-def get_options(args, mutators):
+def get_options(args, mutators, converters={}):
 	options = []
 	for mutator in mutators:
 		cl_opt = '--' + mutator
 		if cl_opt in args and args[cl_opt] is not None:
-			options.append((mutator, args[cl_opt]))
+			val = args[cl_opt]
+			convertions = converters.get(cl_opt)
+			if convertions is not None and val in convertions:
+				val = convertions[val]
+			options.append((mutator, val))
 	return options
 
 
