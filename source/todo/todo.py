@@ -85,7 +85,7 @@ else:
 
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
-	'show_after': 'edit'
+	'layout': 'basic'
 }
 DEFAULT_CONFIG['Colors'] = {
 	'colors': COLORS,
@@ -485,12 +485,17 @@ def feedback_multiple_tasks_done(not_found):
 
 
 def feedback_todo(context, tasks, subcontexts):
+	layout = CONFIG.get('App', 'layout')
 	if len(tasks) != 0:
 		id_width = max(len(utils.to_hex(task['id'])) for task in tasks)
 	else:
 		id_width = 1
 	for task in tasks:
-		partial = functools.partial(get_task_string, context, id_width, task)
+		if layout == 'multiline':
+			stringyfier = get_multiline_task_string
+		else:
+			stringyfier = get_basic_task_string
+		partial = functools.partial(stringyfier, context, id_width, task)
 		safe_print(partial)
 	if len(subcontexts) > 0:				
 		print(TASK_SUBCTX_SEP)
@@ -535,39 +540,65 @@ def feedback_purge(count):
 	print('{} task{} deleted'.format(count, s))
 
 
-def get_task_string(context, id_width, task, ascii_=False):
+## String building for todo feedback
+
+
+def get_basic_task_string(context, id_width, task, ascii_=False):
+	c = get_task_string_components(task, ascii_)
+	if isinstance(c['id'], ColoredStr):
+		ansi_offset = c['id'].lenesc
+	else:
+		ansi_offset = 0
+	return '{id:>{width}} | {title} {deadline} {priority}'.format(
+		width=id_width + ansi_offset + 1,
+		**c
+	)
+
+
+def get_multiline_task_string(context, id_width, task, ascii_=False):
+	c = get_task_string_components(task, ascii_)
+	return ' {} / {} {}\n {}\n'.format(
+		c['id'],
+		c['deadline'],
+		c['priority'],
+		c['title']
+	)
+
+
+def get_task_string_components(task, ascii_=False):
 	id_str = may_be_colored(
 		utils.to_hex(task['id']),
 		CONFIG.get('Colors', 'id')
 	)
-	if isinstance(id_str, ColoredStr):
-		ansi_offset = id_str.lenesc
-	else:
-		ansi_offset = 0
-	content_str = may_be_colored(task['title'], CONFIG.get('Colors', 'content'))
-	string = '{id_:>{width}} | {content}'.format(
-		id_=id_str,
-		width=id_width + ansi_offset + 1,
-		content=content_str
+
+	content_str = may_be_colored(
+		task['title'],
+		CONFIG.get('Colors', 'content')
 	)
 
-	ctx_path = utils.get_relative_path(context, task['ctx_path'])
-	if ctx_path != '':
-		ctx_string = ' {}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
-		string += may_be_colored(ctx_string, CONFIG.get('Colors', 'context'))
-
+	remaining_str = ''
 	deadline = get_datetime(task['deadline'])
 	if deadline is not None:
 		remaining = deadline - NOW
 		user_friendly = utils.parse_remaining(remaining)
-		remaining_str = ' {} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
-		string += may_be_colored(remaining_str, CONFIG.get('Colors', 'deadline'))
+		remaining_str = '{} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
+		remaining_str = may_be_colored(
+			remaining_str,
+			CONFIG.get('Colors', 'deadline')
+		)
 
+	prio_str = ''
 	priority = task['priority']
 	if not is_task_default(task, 'priority'):
-		prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], priority)
-		string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
-	return string
+		prio_str = '{}{}'.format(PRIORITY_ICON[ascii_], priority)
+		prio_str = may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
+
+	return {
+		'id': id_str,
+		'title': content_str,
+		'deadline': remaining_str,
+		'priority': prio_str
+	}
 
 
 def get_context_string(context, id_width, ctx, ascii_=False):
