@@ -12,6 +12,7 @@ Usage:
   todo edit <id>
   todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
+  todo mv <ctx1> <ctx2>
   todo contexts [<context>]
   todo history
   todo purge
@@ -216,6 +217,8 @@ PARSERS = [
 	('--visibility', parse_visibility),
 	('--context', parse_context),
 	('<context>', parse_context),
+	('<ctx1>', parse_context),
+	('<ctx2>', parse_context),
 	('--deadline', parse_moment),
 	('--start', parse_moment),
 	('--name', parse_new_context_name)
@@ -335,6 +338,16 @@ def manage_context(args, daccess):
 			return 'not_exists_no_options'
 
 
+def move(args, daccess):
+	ctx1 = args['<ctx1>']
+	ctx2 = args['<ctx2>']
+	source_exists = daccess.context_exists(ctx1)
+	if not source_exists:
+		return 'ctx_doesnt_exist', ctx1
+	else:
+		daccess.move(ctx1, ctx2)
+
+
 def todo(args, daccess):
 	ctx = args.get('<context>', '')
 	if ctx is None:
@@ -373,6 +386,7 @@ DISPATCHER = [
 	('done', do_task),
 	('rm', remove_task),
 	('ctx', manage_context),
+	('mv', move),
 	('contexts', get_contexts),
 	('history', get_history),
 	('purge', purge)

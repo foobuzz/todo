@@ -257,6 +257,15 @@ class DataAccess():
 		else:
 			self.added_context = True
 			return c.lastrowid
+
+	def context_exists(self, path):
+		c = self.connection.cursor()
+		c.execute("""
+			SELECT 1 FROM Context
+			WHERE path = ?
+		""", (path,))
+		row = c.fetchone()
+		return row is not None
 		
 	def set_context(self, path, options=[]):
 		cid = self.get_or_create_context(path)
@@ -270,6 +279,18 @@ class DataAccess():
 		c = self.connection.cursor()
 		c.execute(query, values + (cid,))
 		return c.rowcount
+
+	def move(self, ctx1, ctx2):
+		cid = self.get_or_create_context(ctx2)
+		c = self.connection.cursor()
+		c.execute("""
+			UPDATE Task
+			SET context = ?
+			WHERE context = (
+				SELECT id FROM Context
+				WHERE path = ?
+			)
+		""", (cid, ctx1))
 
 	def rename_context(self, path, name):
 		"""Rename context with given path with name. Returns None if new name
