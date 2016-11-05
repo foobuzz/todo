@@ -142,7 +142,8 @@ class DataAccess():
 	def __init__(self, connection):
 		self.connection = connection
 		c = self.connection.cursor()
-		c.execute('PRAGMA case_sensitive_like=ON;')
+		c.execute('PRAGMA case_sensitive_like = ON;')
+		c.execute('PRAGMA foreign_keys = ON;')
 		self.connection.row_factory = sqlite3.Row
 		self.added_context = False
 
@@ -291,6 +292,14 @@ class DataAccess():
 				WHERE path = ?
 			)
 		""", (cid, ctx1))
+
+	def remove_context(self, path):
+		c = self.connection.cursor()
+		c.execute("""
+			DELETE FROM Context
+			WHERE path LIKE ?
+		""", ('{}%'.format(path),))
+		c.rowcount
 
 	def rename_context(self, path, name):
 		"""Rename context with given path with name. Returns None if new name

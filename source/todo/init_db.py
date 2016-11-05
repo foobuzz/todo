@@ -1,3 +1,6 @@
+import sqlite3
+
+
 INIT_DB = [
 	"""
 	CREATE TABLE `Task` (
@@ -8,7 +11,7 @@ INIT_DB = [
 		`start`	TEXT NOT NULL DEFAULT (datetime('now')),
 		`priority`	INTEGER NOT NULL DEFAULT 1,
 		`done`	TEXT,
-		`context`	INTEGER NOT NULL
+		`context`	INTEGER NOT NULL REFERENCES Context(id) ON DELETE CASCADE
 	);
 	""",
 	"""
@@ -23,3 +26,13 @@ INIT_DB = [
 	INSERT INTO `Context` (path) VALUES ('')
 	"""
 ]
+
+
+def main():
+	conn = sqlite3.connect('data.sqlite')
+	for stmt in INIT_DB:
+		conn.execute(stmt)
+
+
+if __name__ == '__main__':
+	main()

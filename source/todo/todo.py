@@ -13,6 +13,7 @@ Usage:
   todo rm <id>...
   todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
   todo mv <ctx1> <ctx2>
+  todo rmctx <context> [--force]
   todo contexts [<context>]
   todo history
   todo purge
@@ -48,7 +49,7 @@ __version__ = '2.1'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
-	'purge'}
+	'purge', 'mv', 'rmctx'}
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 
@@ -348,6 +349,22 @@ def move(args, daccess):
 		daccess.move(ctx1, ctx2)
 
 
+def remove_context(args, daccess):
+	ctx = args['<context>']
+	force = args['--force']
+	go_ahead = False
+	if not force:
+		ans = input('This will delete any tasks and subcontexts associated'
+			' to this context. Continue? y/* ')
+		go_ahead = ans == 'y'
+	else:
+		go_ahead = True
+	if go_ahead:
+		removed = daccess.remove_context(ctx)
+		if removed == 0:
+			return 'ctx_doesnt_exist', ctx
+
+
 def todo(args, daccess):
 	ctx = args.get('<context>', '')
 	if ctx is None:
@@ -386,6 +403,7 @@ DISPATCHER = [
 	('done', do_task),
 	('rm', remove_task),
 	('ctx', manage_context),
+	('rmctx', remove_context),
 	('mv', move),
 	('contexts', get_contexts),
 	('history', get_history),
