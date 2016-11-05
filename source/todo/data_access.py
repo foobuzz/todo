@@ -211,6 +211,7 @@ class DataAccess():
 		c.execute("""
 			UPDATE Task SET done = datetime('now')
 			WHERE id = ?
+			AND done IS NULL
 		""", (tid,))
 		return c.rowcount
 

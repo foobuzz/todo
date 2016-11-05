@@ -318,7 +318,7 @@ def edit_task(args, daccess):
 
 def do_task(args, daccess):
 	not_found = daccess.set_done_many(args['<id>'])
-	return 'multiple_tasks_update', not_found
+	return 'multiple_tasks_done', not_found
 
 
 def remove_task(args, daccess):
@@ -476,6 +476,12 @@ def feedback_multiple_tasks_update(not_found):
 		s = 's' if len(not_found) > 1 else ''
 		string = ', '.join(utils.to_hex(tid) for tid in not_found)
 		print('Task{} not found: {}'.format(s, string))
+
+
+def feedback_multiple_tasks_done(not_found):
+	if len(not_found) > 0:
+		string = ', '.join(utils.to_hex(tid) for tid in not_found)
+		print('Not found or already done: {}'.format(string))
 
 
 def feedback_todo(context, tasks, subcontexts):
