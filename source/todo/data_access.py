@@ -299,7 +299,7 @@ class DataAccess():
 			DELETE FROM Context
 			WHERE path LIKE ?
 		""", ('{}%'.format(path),))
-		c.rowcount
+		return c.rowcount
 
 	def rename_context(self, path, name):
 		"""Rename context with given path with name. Returns None if new name
@@ -429,12 +429,20 @@ class DataAccess():
 		else:
 			return row[0]
 
-	def purge(self):
+	def purge(self, before):
 		c = self.connection.cursor()
-		c.execute("""
+		query = """
 			DELETE FROM Task
 			WHERE done IS NOT NULL
-		""")
+		"""
+		if before is not None:
+			query += """
+				AND created < ?
+			"""
+			values = (before,)
+		else:
+			values = ()
+		c.execute(query, values)
 		return c.rowcount
 
 	def exit(self, save=True):

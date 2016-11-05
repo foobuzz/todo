@@ -16,7 +16,7 @@ Usage:
   todo rmctx <context> [--force]
   todo contexts [<context>]
   todo history
-  todo purge
+  todo purge [--force] [--before MOMENT]
   todo --help
   todo --version
   todo --location
@@ -31,6 +31,7 @@ Options:
   -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
                                           context.
   --name NAME                             Rename a context
+  --before MOMENT                         Purge all done task before a moment
 
 """
 
@@ -195,8 +196,8 @@ def parse_context(ctx):
 	return True, data_access.dbfy_context(ctx)
 
 
-def parse_moment(moment):
-	dt = utils.get_datetime(moment, NOW)
+def parse_moment(moment, direction=1):
+	dt = utils.get_datetime(moment, NOW, direction)
 	if dt is None:
 		return False, INCORRECT_MOMENT
 	else:
@@ -222,6 +223,7 @@ PARSERS = [
 	('<ctx2>', parse_context),
 	('--deadline', parse_moment),
 	('--start', parse_moment),
+	('--before', functools.partial(parse_moment, direction=-1)),
 	('--name', parse_new_context_name)
 ]
 
@@ -389,8 +391,24 @@ def get_history(args, daccess):
 
 
 def purge(args, daccess):
-	count = daccess.purge()
-	return 'purge', count
+	force = args['--force']
+	before = args['--before']
+	go_ahead = False
+	if force:
+		go_ahead = True
+	else:
+		if before is None:
+			q = "This will delete all done tasks. "
+		else:
+			q = "This will delete all done tasks created before "+\
+			"{}. ".format(before)
+		q += "This operation is irreversible. Continue? y/* "
+		ans = input(q)
+		if ans == 'y':
+			go_ahead = True
+	if go_ahead:
+		count = daccess.purge(before)
+		return 'purge', count
 
 ## DISPATCHING
 

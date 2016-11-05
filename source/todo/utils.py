@@ -92,7 +92,7 @@ def limit_str(string, length):
 			return string[:length-3] + '...'
 
 
-def get_datetime(string, now):
+def get_datetime(string, now, direction=1):
 	"""Parse the string `string` representating a datetime. The string can be
 	a delay such `2w` which means "in two weeks". In this case, the datetime
 	is the datetime `now` plus the delay. In any case, this returns a datetime
@@ -101,7 +101,8 @@ def get_datetime(string, now):
 	if match is not None:
 		value, unit = match.groups()
 		seconds = int(value) * REMAINING[unit]
-		return now + timedelta(seconds=seconds)
+		offset = direction * timedelta(seconds=seconds)
+		return now + offset
 	else:
 		dt = None
 		for pattern in USER_DATE_FORMATS:

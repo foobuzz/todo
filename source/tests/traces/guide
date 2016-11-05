@@ -78,5 +78,5 @@ $ ./todo.py
  4 | Send the documents for the house ⌛ 6 days remaining
 ----------------------------------------
  # | culture (2)
-$ ./todo.py purge
+$ ./todo.py purge --force
 1 task deleted
