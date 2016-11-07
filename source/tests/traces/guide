@@ -1,59 +1,59 @@
 $ ./todo.py add "Do the thing"
 $ ./todo.py 
- 1 | Do the thing  
+ 1 | Do the thing
 $ ./todo.py add "Fix the stuff"
 $ ./todo.py 
- 1 | Do the thing  
- 2 | Fix the stuff  
+ 1 | Do the thing
+ 2 | Fix the stuff
 $ ./todo.py done 1
 $ ./todo.py 
- 2 | Fix the stuff  
+ 2 | Fix the stuff
 $ ./todo.py add "Buy the gift for Stefany" --deadline {NOW+16d}
 $ ./todo.py 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
- 2 | Fix the stuff  
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
 $ ./todo.py add "Send the documents for the house" --deadline 1w
 $ ./todo.py 
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
- 2 | Fix the stuff  
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
 $ ./todo.py add "Buy the fireworks package" --deadline {NOW+105d}
 $ ./todo.py 
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
- 5 | Buy the fireworks package ⌛ 104 days remaining 
- 2 | Fix the stuff  
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 5 | Buy the fireworks package ⌛ 104 days remaining
+ 2 | Fix the stuff
 $ ./todo.py task 5 -s {NOW+1d}
 $ ./todo.py 
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
- 2 | Fix the stuff  
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
 $ ./todo.py add "Fix the window" -p 3
 $ ./todo.py 
- 6 | Fix the window  ★3
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
- 2 | Fix the stuff  
+ 6 | Fix the window ★3
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 2 | Fix the stuff
 $ ./todo.py task 2 -p 2
 $ ./todo.py 
- 6 | Fix the window  ★3
- 2 | Fix the stuff  ★2
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
 $ ./todo.py add "Read the article about chemistry" -c culture
 $ ./todo.py 
- 6 | Fix the window  ★3
- 2 | Fix the stuff  ★2
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
 ----------------------------------------
  # | culture (1)
 $ ./todo.py culture
- 7 | Read the article about chemistry  
+ 7 | Read the article about chemistry
 $ ./todo.py ctx culture
- 7 | Read the article about chemistry  
+ 7 | Read the article about chemistry
 $ ./todo.py task 7 -c culture.chemistry
-$ ./todo.py culture  
+$ ./todo.py culture
 ----------------------------------------
  # | chemistry (1)
 $ ./todo.py add "Listen to the podcast about movies" -c culture.cinema
@@ -62,21 +62,22 @@ $ ./todo.py culture
  # | chemistry (1)
  # | cinema (1)
 $ ./todo.py culture.chemistry
- 7 | Read the article about chemistry  
+ 7 | Read the article about chemistry
 $ ./todo.py 
- 6 | Fix the window  ★3
- 2 | Fix the stuff  ★2
- 4 | Send the documents for the house ⌛ 6 days remaining 
- 3 | Buy the gift for Stefany ⌛ 15 days remaining 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
 ----------------------------------------
  # | culture (2)
 $ ./todo.py ctx health -p 10
 $ ./todo.py rm 3
 $ ./todo.py 
- 6 | Fix the window  ★3
- 2 | Fix the stuff  ★2
- 4 | Send the documents for the house ⌛ 6 days remaining 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
 ----------------------------------------
+ # | health (0) ★10
  # | culture (2)
 $ ./todo.py purge --force
 1 task deleted

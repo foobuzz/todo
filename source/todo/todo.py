@@ -3,7 +3,7 @@
 """todo. CLI todo list manager.
 
 Usage:
-  todo [<context>]
+  todo [<context>] [--flat|--tidy]
   todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
   todo done <id>...
@@ -85,7 +85,8 @@ else:
 
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
-	'layout': 'basic'
+	'layout': 'basic',
+	'todo_fashion': 'tidy'
 }
 DEFAULT_CONFIG['Colors'] = {
 	'colors': COLORS,
@@ -373,11 +374,19 @@ def remove_context(args, daccess):
 
 
 def todo(args, daccess):
+	fashion = 'flat' if args['--flat'] else None
+	if fashion is None:
+		fashion = 'tidy' if args['--tidy'] else None
+	if fashion is None:
+		fashion = CONFIG.get('App', 'todo_fashion')
 	ctx = args.get('<context>', '')
 	if ctx is None:
 		ctx = ''
-	tasks = daccess.todo(ctx)
-	subcontexts = daccess.get_subcontexts(ctx)
+	tasks = daccess.todo(ctx, recursive=(fashion == 'flat'))
+	if fashion == 'tidy':
+		subcontexts = daccess.get_subcontexts(ctx)
+	else:
+		subcontexts = []
 	return 'todo', ctx, tasks, subcontexts
 
 
@@ -542,28 +551,23 @@ def feedback_purge(count):
 
 
 def get_basic_task_string(context, id_width, task, ascii_=False):
-	c = get_task_string_components(task, ascii_)
+	c = get_task_string_components(task, context, ascii_)
 	if isinstance(c['id'], ColoredStr):
 		ansi_offset = c['id'].lenesc
 	else:
 		ansi_offset = 0
-	return '{id:>{width}} | {title} {deadline} {priority}'.format(
-		width=id_width + ansi_offset + 1,
-		**c
-	)
+	left = '{id:>{width}}'.format(width=id_width + ansi_offset + 1, **c)
+	right = ['title', 'deadline', 'priority', 'context']
+	right = ' '.join(c[a] for a in right if c[a] != '')
+	return '{} | {}'.format(left, right)
 
 
 def get_multiline_task_string(context, id_width, task, ascii_=False):
-	c = get_task_string_components(task, ascii_)
-	return ' {} / {} {}\n {}\n'.format(
-		c['id'],
-		c['deadline'],
-		c['priority'],
-		c['title']
-	)
+	c = get_task_string_components(task, context, ascii_)
+	return ' {id} / {deadline} {priority} {context}\n {title}\n'.format(**c)
 
 
-def get_task_string_components(task, ascii_=False):
+def get_task_string_components(task, ctx, ascii_=False):
 	id_str = may_be_colored(
 		utils.to_hex(task['id']),
 		CONFIG.get('Colors', 'id')
@@ -591,11 +595,19 @@ def get_task_string_components(task, ascii_=False):
 		prio_str = '{}{}'.format(PRIORITY_ICON[ascii_], priority)
 		prio_str = may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
 
+	ctx_path = utils.get_relative_path(ctx, task['ctx_path'])
+	if ctx_path == '':
+		ctx_str = ''
+	else:
+		ctx_str = '{}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
+		ctx_str = may_be_colored(ctx_str, CONFIG.get('Colors', 'context'))
+
 	return {
 		'id': id_str,
 		'title': content_str,
 		'deadline': remaining_str,
-		'priority': prio_str
+		'priority': prio_str,
+		'context': ctx_str
 	}
 
 

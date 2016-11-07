@@ -325,13 +325,17 @@ class DataAccess():
 		""", new)
 		return c2.rowcount
 
-	def todo(self, path=''):
+	def todo(self, path='', recursive=False):
+		if recursive:
+			operator, value = 'LIKE', '{}%'.format(path)
+		else:
+			operator, value = '=', path
 		c = self.connection.cursor()
 		c.execute("""
 			SELECT t.*, c.path as ctx_path
 			FROM Task t JOIN Context c
 			ON t.context = c.id
-			WHERE c.path = ?
+			WHERE c.path {} ?
 			  AND t.done IS NULL
 			  AND (datetime('now')) >= datetime(t.start)
 			ORDER BY
@@ -341,7 +345,7 @@ class DataAccess():
 			      julianday('9999-12-31 23:59:59')
 			    ) - julianday('now') ASC,
 			  created ASC
-		""", (path,))
+		""".format(operator), (value,))
 		return c.fetchall()
 
 	def get_subcontexts(self, path=''):
