@@ -299,8 +299,6 @@ def update_task(args, daccess):
 	tid = args['<id>'][0]
 	context = args.get('--context')
 	options = get_options(args, TASK_MUTATORS, {'--deadline': {'None': None}})
-	if context is None:
-		context = ''
 	upt_count = daccess.update_task(tid, context, options)
 	return 'single_task_update', tid, upt_count != 0
 
