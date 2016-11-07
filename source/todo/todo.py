@@ -311,7 +311,7 @@ def edit_task(args, daccess):
 	# hurr durr I'm a text editor I append a newline at the end of files
 		new_content = new_content[:-1]
 	upt_count = daccess.update_task(tid, options=[('title', new_content)])
-	return 'single_task_update', upt_count != 0
+	return 'single_task_update', tid, upt_count != 0
 
 
 def do_task(args, daccess):
