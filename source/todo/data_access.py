@@ -363,7 +363,6 @@ class DataAccess():
 			 AND own.done IS NULL
 			WHERE path LIKE ?
 			  AND path NOT LIKE ?
-			  AND total_tasks > 0
 			  AND visibility = 'normal'
 			GROUP BY c.id
 			ORDER BY
