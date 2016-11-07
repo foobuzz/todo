@@ -137,7 +137,7 @@ class DataAccess():
 		c.execute('PRAGMA case_sensitive_like = ON;')
 		c.execute('PRAGMA foreign_keys = ON;')
 		self.connection.row_factory = sqlite3.Row
-		self.added_context = False
+		self.changed_contexts = False
 
 	def add_task(self, title, context='', options=[]):
 		cid = self.get_or_create_context(context)
@@ -229,7 +229,7 @@ class DataAccess():
 			except sqlite3.IntegrityError: # Already exists
 				continue
 			else:
-				self.added_context = True
+				self.changed_contexts = True
 
 		query_tmp = """
 			INSERT INTO Context (path {})
@@ -249,7 +249,7 @@ class DataAccess():
 			row = c2.fetchone()
 			return row[0]
 		else:
-			self.added_context = True
+			self.changed_contexts = True
 			return c.lastrowid
 
 	def context_exists(self, path):
@@ -292,6 +292,7 @@ class DataAccess():
 			DELETE FROM Context
 			WHERE path LIKE ?
 		""", ('{}%'.format(path),))
+		self.changed_contexts = True
 		return c.rowcount
 
 	def rename_context(self, path, name):
@@ -444,7 +445,7 @@ class DataAccess():
 	def exit(self, save=True):
 		if save:
 			self.connection.commit()
-			if self.added_context:
+			if self.changed_contexts:
 				c = self.connection.cursor()
 				c.execute("""
 					SELECT DISTINCT path FROM Context
