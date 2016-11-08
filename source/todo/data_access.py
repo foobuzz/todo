@@ -136,6 +136,7 @@ class DataAccess():
 		c = self.connection.cursor()
 		c.execute('PRAGMA case_sensitive_like = ON;')
 		c.execute('PRAGMA foreign_keys = ON;')
+		c.execute('PRAGMA synchronous = OFF;')
 		self.connection.row_factory = sqlite3.Row
 		self.changed_contexts = False
 
