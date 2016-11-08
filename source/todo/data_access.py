@@ -129,6 +129,26 @@ def rename_context(path, name):
 	return '.'.join(path.split('.')[:-1]+[name])
 
 
+def check_options(options, allowed_options):
+	for option, val in options:
+		if option not in allowed_options:
+			raise ValueError('Illegal option')
+
+
+TASK_OPTIONS = {
+	'title',
+	'deadline',
+	'start',
+	'priority',
+	'context'
+}
+
+CONTEXT_OPTIONS = {
+	'priority',
+	'visibility'
+}
+
+
 class DataAccess():
 
 	def __init__(self, connection):
@@ -141,6 +161,7 @@ class DataAccess():
 		self.changed_contexts = False
 
 	def add_task(self, title, context='', options=[]):
+		check_options(options, TASK_OPTIONS)
 		cid = self.get_or_create_context(context)
 		query_tmp = """
 			INSERT INTO Task (title, context {})
@@ -155,6 +176,7 @@ class DataAccess():
 		return c.lastrowid
 
 	def update_task(self, tid, context=None, options=[]):
+		check_options(options, TASK_OPTIONS)
 		if context is not None:
 			cid = self.get_or_create_context(context)
 			options = options.copy()
@@ -217,6 +239,7 @@ class DataAccess():
 		return c.rowcount
 
 	def get_or_create_context(self, path, options=[]):
+		check_options(options, CONTEXT_OPTIONS)
 		ctxs = path.split('.')[1:]
 		path_so_far = ''
 		c = self.connection.cursor()
@@ -263,6 +286,7 @@ class DataAccess():
 		return row is not None
 		
 	def set_context(self, path, options=[]):
+		check_options(options, CONTEXT_OPTIONS)
 		cid = self.get_or_create_context(path)
 		query_tmp = """
 			UPDATE Context SET {}
