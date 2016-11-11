@@ -155,10 +155,12 @@ CANT_RENAME_ROOT = "Can't rename root context."
 INVALID_TID = "Invalid task{} ID: {}"
 
 
-# Argument parsers. Each function should return a 2-tuple where the first
-# component is a boolean indicating whether the value of the argument is
-# correct and has been successfully parsed. The second component contains
-# either the parsed value (if success) or an error message.
+# ARGUMENT PARSERS.
+#
+# Each function should return a 2-tuple where the first component is a boolean
+# indicating whether the value of the argument is correct and has been
+# successfully parsed. The second component contains either the parsed value
+# (if success) or an error message.
 
 def parse_id(tid_list):
 	valid = []
@@ -198,6 +200,10 @@ def parse_context(ctx):
 
 
 def parse_moment(moment, direction=1):
+	""" Parse a moment, which can be either a string datetime in the allowed
+	datetimes format, either a delay (e.g. 2w). In the case of a delay,
+	direction indicates in which direction in time the delay is applied to the
+	current time. It can either be 1 (future) or -1 (past)."""
 	dt = utils.get_datetime(moment, NOW, direction)
 	if dt is None:
 		return False, INCORRECT_MOMENT
@@ -206,6 +212,12 @@ def parse_moment(moment, direction=1):
 
 
 def parse_deadline(moment):
+	""" A deadline-specific wrapper around parse_moment. Case-insensitive
+	'none' is accepted and is parsed as 'None' (the string)"""
+	# The reason why it returns the string 'None' and not the value None is
+	# that docopt gives the value None to all arguments and options that
+	# weren't used. Using 'None' (the string) allows us the make the difference
+	# between a deadline set as none and no deadline set.
 	if moment.lower() == 'none':
 		return True, 'None'
 	else:
@@ -237,6 +249,11 @@ PARSERS = [
 
 
 def parse_args(args):
+	""" Apply application-level parsing of the values of the args dictionary
+	*in place*. Returns a report which is a list of errors (strings) that
+	might have occured during parsing. There's no waranty that the args
+	dictionary will work with the rest of the application if the report
+	list isn't empty."""
 	fix_args(args)
 	report = []
 	for arg_name, parser in PARSERS:
@@ -279,7 +296,7 @@ def get_data_access():
 	return DataAccess(connection)
 
 
-## HANDLERS
+# HANDLERS
 
 # Do something with the args dictionary and the data access object then return
 # a feedback code as well as some data about how things went. Feedback
@@ -426,7 +443,7 @@ def purge(args, daccess):
 
 ## DISPATCHING
 
-# A dictionary is used to map the name of commands to handlers defined above.
+# Map of the names of the commands to handlers defined above.
 
 DISPATCHER = [
 	('add', add_task),
@@ -447,10 +464,22 @@ def dispatch(args, daccess):
 	for command, handler in DISPATCHER:
 		if args[command]:
 			return handler(args, daccess)
+	# If no command, fallback to the todo handler
 	return todo(args, daccess)
 
 
 def get_options(args, mutators, converters={}):
+	""" Returns a list of 2-tuple in the form (option, value) for all options
+	contained in the `mutators` collection if they're also keys of the `args`
+	dictionary prefixed by '--' and have a non-None value. If the option (non-
+	prefixed) is also a key of the `converters` dictionary then the associated
+	value should be another dictionary indicating convertions to be done on
+	the value found in `args`.
+	e.g.
+	args = {'--deadline': 'none'}
+	mutators = {'deadline'}
+	converters = {'deadline': {'none': None}}
+	=> [('deadline', None)]"""
 	options = []
 	for mutator in mutators:
 		cl_opt = '--' + mutator
@@ -470,7 +499,6 @@ TASK_SUBCTX_SEP = '-'*40
 
 def feedback_add_task(id_):
 	pass
-	#print('Added task {}'.format(id_))
 
 
 def feedback_single_task_update(tid, found):
@@ -547,8 +575,15 @@ def feedback_purge(count):
 	print('{} task{} deleted'.format(count, s))
 
 
-## String building for todo feedback
+# String building for todo feedback
 
+# Those functions return a string. They accept a boolean `ascii_` argument
+# that indicates whether to build the returned string with ASCII characters
+# only (True) or whether non-ASCII characters are allowed (False). Those
+# functions will then be partially called with all arguments set except the
+# `ascii_` one and the resulting partial will be passed to `safe_print` which
+# will take care of trying to print the non-ASCII version and then fallback to
+# the ASCII version in case of error from the terminal.
 
 def get_basic_task_string(context, id_width, task, ascii_=False):
 	c = get_task_string_components(task, context, ascii_)
@@ -639,6 +674,7 @@ def safe_print(partial):
 
 
 def get_datetime(db_dt):
+	""" Get a datetime object from the string retrieved from the database."""
 	if db_dt is None:
 		return None
 	return datetime\
