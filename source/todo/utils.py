@@ -22,29 +22,31 @@ SQLITE_DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 def print_table(struct, iterable, is_default=lambda a: False):
-	"""This function, which is responsible for printing tables to the
-	terminal, awaits a "structure", an iterable and the width of the display.
-	The structure describes the columns of the table and their properties.
-	It's a list of tuples where each tuple describes one column of the table.
-	A tuple has 5 elements corresponding to the following pieces of
-	information:
+	""" This function, which is responsible for printing tables to the
+	terminal, awaits a "structure", an iterable and a function. The structure
+	describes the columns of the table and their properties. It's a list of
+	tuples where each tuple describes one column of the table. A tuple has 5
+	elements corresponding to the following pieces of information:
 	 1. The header of the column, a string
 	 2. The width of the column given in number of characters. The width can
-        either be an integer or a function accepting one argument. Widths
-        given as integers will be subtracted from the display's width to
-        obtain the "available space". After that, widths given as functions
-        will be evaluated with the available space given as their argument and
-        the functions should return an integer being the actual width of the
-        corresponding column.
+	    either be an integer or a function accepting one argument. Widths
+	    given as integers will be subtracted from the terminal's width to
+	    obtain the "available space". After that, widths given as functions
+	    will be evaluated with the available space given as their argument and
+	    the functions should return an integer being the actual width of the
+	    corresponding column.
 	 3. How the name of the column should be aligned in the table header.
-        Value should be either ">", "<", "=" or "^". See Python's format mini-
-        language.
-	 4. The name of the attribute of the objects yielded by the iterable to
-        print in the table. This attribute's value will be accessed using
-        hasattr. If this element of the tuple is set to None, the object
-        itself will be used for printing.
+	    Value should be either ">", "<", "=" or "^". See Python's format mini-
+	    language.
+	 4. For mappings, the name of the key of the map to print the value of. If
+	    this element is set to None, the object itself will be used for
+	    printing.
 	 5. A function which takes as argument the value obtained according to the
-        previous element and return the string to finally print.
+	    previous element and return the string to finally print.
+
+    The function `is_default` should accept a yielded object and the element 4
+    of the tuple and returns True if this objects contains a "default value"
+    at the given key. Such values aren't printed in the table.
 
     See the function get_history_struct to have an example of structure."""
 	term_width = get_terminal_width()
@@ -94,9 +96,10 @@ def limit_str(string, length):
 
 def get_datetime(string, now, direction=1):
 	"""Parse the string `string` representating a datetime. The string can be
-	a delay such `2w` which means "in two weeks". In this case, the datetime
-	is the datetime `now` plus the delay. In any case, this returns a datetime
-	object."""
+	a delay such `2w` which means "two weeks". In this case, the datetime is
+	the datetime `now` plus/minus the delay. The `direction` option indicates
+	if the delay needs to be added to now (+1) or substracted from now (-1).
+	In any case, this returns a datetime object."""
 	match = REMAINING_RE.match(string)
 	if match is not None:
 		value, unit = match.groups()
