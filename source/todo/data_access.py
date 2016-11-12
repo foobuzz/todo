@@ -19,6 +19,8 @@ else:
 
 DB_PATH = op.join(DATA_DIR, DATABASE_NAME)
 
+DATETIME_MIN = '0001-01-01 00:00:00'
+
 
 def setup_data_access():
 	""" Prepare the sqlite database so that it's ready to be used by the
@@ -81,7 +83,7 @@ def transfer_data(connection, data):
 		if 'created' in task:
 			created = iso2sqlite(task['created'])
 		else:
-			created = datetime.min.strftime(utils.SQLITE_DT_FORMAT)
+			created = DATETIME_MIN
 		options.append(('created', created))
 		for prop in ['start', 'deadline']:
 			if prop in task:
