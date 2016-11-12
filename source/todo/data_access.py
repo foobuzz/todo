@@ -271,6 +271,10 @@ class DataAccess():
 		keys. A subset of the columns can be retrieved by changing the value
 		of the `columns` argument which must contain a comma-separated list of
 		columns (a string)."""
+		if columns != '*':
+			for c in columns.split(','):
+				if c.strip() not in TASK_OPTIONS:
+					raise ValueError('Illegal column')
 		query = """
 			SELECT {}
 			FROM Task
