@@ -376,6 +376,26 @@ class DataAccess():
 		""", (path,))
 		row = c.fetchone()
 		return row is not None
+
+	def get_basic_context_tally(self, path):
+		""" Returns the number of (direct) tasks a context contains and the
+		number of (direct subcontexts it contains, in the form of a
+		2-tuple."""
+		c = self.connection.cursor()
+		c.execute("""
+			SELECT COUNT(t.id)
+			FROM Task t
+			JOIN Context c
+			  ON t.context = c.id
+			WHERE t.done IS NULL
+			  AND c.path = ?
+			UNION ALL
+			SELECT COUNT(id)
+			FROM Context
+			WHERE path LIKE ?
+		""", (path, '{}_%'.format(path)))
+		result = c.fetchall()
+		return result[0][0], result[1][0]
 		
 	def set_context(self, path, options=[]):
 		""" Set the context pointed to by `path` to have the given `options`.

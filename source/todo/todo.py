@@ -379,8 +379,9 @@ def remove_context(args, daccess):
 	force = args['--force']
 	go_ahead = False
 	if not force:
-		ans = input('This will delete any tasks and subcontexts associated'
-			' to this context. Continue? y/* ')
+		nb_tasks, nb_subctx = daccess.get_basic_context_tally(ctx)
+		ans = input('This context contains {} direct undone task(s) and '
+			'{} subcontext(s). Continue? y/* '.format(nb_tasks, nb_subctx))
 		go_ahead = ans == 'y'
 	else:
 		go_ahead = True
