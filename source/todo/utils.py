@@ -55,7 +55,7 @@ def print_table(struct, iterable, is_default=lambda a: False):
 	template, separator = '', ''
 	widths = {}
 	for header, width, align, *_ in struct:
-		w = width if isinstance(width, int) else width(available)
+		w = max(0, width if isinstance(width, int) else width(available))
 		widths[header] = w
 		template = ' '.join([template, '{{: {}{}}}'.format(align, w)])
 		separator = ' '.join([separator, '-'*w])

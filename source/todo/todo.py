@@ -701,8 +701,9 @@ def is_default(dico, prop, defaults):
 
 
 def get_history_struct(gid):
+	gid_len = len(utils.to_hex(gid))
 	struct = [
-		('id', gid, '>', 'id', utils.to_hex),
+		('id', gid_len + 1, '>', 'id', utils.to_hex),
 		('title', lambda a: 3 * (a//4), '<', 'title', None),
 		('created', 19, '<', 'created', None),
 	]
