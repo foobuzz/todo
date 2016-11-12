@@ -24,6 +24,9 @@ INIT_DB = [
 	""",
 	"""
 	INSERT INTO `Context` (path) VALUES ('')
+	""",
+	"""
+	CREATE INDEX `PathIndex` ON `Context` (`path` ASC);
 	"""
 ]
 
