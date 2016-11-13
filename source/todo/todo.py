@@ -46,7 +46,7 @@ from .rainbow import ColoredStr
 from .data_access import DataAccess, DATA_DIR
 
 
-__version__ = '2.1'
+__version__ = '3.0'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
