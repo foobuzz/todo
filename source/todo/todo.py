@@ -11,7 +11,7 @@ Usage:
     [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]
   todo edit <id>
   todo rm <id>...
-  todo ctx <context> [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
+  todo ctx <context> [--flat|--tidy] [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
   todo mv <ctx1> <ctx2>
   todo rmctx <context> [--force]
   todo contexts [<context>]
