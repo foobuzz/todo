@@ -86,7 +86,8 @@ else:
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
 	'layout': 'basic',
-	'todo_fashion': 'tidy'
+	'todo_fashion': 'tidy',
+	'show_empty_contexts': True
 }
 DEFAULT_CONFIG['Colors'] = {
 	'colors': COLORS,
@@ -402,7 +403,8 @@ def todo(args, daccess):
 		ctx = ''
 	tasks = daccess.todo(ctx, recursive=(fashion == 'flat'))
 	if fashion == 'tidy':
-		subcontexts = daccess.get_subcontexts(ctx)
+		get_empty = CONFIG.getboolean('App', 'show_empty_contexts')
+		subcontexts = daccess.get_subcontexts(ctx, get_empty)
 	else:
 		subcontexts = []
 	return 'todo', ctx, tasks, subcontexts

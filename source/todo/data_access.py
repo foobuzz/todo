@@ -505,13 +505,19 @@ class DataAccess():
 		""".format(operator), (value,))
 		return c.fetchall()
 
-	def get_subcontexts(self, path=''):
+	def get_subcontexts(self, path='', get_empty=True):
 		""" Return a list of Row-contexts that are direct children of the
 		context pointed to by `path`. The list doesn't contain contexts that
-		have a "hidden" visibility. In the list, contexts are sorted by:
+		have a "hidden" visibility. If `get_empty` is False, then contexts
+		that have 0 total tasks are excluded from the list. In the list,
+		contexts are sorted by:
 		 * priority, descending
 		 * total number of tasks (including tasks in descendance), ascending
 		"""
+		if get_empty:
+			add_condition = ''
+		else:
+			add_condition = 'AND total_tasks > 0'
 		c = self.connection.cursor()
 		c.execute("""
 			SELECT c.*, COUNT(own.id) as own_tasks, (
@@ -531,13 +537,14 @@ class DataAccess():
 			WHERE path LIKE ?
 			  AND path NOT LIKE ?
 			  AND visibility = 'normal'
+			  {}
 			GROUP BY c.id
 			ORDER BY
 			  priority DESC,
 			  total_tasks DESC
-		""", (
+		""".format(add_condition), (
 			'{}.%'.format(path),
-			'{}.%.%'.format(path)
+			'{}.%.%'.format(path),
 			)
 		)
 		return c.fetchall()
