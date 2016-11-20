@@ -430,6 +430,13 @@ class DataAccess():
 			)
 		""", (cid, ctx1))
 
+	def move_all(self, ctx1, ctx2):
+		""" Same as `move` but move tasks of subcontexts as well. (any
+		necessary context is created at the destination context."""
+		for ctx in self.get_descendants(ctx1):
+			dest = ctx2 + ctx['path'][len(ctx1):]
+			self.move(ctx['path'], dest)
+
 	def remove_context(self, path):
 		""" Remove the context (and all subcontexts and tasks/subtasks)
 		pointed to by `path`."""

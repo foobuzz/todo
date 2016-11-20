@@ -372,7 +372,7 @@ def move(args, daccess):
 	if not source_exists:
 		return 'ctx_doesnt_exist', ctx1
 	else:
-		daccess.move(ctx1, ctx2)
+		daccess.move_all(ctx1, ctx2)
 
 
 def remove_context(args, daccess):
