@@ -494,6 +494,7 @@ class DataAccess():
 			ON t.context = c.id
 			WHERE c.path {} ?
 			  AND t.done IS NULL
+			  AND (c.path = ? OR c.visibility = 'normal')
 			  AND (datetime('now')) >= datetime(t.start)
 			ORDER BY
 			  priority DESC,
@@ -502,7 +503,7 @@ class DataAccess():
 			      julianday('9999-12-31 23:59:59')
 			    ) - julianday('now') ASC,
 			  created ASC
-		""".format(operator), (value,))
+		""".format(operator), (value, path))
 		return c.fetchall()
 
 	def get_subcontexts(self, path='', get_empty=True):
