@@ -1,10 +1,18 @@
-import subprocess, re, os, shutil
+import subprocess, re, os, shutil, sys, time
 import os.path as op
 from datetime import datetime
 
 
 COMMAND_W_DT = '{NOW\+(.*)}'
 NOW = datetime.now()
+
+
+class TestFunction():
+
+	def run_test(self, func):
+		for args, expected in self.cases:
+			result = func(*args)
+			self.assertEqual(result, expected)
 
 
 def parse_trace(trace_file, get_datetime):
@@ -32,7 +40,10 @@ def test_trace(filename, get_datetime, print_commands=False):
 	with open(filename) as trace_file:
 		sequence = parse_trace(trace_file, get_datetime)
 	errors = {'crash': 0, 'clash': 0}
+	counter = 0
+	start = time.time()
 	for command, out in sequence:
+		counter += 1
 		if print_commands:
 			print(command)
 		process = subprocess.Popen(command, shell=True,
@@ -41,6 +52,7 @@ def test_trace(filename, get_datetime, print_commands=False):
 			stderr=subprocess.PIPE)
 		stdout, stderr = process.communicate()
 		status = process.returncode
+		passed = True
 		try:
 			assert status == 0
 			assert stderr == ''
@@ -48,6 +60,7 @@ def test_trace(filename, get_datetime, print_commands=False):
 			print('[cRash] >', command)
 			print('[stderr]:\n'+stderr)
 			errors['crash'] += 1
+			passed = False
 		try:
 			assert out == stdout
 		except AssertionError:
@@ -55,6 +68,12 @@ def test_trace(filename, get_datetime, print_commands=False):
 			print('[output]:\n'+stdout)
 			print('[expected]:\n'+out)
 			errors['clash'] += 1
+			passed = False
+		if passed:
+			print('.', end='')
+			sys.stdout.flush()
+	total = time.time() - start
+	print('\nRan {} commands in {:.3} seconds'.format(counter, total))
 	return errors
 
 
