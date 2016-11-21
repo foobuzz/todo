@@ -2,6 +2,7 @@ import unittest, sys
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
+from .utils import TestFunction
 
 sys.path.insert(1, op.abspath('./todo'))
 
@@ -71,16 +72,27 @@ class TestDatetimeParsing(unittest.TestCase):
 			self.assertEqual(result, expected)
 
 
-class TestLimitStr(unittest.TestCase):
+class TestLimitStr(TestFunction, unittest.TestCase):
 
-	cases = {
-		('hello', 5): 'hello',
-		('hello', 6): 'hello',
-		('hello', 4): 'h...',
-		('hello', 3): 'hel',
-		('hello', 0): ''
-	}
+	cases = [
+		(['hello', 5], 'hello'),
+		(['hello', 6], 'hello'),
+		(['hello', 4], 'h...'),
+		(['hello', 3], 'hel'),
+		(['hello', 0], '')
+	]
 
 	def test_limit_str(self):
-		for args, result in TestLimitStr.cases.items():
-			self.assertEqual(tutils.limit_str(*args), result)
+		self.run_test(tutils.limit_str)
+
+
+class TestGetRelativePath(TestFunction, unittest.TestCase):
+
+	cases = [
+		(['', '.test'], 'test'),
+		(['', '.test.test2'], 'test.test2'),
+		(['.test', '.test.test2'], 'test2')
+	]
+
+	def test_get_relative_path(self):
+		self.run_test(tutils.get_relative_path)
