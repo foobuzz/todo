@@ -142,12 +142,6 @@ def input_from_editor(init_content, editor):
 	return new_content
 
 
-def parse_list(string):
-	""" "foo, bar" => ["foo", "bar"]"""
-	ls = [e.strip() for e in string.split(',')]
-	return [] if ls[0] == '' else ls
-
-
 def get_relative_path(parent, desc):
 	rel = desc[len(parent):]
 	if rel.startswith('.'):
