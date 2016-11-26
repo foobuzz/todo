@@ -430,6 +430,13 @@ class DataAccess():
 			)
 		""", (cid, ctx1))
 
+	def move_all(self, ctx1, ctx2):
+		""" Same as `move` but move tasks of subcontexts as well. (any
+		necessary context is created at the destination context."""
+		for ctx in self.get_descendants(ctx1):
+			dest = ctx2 + ctx['path'][len(ctx1):]
+			self.move(ctx['path'], dest)
+
 	def remove_context(self, path):
 		""" Remove the context (and all subcontexts and tasks/subtasks)
 		pointed to by `path`."""
@@ -494,6 +501,7 @@ class DataAccess():
 			ON t.context = c.id
 			WHERE c.path {} ?
 			  AND t.done IS NULL
+			  AND (c.path = ? OR c.visibility = 'normal')
 			  AND (datetime('now')) >= datetime(t.start)
 			ORDER BY
 			  priority DESC,
@@ -502,7 +510,7 @@ class DataAccess():
 			      julianday('9999-12-31 23:59:59')
 			    ) - julianday('now') ASC,
 			  created ASC
-		""".format(operator), (value,))
+		""".format(operator), (value, path))
 		return c.fetchall()
 
 	def get_subcontexts(self, path='', get_empty=True):

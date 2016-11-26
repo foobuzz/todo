@@ -43,7 +43,7 @@ Set a task as done using the `done` command, with the task's ID as value:
 
 ## Deadlines
 
-Set a deadline to a task using the `-d` or `--deadline` option. The value is a date in the YYYY-MM-DD format:
+Set a deadline to a task using the `-d` or `--deadline` option. The value is a date in the `YYYY-MM-DD` or `YYYY-MM-DD HH:MM:SS` format:
 
 	$ todo add "Buy the gift for Stefany" --deadline 2016-02-25
 	$ todo
@@ -102,7 +102,7 @@ You can assign a priority to a task using the `-p` or `--priority` option. Prior
 
 ## Contexts
 
-You can assign a context to a task using the `-c` or `--context` option. Contexts are strings.
+You can put the task in a context using the `-c` or `--context` option. Contexts are strings.
 
 	$ todo add "Read the article about chemistry" -c culture
 	$ todo
@@ -110,12 +110,15 @@ You can assign a context to a task using the `-c` or `--context` option. Context
 	    2 | Fix the stuff ★2
 	    4 | Send the documents for the house ⌛ 6 days remaining
 	    3 | Buy the gift for Stefany ⌛ 16 days remaining
-	    7 | Read the article about chemistry #culture
+		----------------------------------------
+ 		# | culture (1)
 
-To filter tasks according to their context, you need to indicate the name of the context:
+You can think of contexts as of directories in which you put tasks. Contexts are listed after the list of tasks, and the number of tasks of each context is indicated.
+
+To see the todolist of a specific context, you need to indicate the name of the context:
 
 	$ todo culture
-	    7 | Read the article about chemistry #culture
+	    7 | Read the article about chemistry
 
 Another way to accomplish that is though the `ctx` command:
 
@@ -124,83 +127,83 @@ Another way to accomplish that is though the `ctx` command:
 
 This helps removing any ambiguity if you ever have a context whose name happens to be the name of a command.
 
+You can also display tasks of contexts integrated with general tasks with the `--flat` option:
+
+	$ todo --flat
+	    6 | Fix the window ★3
+	    2 | Fix the stuff ★2		
+	    4 | Send the documents for the house ⌛ 6 days remaining
+	    3 | Buy the gift for Stefany ⌛ 16 days remaining
+		7 | Read the article about chemistry #culture
+
+Notice how the `#` flag indicates the context of the task. You can set the `--flat` option to be the default way to display tasks in the [configuration file]. In such case, the original hierarchical display is achieved using the `--tidy` option.
+
+
 ### Subcontexts
 
-You can define contexts within contexts using the dot notation:
+Since contexts are the equivalent of directories, you can also create a hierarchy of contexts. You can define contexts within contexts using the dot notation:
 
 	$ todo task 7 -c culture.chemistry
-	$ todo ctx culture
-	    7 | Read the article about chemistry #chemistry
+	$ todo culture
+	----------------------------------------
+	 # | chemistry (1)
 	$ todo add "Listen to the podcast about movies" -c culture.cinema
-	$ todo ctx culture
-	    7 | Read the article about chemistry #chemistry
-	    8 | Listen to the podcast about movies #cinema
-	$ todo ctx culture.chemistry
-	    7 | Read the article about chemistry
+	$ todo culture
+	----------------------------------------
+	 # | chemistry (1)
+	 # | cinema (1)
+	$ todo culture.chemistry
+	 7 | Read the article about chemistry
+	$ todo culture --flat
+	 7 | Read the article about chemistry #chemistry
+	 8 | Listen to the podcast about movies #cinema
+	$ todo --flat
+	 6 | Fix the window ★3
+	 2 | Fix the stuff ★2
+	 4 | Send the documents for the house ⌛ 6 days remaining
+	 3 | Buy the gift for Stefany ⌛ 16 days remaining
+	 7 | Read the article about chemistry #culture.chemistry
+	 8 | Listen to the podcast about movies #culture.cinema
+
 
 ### Visibility
 
-Tasks have a visibility which impacts on what tasks are listed when you use the `todo` command with a context's name. There are three kinds of visibility: hidden, discreet or wide. The default is discreet.
+Contexts have a visibility which is either `normal` or `hidden`. Hidden contexts aren't shown when using `todo` on their parent context. However, they still exists and their tasks can be seen as regular contexts by doing `todo <context>`.
 
- - hidden means that the task will show up only if its context is exactly the one given in the command line. So `hello.world.yeah` will only match `hello.world.yeah`.
-
- - discreet means that the task will show up only if its context is a subcontext of the one given in the command line. `hello.world.yeah` is a subcontext of `hello.world` and also a subcontext of `hello`. Discreet tasks which have a top-level context will also show up when a bare `todo` is ran, such as `culture` in the previous examples.
-
- - wide is the same as discreet, but the task will always show up when no context is specified in the command line, even if the task doesn't have a top-level context.
-
-For example, continuing on the previous example, if you show the general todolist:
-
+	$ todo ctx culture --visibility hidden
 	$ todo
-	    6 | Fix the window ★3
-	    2 | Fix the stuff ★2
-	    4 | Send the documents for the house ⌛ 6 days remaining
-	    3 | Buy the gift for Stefany ⌛ 11 days remaining
-
-You realize that the cultural tasks have disappeared. That's because these tasks don't have a top-level context. They have sub-level contexts, namely `culture.chemistry` and `culture.movies`. Being discreet by default, these tasks will only show up when you query the todolist with a super-context of their context, `culture` in this case:
-
-	$ todo culture
-	    7 | Read the article about chemistry #culture.chemistry
-	    8 | Listen to the podcast about movies #culture.cinema
-
-If you really want them to be shown in the general todolist, you can set their visibility to "wide", using the `-v` or `--visibility` option:
-
-	$ todo task 7 -v wide
-	$ todo task 8 -v wide
+	 6 | Fix the window ★3
+	 2 | Fix the stuff ★2		
+	 4 | Send the documents for the house ⌛ 6 days remaining
+	 3 | Buy the gift for Stefany ⌛ 16 days remaining
+	$ todo ctx culture -v normal
 	$ todo
-	    6 | Fix the window ★3
-	    2 | Fix the stuff ★2
-	    4 | Send the documents for the house ⌛ 6 days remaining
-	    3 | Buy the gift for Stefany ⌛ 11 days remaining
-	    7 | Read the article about chemistry #culture.chemistry
-	    8 | Listen to the podcast about movies #culture.cinema
+	 6 | Fix the window ★3
+	 2 | Fix the stuff ★2		
+	 4 | Send the documents for the house ⌛ 6 days remaining
+	 3 | Buy the gift for Stefany ⌛ 16 days remaining
+	----------------------------------------
+	 # | culture (2)
 
-On the opposite, if you want a task to appear only if you query the todolist with its exact context, you can set its visibility to "hidden".
-
-	$ todo task 7 -v hidden
-	$ todo
-	    6 | Fix the window ★3
-	    2 | Fix the stuff ★2
-	    4 | Send the documents for the house ⌛ 6 days remaining
-	    3 | Buy the gift for Stefany ⌛ 11 days remaining
-	    8 | Listen to the podcast about movies #culture.cinema
-	$ todo culture
-	    8 | Listen to the podcast about movies #cinema
-	$ todo culture.chemistry
-	    7 | Read the article about chemistry
-
-You can specify the visibility of a context. This visibility will apply to all tasks belonging to the context that have the default visibility (discreet). If a task has a non-default visibility, it'll override the visibility of its context.
-
-	$ todo ctx culture.cinema -v wide
-
-This only applies to tasks which match the exact context, this doesn't recurse to subcontexts.
 
 ### Context priority
 
-You can specify a priority to a whole context:
+You can specify a priority to a context:
 
-	$ todo ctx health -p 10
+	$ todo ctx culture -p 10
+	$ todo
+	 6 | Fix the window ★3
+	 2 | Fix the stuff ★2		
+	 4 | Send the documents for the house ⌛ 6 days remaining
+	 3 | Buy the gift for Stefany ⌛ 16 days remaining
+	----------------------------------------
+	 # | culture (2) ★10
 
-Tasks with this context will always show up before tasks with a lower context priority.
+When doing a `todo`, contexts are sorted by:
+ * Priority, descending
+ * Number of tasks, descending
+
+[More about contexts: how to rename contexts, delete contexts, move all tasks from one context to another, list all existing contexts]
 
 
 ## Sort summary
@@ -213,75 +216,10 @@ When showing the todolist, tasks are sorted in the following order:
  * Date added, ascending
 
 
-## History
+## More
 
-There are several commands to help you browse the history of your tasks.
+Showing the history of tasks, listing all existing contexts, editing tasks... Find more in the [Reference].
 
-The command `history` shows the list of tasks sorted by chronological order, including tasks marked as done:
-
-	$ todo history
-	 id content                                    created    context        status 
-	--- ------------------------------------------ ---------- -------------- -------
-	  1 Do the thing                               2016-04-09                DONE   
-	  2 Fix the stuff                              2016-04-09                       
-	  3 Buy the gift for Stefany                   2016-04-09                       
-	  4 Send the documents for the house           2016-04-09                       
-	  5 Buy the fireworks package                  2016-04-09                       
-	  6 Fix the window                             2016-04-09                       
-	  7 Read the article about chemistry           2016-04-09 culture.che...        
-	  8 Listen to the podcast about movies         2016-04-09 culture.cinema        
-
-Notes:
-
- * Don't mind the dates not being consistent with the rest of the README
- * Prior to version 1.0.2, tasks' creation date wasn't stored. Tasks created prior to this version will have a blank value in the "created" column
- * The `history` command adapts according to the width of the terminal. If you make your terminal wider, more columns are shown with more info.
-
-To definetely remove a task from history, use the `rm` command with the task's id:
-
-	$ todo rm 3
-	$ todo history
-	 id content                                    created    context        status 
-	--- ------------------------------------------ ---------- -------------- -------
-	  1 Do the thing                               2016-04-09                DONE   
-	  2 Fix the stuff                              2016-04-09                       
-	  4 Send the documents for the house           2016-04-09                       
-	  5 Buy the fireworks package                  2016-04-09                       
-	  6 Fix the window                             2016-04-09                       
-	  7 Read the article about chemistry           2016-04-09 culture.che...        
-	  8 Listen to the podcast about movies         2016-04-09 culture.cinema        
-
-To remove all tasks marked as done, use the `purge` command:
-
-	$ todo purge
-	$ todo history
-	 id content                                    created    context        status 
-	--- ------------------------------------------ ---------- -------------- -------
-	  2 Fix the stuff                              2016-04-09                       
-	  4 Send the documents for the house           2016-04-09                       
-	  5 Buy the fireworks package                  2016-04-09                       
-	  6 Fix the window                             2016-04-09                       
-	  7 Read the article about chemistry           2016-04-09 culture.che...        
-	  8 Listen to the podcast about movies         2016-04-09 culture.cinema        
-
-
-To list all the contexts, use the `contexts` command.
-
-	$ todo contexts
-	context                                         visibility priority undone tasks
-	----------------------------------------------- ---------- -------- ------------
-	                                                                    6           
-	culture                                                             2           
-	culture.chemistry                                                   1           
-	culture.cinema                                  wide                1           
-	health                                                     10       0               
-
-The first line is the "root context", which contains all tasks without any specific context and is the father of all contexts. The number of undone tasks shown include tasks in subcontexts, which means the first line displays the total number of undone tasks.
-
-todo remembers a context if it meets one of the following conditions:
-
- * One of the tasks in history has such context
- * This context has a non-default property attached to it (visibility different than discreet or priority different than 1)
 
 ## Configuration
 
