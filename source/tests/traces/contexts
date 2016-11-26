@@ -1,0 +1,49 @@
+$ ./todo.py add "Root task"
+$ ./todo.py add "Task in subcontext 1" -c sub1
+$ ./todo.py add "Task in sub-subcontext 1" -c sub1.sub
+$ ./todo.py add "Task in subcontext 2" -c sub2
+$ ./todo.py add "Task in sub-subcontext2" -c sub2.sub
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub1 (2)
+ # | sub2 (2)
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub1 (2)
+ # | sub2 (2)
+$ ./todo.py ctx sub1.sub --name renamed
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub1 (2)
+ # | sub2 (2)
+$ ./todo.py sub1
+ 2 | Task in subcontext 1
+----------------------------------------
+ # | renamed (1)
+$ ./todo.py rmctx sub2 --force
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub1 (2)
+$ ./todo.py sub2
+$ ./todo.py mv sub1 sub2
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub2 (2)
+ # | sub1 (0)
+$ ./todo.py sub2
+ 2 | Task in subcontext 1
+----------------------------------------
+ # | renamed (1)
+$ ./todo.py sub1
+----------------------------------------
+ # | renamed (0)
+$ ./todo.py rmctx sub1 --force
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub2 (2)

@@ -27,24 +27,36 @@ UNIT_TESTS = [
 
 TRACES_DIR = 'tests/traces'
 
+TEST_REPLACEMENTS = [
+	(DATA_LOCATION, TEST_DATA_FILE),
+	(CONFIG_FILE, TEST_CONFIG)
+]
+
+
+class TestSetup:
+
+	def __init__(self, replacements=TEST_REPLACEMENTS):
+		self.replacements = {repl: None for repl in replacements}
+
+	def __enter__(self):
+		for source, repl in self.replacements:
+			backup = utils.backup_and_replace(source, repl)
+			self.replacements[(source, repl)] = backup
+		return self
+
+	def __exit__(self, *args):
+		for (source, repl), backup in self.replacements.items():
+			os.rename(backup, source)
+
 
 def test_trace(trace_file, print_commands=False):
-	# Backuping the datafile and removing the original
-	data_backup = utils.backup_and_replace(DATA_LOCATION, TEST_DATA_FILE)
-	# Backuping the config file and replace it with ours (colors disabled)
-	config_backup = utils.backup_and_replace(CONFIG_FILE, TEST_CONFIG)
-	try:
+	with TestSetup() as setup:
 		get_dt = functools.partial(tutils.get_datetime, now=NOW)
 		errors = utils.test_trace(trace_file, get_dt, print_commands)
 		if errors['clash'] == 0 and errors['crash'] == 0:
 			print('OK')
 		else:
 			print('FAIL')
-	finally:
-		if data_backup is not None:
-			os.rename(data_backup, DATA_LOCATION)
-		if config_backup is not None:
-			os.rename(config_backup, CONFIG_FILE)
 
 
 def main():
@@ -55,7 +67,21 @@ def main():
 		help="Run only functional test")
 	parser.add_argument('-v', '--verbose', action='store_true',
 		help="Prints the commands being ran during functional test")
+	parser.add_argument('-b', '--build', action='store',
+		dest='build',
+		help="Build a trace file")
+	parser.add_argument('-o', '--out', action='store',
+		dest='out',
+		help="Destination of a trace build")
 	args = parser.parse_args()
+
+	if args.build is not None:
+		out = args.build
+		if args.out is not None:
+			out = args.out
+		with TestSetup() as setup:
+			utils.run_trace(args.build, out)
+		sys.exit(0)
 
 	if not args.func:
 		suite = unittest.TestSuite()

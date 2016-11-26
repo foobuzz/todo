@@ -24,7 +24,7 @@ def parse_trace(trace_file, get_datetime):
 				sequence.append((command, out))
 			command = line[2:-1]
 			match = re.search(COMMAND_W_DT, command)
-			if match is not None:
+			if match is not None and get_datetime is not None:
 				delay = match.group(1)
 				dt = get_datetime(delay)
 				dt_string = dt.strftime('%Y-%m-%d')
@@ -34,6 +34,31 @@ def parse_trace(trace_file, get_datetime):
 			out += line
 	sequence.append((command, out))
 	return sequence
+
+
+def run_command(command):
+	process = subprocess.Popen(command, shell=True,
+		universal_newlines=True,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE)
+	stdout, stderr = process.communicate()
+	status = process.returncode
+	return status, stdout, stderr
+
+
+def run_trace(filename, out):
+	with open(filename) as trace_file:
+		sequence = parse_trace(trace_file, None)
+	with open(out, 'w') as trace_file:
+		for command, out in sequence:
+			trace_file.write('$ {}\n'.format(command))
+			status, stdout, stderr = run_command(command)
+			if status != 0 and stdout == '':
+				print('[Error from command]')
+				print(command)
+				trace_file.write(stderr)
+			else:
+				trace_file.write(stdout)
 
 
 def test_trace(filename, get_datetime, print_commands=False):
@@ -46,12 +71,7 @@ def test_trace(filename, get_datetime, print_commands=False):
 		counter += 1
 		if print_commands:
 			print(command)
-		process = subprocess.Popen(command, shell=True,
-			universal_newlines=True,
-			stdout=subprocess.PIPE,
-			stderr=subprocess.PIPE)
-		stdout, stderr = process.communicate()
-		status = process.returncode
+		status, stdout, stderr = run_command(command)
 		passed = True
 		try:
 			assert status == 0
@@ -75,7 +95,6 @@ def test_trace(filename, get_datetime, print_commands=False):
 	total = time.time() - start
 	print('\nRan {} commands in {:.3} seconds'.format(counter, total))
 	return errors
-
 
 
 def backup_and_replace(source, replacement=None):
