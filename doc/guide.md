@@ -218,7 +218,7 @@ When showing the todolist, tasks are sorted in the following order:
 
 ## More
 
-Showing the history of tasks, listing all existing contexts, editing tasks... Find more in the [Reference].
+Showing the history of tasks, listing all existing contexts, editing tasks... Find more in the [Reference](https://github.com/foobuzz/todo/blob/master/doc/reference.md).
 
 
 ## Configuration
