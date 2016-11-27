@@ -156,7 +156,7 @@ def get_update_components(options):
 def check_options(options, allowed_options):
 	for option, val in options:
 		if option not in allowed_options:
-			raise ValueError('Illegal option')
+			raise ValueError('Illegal option: {}'.format(option))
 
 
 def rename_context(path, name):
@@ -167,10 +167,12 @@ def rename_context(path, name):
 
 TASK_OPTIONS = {
 	'title',
+	'created',
 	'deadline',
 	'start',
 	'priority',
-	'context'
+	'context',
+	'done'
 }
 
 CONTEXT_OPTIONS = {
