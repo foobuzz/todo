@@ -1,3 +1,23 @@
+## 3.0
+
+### Features & behaviour
+
+ * Contexts are now listed belows the list of tasks, along with the number of tasks they contain. The previous behaviour (tasks of subcontexts being mixed with general tasks) can be achieved with the `--flat` option.
+ * The concept of visibility for tasks has been abandonned
+ * The `LAST` selector if not supported anymore, as well as the ability to re-show the todolist after a certain command.
+ * Three new context-management commands or options:
+ 	* `mv <ctx1> <ctx2>` to move everything from one context to another
+ 	* `rm <ctx>` to remove a context (and all of its descendance)
+ 	* The `--name` option for the `ctx` command which serves as renaming a context
+ * The `purge` command now awaits user input to validate the purge, unless the `--force` flag is used. It also supports a new option `--before` which awaits a date or delay. The value indicates before which date done tasks will be deleted. Tasks created after the given date will be kept.
+ * Cancelling a deadline with `--deadline none`
+ * Support for an alternative layout where tasks are printed on two lines, one for metadata and one for the title of the task. The configuration file now accepts a `layout` key with value which can be either `basic` (default) or `multiline`.
+
+### Implementation
+
+The persistance is now handled by sqlite3 instead of a JSON datafile. Performance if similar on small todolists but will obvously increase for huge task bases. Concurrency is now supported, although they're no waranty about scaling. Most of the codebase had to be rewritten to handle such change, for the greater good!
+
+
 ### 2.1
 
 #### Features & behaviour

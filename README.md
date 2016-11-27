@@ -54,4 +54,9 @@ To run the functional tests, use the `-f` option. The `-a` option runs both unit
 
 ### Contributing
 
-Submit issues for bug reports or enhancement ideas. Then submit pull requests if you want to solve/develop them. [The Roadmap](https://github.com/foobuzz/todo/blob/master/ROADMAP.md) lists features I plan to add.
+Submit issues for bug reports or enhancement ideas.
+
+
+### License
+
+MIT. See [LICENSE.txt](https://github.com/foobuzz/todo/blob/master/LICENSE.txt)
