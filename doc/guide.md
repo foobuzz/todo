@@ -238,23 +238,6 @@ Example:
 
 	editor = emacs
 
-`show_after` is a list of todo built-in commands separated by commas. It indicates that after completing those commands, todo will print the todolist again, *using the last used context*.
-
-Example:
-	
-	show_after = done
-
-Then, using the application:
-
-	$ todo myContext
-	1 | some task
-	2 | some other task
-
-	$ todo done 1
-	2 | some other task
-
-By default, usage of the `done` command doesn't print the todolist again, but in this case it did because `done` is contained in the `show_after` list. Note that for printing the todolist again, the last used context, that is `myContext`, has been automatically used.
-
 ### Colors
 
 The Colors section allow you to customize colors.
@@ -285,7 +268,6 @@ Here's an example of a complete configuration file:
 
 	[App]
 	editor = emacs
-	show_after = edit, done
 
 	[Colors]
 	colors = on
