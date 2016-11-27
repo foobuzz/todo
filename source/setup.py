@@ -13,6 +13,7 @@ SOURCE_COMPLETION = 'bash_completion/toduh.sh'
 class PostInstallCommand(install):
 
 	def run(self):
+		install.run(self)
 		if op.exists(BASH_COMPLETION) and op.isdir(BASH_COMPLETION):
 			requirement = Requirement.parse("todocli")
 			filename = resource_filename(requirement, SOURCE_COMPLETION)
@@ -21,12 +22,11 @@ class PostInstallCommand(install):
 			except:
 				print('Installation of auto-completion script failed. '
 					'Please use sudo.')
-		install.run(self)
 
 
 setup(
 	name='todocli',
-	version='2.1',
+	version='3.0',
 	packages=['todo'],
 	entry_points={
 		'console_scripts': [
@@ -45,5 +45,6 @@ setup(
 	author_email='dprosium@gmail.com',
 	description='A command line todo list manager',
 	keywords='command line todo list',
-	url='https://github.com/foobuzz/todo'
+	url='https://github.com/foobuzz/todo',
+	license='MIT'
 )
