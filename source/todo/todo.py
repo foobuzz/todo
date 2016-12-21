@@ -43,10 +43,11 @@ from docopt import docopt
 
 from . import utils, data_access
 from .rainbow import ColoredStr
-from .data_access import DataAccess, DATA_DIR
+from .data_access import DataAccess
+from .utils import DATA_DIR
 
 
-__version__ = '3.0'
+__version__ = '3.0.1'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',

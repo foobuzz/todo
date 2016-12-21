@@ -3,21 +3,7 @@ import os.path as op
 from datetime import datetime
 
 from . import utils
-
-
-DATA_DIR_NAME = '.toduh'
-DATAFILE_NAME = 'data.json'
-DATABASE_NAME = 'data.sqlite'
-DATA_CTX_NAME = 'contexts'
-
-# If a .toduh exists in the current working directory, it's used by the
-# program. Otherwise the one in the home is used.
-if op.exists(DATA_DIR_NAME) and op.isdir(DATA_DIR_NAME):
-	DATA_DIR = DATA_DIR_NAME
-else:
-	DATA_DIR = op.expanduser(op.join('~', '.toduh'))
-
-DB_PATH = op.join(DATA_DIR, DATABASE_NAME)
+from .utils import DATA_DIR, DB_PATH, DATAFILE_NAME, DATA_CTX_NAME
 
 DATETIME_MIN = '0001-01-01 00:00:00'
 

@@ -1,5 +1,21 @@
-import re
+import re, os
+import os.path as op
 from datetime import datetime, timedelta, timezone
+
+
+DATA_DIR_NAME = '.toduh'
+DATAFILE_NAME = 'data.json'
+DATABASE_NAME = 'data.sqlite'
+DATA_CTX_NAME = 'contexts'
+
+# If a .toduh exists in the current working directory, it's used by the
+# program. Otherwise the one in the home is used.
+if op.exists(DATA_DIR_NAME) and op.isdir(DATA_DIR_NAME):
+	DATA_DIR = DATA_DIR_NAME
+else:
+	DATA_DIR = op.expanduser(op.join('~', '.toduh'))
+
+DB_PATH = op.join(DATA_DIR, DATABASE_NAME)
 
 
 ISO_SHORT = '%Y-%m-%d'
@@ -132,14 +148,26 @@ def parse_remaining(delta):
 
 
 def input_from_editor(init_content, editor):
-	import tempfile, subprocess # Tempfile being slow to import
-	with tempfile.NamedTemporaryFile(mode='w+') as edit_file:
-		edit_file.write(init_content)
-		edit_file.flush()
-		subprocess.call([editor, edit_file.name])
-		edit_file.seek(0)
-		new_content = edit_file.read()
+	import subprocess
+	with CustomTemporaryFile() as filename:
+		with open(filename, 'w') as edit_file:
+			edit_file.write(init_content)
+		subprocess.call([editor, filename])
+		with open(filename) as edit_file:
+			new_content = edit_file.read()
 	return new_content
+
+
+class CustomTemporaryFile:
+
+	def __enter__(self):
+		import uuid
+		self.path = op.join(DATA_DIR, '.todoedit-'+uuid.uuid4().hex)
+		return self.path
+
+	def __exit__(self, type_, value, traceback):
+		os.remove(self.path)
+		return type_ is None
 
 
 def get_relative_path(parent, desc):

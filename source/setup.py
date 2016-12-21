@@ -26,7 +26,7 @@ class PostInstallCommand(install):
 
 setup(
 	name='todocli',
-	version='3.0',
+	version='3.0.1',
 	packages=['todo'],
 	entry_points={
 		'console_scripts': [

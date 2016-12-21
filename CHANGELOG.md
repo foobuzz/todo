@@ -1,3 +1,8 @@
+## 3.0.1
+
+Management of the temporary file created for editing purposes with the `edit` command is handled with a custom context manager instead of Python's `NamedTemporaryFile` as the documentation states that depending on platform external programs might not be able to write to such file.
+
+
 ## 3.0
 
 ### Features & behaviour
@@ -15,7 +20,7 @@
 
 ### Implementation
 
-The persistance is now handled by sqlite3 instead of a JSON datafile. Performance if similar on small todolists but will obvously increase for huge task bases. Concurrency is now supported, although they're no waranty about scaling. Most of the codebase had to be rewritten to handle such change, for the greater good!
+The persistance is now handled by sqlite3 instead of a JSON datafile. Performance if similar on small todolists but will obvously increase for huge task bases. Most of the codebase had to be rewritten to handle such change, for the greater good!
 
 
 ### 2.1
