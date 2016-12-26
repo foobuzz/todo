@@ -137,14 +137,19 @@ def get_datetime(string, now, direction=1):
 
 
 def parse_remaining(delta):
+	null_delta = timedelta(0)
+	sign = '' if delta >= null_delta else '-'
+	delta = abs(delta)
 	seconds = 3600 * 24 * delta.days + delta.seconds
 	if seconds >= 2 * 24 * 3600:
-		return '{} days'.format(delta.days)
-	if seconds >= 2*3600:
-		return '{} hours'.format(24*delta.days + delta.seconds // 3600)
-	if seconds >= 2*60:
-		return '{} minutes'.format(seconds // 60)
-	return '{} seconds'.format(seconds)
+		string = '{} days'.format(delta.days)
+	elif seconds >= 2*3600:
+		string = '{} hours'.format(24*delta.days + delta.seconds // 3600)
+	elif seconds >= 2*60:
+		string = '{} minutes'.format(seconds // 60)
+	else:
+		string = '{} seconds'.format(seconds)
+	return '{}{}'.format(sign, string)
 
 
 def input_from_editor(init_content, editor):

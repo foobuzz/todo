@@ -525,15 +525,17 @@ def feedback_multiple_tasks_done(not_found):
 
 def feedback_todo(context, tasks, subcontexts):
 	layout = CONFIG.get('App', 'layout')
+	if layout == 'multiline':
+		stringyfier = get_multiline_task_string
+	else:
+		stringyfier = get_basic_task_string
+
 	if len(tasks) != 0:
 		id_width = max(len(utils.to_hex(task['id'])) for task in tasks)
 	else:
 		id_width = 1
+		
 	for task in tasks:
-		if layout == 'multiline':
-			stringyfier = get_multiline_task_string
-		else:
-			stringyfier = get_basic_task_string
 		partial = functools.partial(stringyfier, context, id_width, task)
 		safe_print(partial)
 	if len(subcontexts) > 0:				
