@@ -37,7 +37,7 @@ REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 SQLITE_DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
-def print_table(struct, iterable, is_default=lambda a: False):
+def print_table(struct, iterable, is_default=lambda obj, p: False):
 	""" This function, which is responsible for printing tables to the
 	terminal, awaits a "structure", an iterable and a function. The structure
 	describes the columns of the table and their properties. It's a list of
@@ -207,3 +207,16 @@ def get_terminal_width():
 	except ValueError:
 		return fallback
 	return cols
+
+
+def sqlite_date_to_local(sqlite_date):
+	if sqlite_date is None:
+		return ''
+	dt = datetime.strptime(sqlite_date, SQLITE_DT_FORMAT)
+	dt = dt.replace(tzinfo=timezone.utc)
+	try:
+		local_dt = dt.astimezone(tz=None)
+	except ValueError:
+		# Some exotic dates such as '0001-01-01 00:00:00' don't work well
+		return sqlite_date
+	return local_dt.strftime(SQLITE_DT_FORMAT)

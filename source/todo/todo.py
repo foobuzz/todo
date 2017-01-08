@@ -68,7 +68,8 @@ TASK_MUTATORS = {
 	'deadline': datetime.max,
 	'start': None,
 	'priority': 1,
-	'title': None
+	'title': None,
+	'created': data_access.DATETIME_MIN
 }
 
 CONTEXT_MUTATORS = {
@@ -711,12 +712,12 @@ def get_history_struct(gid):
 	struct = [
 		('id', gid_len + 1, '>', 'id', utils.to_hex),
 		('title', lambda a: 3 * (a//4), '<', 'title', None),
-		('created', 19, '<', 'created', None),
+		('created', 19, '<', 'created', utils.sqlite_date_to_local),
 	]
 	if utils.get_terminal_width() > WIDE_HIST_THRESHOLD:
 		struct += [
-			('start', 19, '<', 'start', None),
-			('deadline', 19, '<', 'deadline', None),
+			('start', 19, '<', 'start', utils.sqlite_date_to_local),
+			('deadline', 19, '<', 'deadline', utils.sqlite_date_to_local),
 			('priority', 8, '>', 'priority', None)
 		]
 	struct += [
