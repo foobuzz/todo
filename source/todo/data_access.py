@@ -617,6 +617,17 @@ class DataAccess():
 		c.execute(query, values)
 		return c.rowcount
 
+	def search(self, term):
+		c = self.connection.cursor()
+		query = """
+			SELECT t.*, c.path as ctx_path
+			FROM Task t JOIN Context c
+			ON t.context = c.id
+			WHERE t.title LIKE ?
+		"""
+		c.execute(query, ('%{}%'.format(term),))
+		return c.fetchall()
+
 	def exit(self, save=True):
 		""" Close the database and save all operations done to it if `save` is
 		True. Write all contexts paths (NON fully-dotted) to the contexts file

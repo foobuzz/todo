@@ -6,6 +6,7 @@ Usage:
   todo [<context>] [--flat|--tidy]
   todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
+  todo search <term>
   todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]
@@ -51,7 +52,7 @@ __version__ = '3.0.1'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
-	'purge', 'mv', 'rmctx'}
+	'purge', 'mv', 'rmctx', 'search'}
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 
@@ -98,7 +99,8 @@ DEFAULT_CONFIG['Colors'] = {
 	'content': 'default',
 	'context': 'cyan',
 	'deadline': 'cyan',
-	'priority': 'green'
+	'priority': 'green',
+	'done': 'green'
 }
 
 CONFIG = configparser.ConfigParser(
@@ -457,6 +459,12 @@ def purge(args, daccess):
 		count = daccess.purge(before)
 		return 'purge', count
 
+
+def search(args, daccess):
+	term = args['<term>']
+	tasks = daccess.search(term)
+	return 'todo', '', tasks, [], term
+
 ## DISPATCHING
 
 # Map of the names of the commands to handlers defined above.
@@ -472,7 +480,8 @@ DISPATCHER = [
 	('mv', move),
 	('contexts', get_contexts),
 	('history', get_history),
-	('purge', purge)
+	('purge', purge),
+	('search', search)
 ]
 
 
@@ -535,7 +544,7 @@ def feedback_multiple_tasks_done(not_found):
 		print('Not found or already done: {}'.format(string))
 
 
-def feedback_todo(context, tasks, subcontexts):
+def feedback_todo(context, tasks, subcontexts, highlight=None):
 	layout = CONFIG.get('App', 'layout')
 	if layout == 'multiline':
 		stringyfier = get_multiline_task_string
@@ -548,9 +557,10 @@ def feedback_todo(context, tasks, subcontexts):
 		id_width = 1
 		
 	for task in tasks:
-		partial = functools.partial(stringyfier, context, id_width, task)
+		partial = functools.partial(stringyfier, context, id_width, task,
+			highlight=highlight)
 		safe_print(partial)
-	if len(subcontexts) > 0:				
+	if len(subcontexts) > 0:
 		print(TASK_SUBCTX_SEP)
 	for ctx in subcontexts:
 		partial = functools.partial(get_context_string, context, id_width, ctx)
@@ -603,33 +613,45 @@ def feedback_purge(count):
 # will take care of trying to print the non-ASCII version and then fallback to
 # the ASCII version in case of error from the terminal.
 
-def get_basic_task_string(context, id_width, task, ascii_=False):
-	c = get_task_string_components(task, context, ascii_)
+def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False):
+	c = get_task_string_components(task, context, ascii_, highlight=highlight)
 	if isinstance(c['id'], ColoredStr):
 		ansi_offset = c['id'].lenesc
 	else:
 		ansi_offset = 0
 	left = '{id:>{width}}'.format(width=id_width + ansi_offset + 1, **c)
-	right = ['title', 'deadline', 'priority', 'context']
+	right = ['done', 'title', 'deadline', 'priority', 'context']
 	right = ' '.join(c[a] for a in right if c[a] != '')
 	return '{} | {}'.format(left, right)
 
 
-def get_multiline_task_string(context, id_width, task, ascii_=False):
-	c = get_task_string_components(task, context, ascii_)
-	return ' {id} / {deadline} {priority} {context}\n {title}\n'.format(**c)
+def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
+	c = get_task_string_components(task, context, ascii_, highlight=None)
+	template = ' {id} {done} / {deadline} {priority} {context}\n {title}\n'
+	return template.format(**c)
 
 
-def get_task_string_components(task, ctx, ascii_=False):
+def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 	id_str = cstr(utils.to_hex(task['id']), clr('id'))
-	content_str = cstr(task['title'], clr('content'))
+
+	if highlight is not None:
+		content_str = utils.get_highlights_term(
+			task['title'],
+			highlight,
+			(clr('content'), CONFIG.get('Colors', 'palette')),
+		)
+	else:
+		content_str = cstr(task['title'], clr('content'))
 
 	remaining_str = ''
 	deadline = get_datetime(task['deadline'])
 	if deadline is not None:
 		remaining = deadline - NOW
 		user_friendly = utils.parse_remaining(remaining)
-		remaining_str = '{} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
+		remaining_str = '{} {} remaining'.format(
+			TIME_ICON[ascii_],
+			user_friendly
+		)
 		remaining_str = cstr(remaining_str, clr('deadline'))
 
 	prio_str = ''
@@ -645,12 +667,22 @@ def get_task_string_components(task, ctx, ascii_=False):
 		ctx_str = '{}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
 		ctx_str = cstr(ctx_str, clr('context'))
 
+	done_str = ''
+	if task['done'] is not None:
+		done_str = '[DONE'
+		if task['done'] != '1':
+			done_str += ' ' + task['done']
+		done_str += ']'
+	if done_str != '':
+		done_str = cstr(done_str, clr('done'))
+
 	return {
 		'id': id_str,
 		'title': content_str,
 		'deadline': remaining_str,
 		'priority': prio_str,
-		'context': ctx_str
+		'context': ctx_str,
+		'done': done_str
 	}
 
 
