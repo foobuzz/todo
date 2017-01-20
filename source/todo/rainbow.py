@@ -254,5 +254,12 @@ class ColoredStr(str):
 		return self.length
 
 
+def cstr(string, color, palette='xterm-256', no_color=False):
+	if no_color:
+		return string
+	else:
+		return ColoredStr(string, color, palette)
+
+
 if __name__ == '__main__':
 	print(ColoredStr('hello, world', 'blue', 'xterm-256'))

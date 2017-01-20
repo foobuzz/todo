@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 from docopt import docopt
 
 from . import utils, data_access
-from .rainbow import ColoredStr
+from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
 from .utils import DATA_DIR
 
@@ -115,6 +115,17 @@ CONFIG.read(CONFIG_FILE)
 EDITOR = CONFIG.get('App', 'editor', fallback=None)
 if EDITOR is None:
 	EDITOR = os.environ.get('EDITOR', 'vim')
+
+if CONFIG.getboolean('Colors', 'colors'):
+	cstr = functools.partial(
+		cstr,
+		palette=CONFIG.get('Colors', 'palette')
+	)
+else:
+	cstr = functools.partial(
+		cstr,
+		no_color=True
+	)
 
 
 def main():
@@ -610,15 +621,8 @@ def get_multiline_task_string(context, id_width, task, ascii_=False):
 
 
 def get_task_string_components(task, ctx, ascii_=False):
-	id_str = may_be_colored(
-		utils.to_hex(task['id']),
-		CONFIG.get('Colors', 'id')
-	)
-
-	content_str = may_be_colored(
-		task['title'],
-		CONFIG.get('Colors', 'content')
-	)
+	id_str = cstr(utils.to_hex(task['id']), clr('id'))
+	content_str = cstr(task['title'], clr('content'))
 
 	remaining_str = ''
 	deadline = get_datetime(task['deadline'])
@@ -626,23 +630,20 @@ def get_task_string_components(task, ctx, ascii_=False):
 		remaining = deadline - NOW
 		user_friendly = utils.parse_remaining(remaining)
 		remaining_str = '{} {} remaining'.format(TIME_ICON[ascii_], user_friendly)
-		remaining_str = may_be_colored(
-			remaining_str,
-			CONFIG.get('Colors', 'deadline')
-		)
+		remaining_str = cstr(remaining_str, clr('deadline'))
 
 	prio_str = ''
 	priority = task['priority']
 	if not is_task_default(task, 'priority'):
 		prio_str = '{}{}'.format(PRIORITY_ICON[ascii_], priority)
-		prio_str = may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
+		prio_str = cstr(prio_str, clr('priority'))
 
 	ctx_path = utils.get_relative_path(ctx, task['ctx_path'])
 	if ctx_path == '':
 		ctx_str = ''
 	else:
 		ctx_str = '{}{}'.format(CONTEXT_ICON[ascii_], ctx_path)
-		ctx_str = may_be_colored(ctx_str, CONFIG.get('Colors', 'context'))
+		ctx_str = cstr(ctx_str, clr('context'))
 
 	return {
 		'id': id_str,
@@ -654,7 +655,7 @@ def get_task_string_components(task, ctx, ascii_=False):
 
 
 def get_context_string(context, id_width, ctx, ascii_=False):
-	hash_str = may_be_colored('#', CONFIG.get('Colors', 'id'))
+	hash_str = cstr('#', clr('id'))
 	if isinstance(hash_str, ColoredStr):
 		ansi_offset = hash_str.lenesc
 	else:
@@ -669,7 +670,7 @@ def get_context_string(context, id_width, ctx, ascii_=False):
 	priority = ctx['priority']
 	if not is_task_default(ctx, 'priority'):
 		prio_str = ' {}{}'.format(PRIORITY_ICON[ascii_], priority)
-		string += may_be_colored(prio_str, CONFIG.get('Colors', 'priority'))
+		string += cstr(prio_str, clr('priority'))
 	return string
 
 
@@ -727,10 +728,5 @@ def get_history_struct(gid):
 	return struct
 
 
-def may_be_colored(string, color):
-	"""Return a string, colored or not, depending on the CONFIG variable"""
-	if CONFIG.getboolean('Colors', 'colors'):
-		palette = CONFIG.get('Colors', 'palette')
-		return ColoredStr(string, color, palette)
-	else:
-		return string
+def clr(component):
+	return CONFIG.get('Colors', component)
