@@ -206,12 +206,21 @@ class DataAccess():
 
 	def __init__(self, connection):
 		self.connection = connection
+		self.case_sensitive_like = False
+		self.set_case_sensitive_like(True)
 		c = self.connection.cursor()
-		c.execute('PRAGMA case_sensitive_like = ON;')
 		c.execute('PRAGMA foreign_keys = ON;')
 		c.execute('PRAGMA synchronous = OFF;')
 		self.connection.row_factory = sqlite3.Row
 		self.changed_contexts = False
+
+	def set_case_sensitive_like(self, switch=True):
+		if self.case_sensitive_like == switch:
+			return
+		value = 'ON' if switch else 'OFF'
+		c = self.connection.cursor()
+		c.execute('PRAGMA case_sensitive_like = {};'.format(value))
+		self.case_sensitive_like = switch
 
 	def add_task(self, title, context='', options=[]):
 		""" Add a task titled `title` and associated to the given `context`,
@@ -617,15 +626,38 @@ class DataAccess():
 		c.execute(query, values)
 		return c.rowcount
 
-	def search(self, term):
+	def search(self, term, ctx='', done=None, before=None, after=None,
+		       case=False):
+		original = self.case_sensitive_like
+		self.set_case_sensitive_like(case)
 		c = self.connection.cursor()
 		query = """
 			SELECT t.*, c.path as ctx_path
 			FROM Task t JOIN Context c
 			ON t.context = c.id
 			WHERE t.title LIKE ?
+			  AND c.path LIKE ?
 		"""
-		c.execute(query, ('%{}%'.format(term),))
+		params = ('%{}%'.format(term), '{}%'.format(ctx))
+
+		if done is not None:
+			cond = 'IS NOT NULL' if done else 'IS NULL'
+			query += """
+				AND t.done {}
+			""".format(cond)
+		if before is not None:
+			query += """
+				AND t.created < ?
+			"""
+			params = params + (before,)
+		if after is not None:
+			query += """
+				AND t.created > ?
+			"""
+			params = params + (after,)
+
+		c.execute(query, params)
+		self.set_case_sensitive_like(original)
 		return c.fetchall()
 
 	def exit(self, save=True):

@@ -6,7 +6,7 @@ Usage:
   todo [<context>] [--flat|--tidy]
   todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY]
-  todo search <term>
+  todo search <term> [--context CONTEXT] [--done|--undone] [--before MOMENT] [--after MOMENT] [--case]
   todo done <id>...
   todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
     [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]
@@ -32,7 +32,8 @@ Options:
   -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
                                           context.
   --name NAME                             Rename a context
-  --before MOMENT                         Purge all done task before a moment
+  --before MOMENT                         Select tasks created before a moment
+  --after MOMENT                          Select tasks created after a moment
 
 """
 
@@ -260,6 +261,7 @@ PARSERS = [
 	('--deadline', parse_deadline),
 	('--start', parse_moment),
 	('--before', functools.partial(parse_moment, direction=-1)),
+	('--after', functools.partial(parse_moment, direction=-1)),
 	('--name', parse_new_context_name)
 ]
 
@@ -462,8 +464,24 @@ def purge(args, daccess):
 
 def search(args, daccess):
 	term = args['<term>']
-	tasks = daccess.search(term)
-	return 'todo', '', tasks, [], term
+	done = None
+	if args['--done']:
+		done = True
+	elif args['--undone']:
+		done = False
+	if args['--context'] is None:
+		ctx = ''
+	else:
+		ctx = args['--context']
+	tasks = daccess.search(
+		term,
+		ctx=ctx,
+		done=done,
+		before=args.get('--before'),
+		after=args.get('--after'),
+		case=args['--case']
+	)
+	return 'todo', '', tasks, [], (term, args['--case'])
 
 ## DISPATCHING
 
@@ -626,7 +644,7 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 
 
 def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
-	c = get_task_string_components(task, context, ascii_, highlight=None)
+	c = get_task_string_components(task, context, ascii_, highlight=highlight)
 	template = ' {id} {done} / {deadline} {priority} {context}\n {title}\n'
 	return template.format(**c)
 
@@ -635,10 +653,12 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 	id_str = cstr(utils.to_hex(task['id']), clr('id'))
 
 	if highlight is not None:
+		term, case = highlight
 		content_str = utils.get_highlights_term(
 			task['title'],
-			highlight,
+			term,
 			(clr('content'), CONFIG.get('Colors', 'palette')),
+			case=case
 		)
 	else:
 		content_str = cstr(task['title'], clr('content'))
@@ -669,10 +689,7 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 
 	done_str = ''
 	if task['done'] is not None:
-		done_str = '[DONE'
-		if task['done'] != '1':
-			done_str += ' ' + task['done']
-		done_str += ']'
+		done_str = '[DONE]'
 	if done_str != '':
 		done_str = cstr(done_str, clr('done'))
 

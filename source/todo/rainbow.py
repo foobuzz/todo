@@ -242,7 +242,7 @@ class ColoredStr(str):
 		if color == DEFAULT:
 			return string
 		values = get_color_values(color.lower(), palette)
-		ansi_seq = ANSI_TEMPLATES[palette].format(*values)
+		ansi_seq = get_escape(color, palette)
 		literal = ansi_seq + string + ANSI_RESET
 		the_string = super().__new__(cls, literal)
 		setattr(the_string, 'length', len(string))
@@ -259,6 +259,14 @@ def cstr(string, color, palette='xterm-256', no_color=False):
 		return string
 	else:
 		return ColoredStr(string, color, palette)
+
+
+def get_escape(color, palette='xterm-256'):
+	if color == DEFAULT:
+		return None
+	values = get_color_values(color.lower(), palette)
+	ansi_seq = ANSI_TEMPLATES[palette].format(*values)
+	return ansi_seq
 
 
 if __name__ == '__main__':

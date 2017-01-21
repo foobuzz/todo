@@ -2,7 +2,8 @@ import re, os
 import os.path as op
 from datetime import datetime, timedelta, timezone
 
-from todo.rainbow import ColoredStr
+from . import rainbow
+from .rainbow import ColoredStr
 
 
 DATA_DIR_NAME = '.toduh'
@@ -224,13 +225,31 @@ def sqlite_date_to_local(sqlite_date):
 	return local_dt.strftime(SQLITE_DT_FORMAT)
 
 
-def get_highlights_term(string, term, str_color, first_occurrence_only=False):
-	highlighted_term = '\33[1;31m' + term + '\33[0m'
-	non_terms = string.split(term)
+def get_highlights_term(string, term, str_color, case=False):
 	if str_color is not None:
-		color, palette = str_color
-		non_terms = [ColoredStr(t, color, palette) for t in non_terms]
-	if len(non_terms) >= 2 and first_occurrence_only:
-		return highlighted_term.join(non_terms[:2]) + term.join(non_terms[2:])
+		escape = rainbow.get_escape(*str_color)
+		if escape is None:
+			str_color = None
+
+	if len(term) > 0:
+		def term_repl(matchobj):
+			repl = '\33[1;31m' + matchobj.group(0) + '\33[0m'
+			if str_color is not None:
+				repl = '\33[0m' + repl + escape
+			return repl
+		args = dict(
+			pattern=term,
+			repl=term_repl,
+			string=string
+		)
+		if not case:
+			args.update(flags=re.IGNORECASE)
+		highlighted = re.sub(**args)
+		if str_color:
+			highlighted = escape + highlighted + '\33[0m'
+		return highlighted
 	else:
-		return highlighted_term.join(non_terms)
+		if str_color is not None:
+			return escape + string + '\33[0m'
+		else:
+			return string
