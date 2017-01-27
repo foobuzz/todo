@@ -3,13 +3,13 @@ import os.path as op
 from datetime import datetime, timedelta, timezone
 
 from . import rainbow
-from .rainbow import ColoredStr
 
 
 DATA_DIR_NAME = '.toduh'
 DATAFILE_NAME = 'data.json'
 DATABASE_NAME = 'data.sqlite'
 DATA_CTX_NAME = 'contexts'
+VER_FILE_NAME = 'version'
 
 # If a .toduh exists in the current working directory, it's used by the
 # program. Otherwise the one in the home is used.
@@ -19,6 +19,7 @@ else:
 	DATA_DIR = op.expanduser(op.join('~', '.toduh'))
 
 DB_PATH = op.join(DATA_DIR, DATABASE_NAME)
+VERSION_PATH = op.join(DATA_DIR, VER_FILE_NAME)
 
 
 ISO_SHORT = '%Y-%m-%d'
@@ -253,3 +254,59 @@ def get_highlights_term(string, term, str_color, case=False):
 			return escape + string + '\33[0m'
 		else:
 			return string
+
+
+def compare_versions(vA, vB):
+	# ((major, minor, patch), tag, tagNumber)
+	(releaseA, tagA, tagnumA), (releaseB, tagB, tagnumB) = [
+		parse_version(v) for v in [vA, vB]
+	]
+	if releaseA != releaseB:
+		return 1 if releaseA > releaseB else -1
+	else:
+		if tagA is None:
+			if tagB is None:
+				return 0
+			elif tagB < 'final':
+				return 1
+			else:
+				return -1
+		elif tagB is None:
+			if tagA < 'final':
+				return -1
+			else:
+				return 1
+		elif tagA != tagB:
+			return 1 if tagA > tagB else -1
+		else:
+			if tagnumA > tagnumB:
+				return 1
+			elif tagnumA == tagnumB:
+				return 0
+			else:
+				return -1
+
+
+def parse_version(v):
+	"""
+	A version is in the form <major>.<minor>.<patch><tag><tagnumber>
+	<minor> and <patch> can be omitted (in which case they count for 0)
+	<tag> and <tagnumber> are optional
+	"""
+	undotted = v.split('.')
+	if len(undotted) == 0:
+		raise ValueError("Versio number cannot be empty")
+	if len(undotted) > 3:
+		raise ValueError("Version number cannot have more than 3 dots")
+	tag_match = re.match('([0-9]+)([a-z]+)([0-9]+)?', undotted[-1])
+	if tag_match is not None:
+		least_number, tag, tagnumber = tag_match.groups()
+	else:
+		least_number, tag, tagnumber = undotted[-1], None, None
+	if tagnumber is None:
+		tagnumber = 0
+	release = tuple(undotted[:-1]) + (least_number,)
+	while len(release) < 3:
+		release = release + (0,)
+	release = tuple(int(n) for n in release)
+	return (release, tag, int(tagnumber))

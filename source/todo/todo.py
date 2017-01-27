@@ -46,10 +46,10 @@ from docopt import docopt
 from . import utils, data_access
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
-from .utils import DATA_DIR
+from .utils import DATA_DIR, DB_PATH, VERSION_PATH
 
 
-__version__ = '3.0.1'
+__version__ = '3.1'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
@@ -151,12 +151,29 @@ def main():
 				print(error)
 			sys.exit(1)
 
-		daccess = get_data_access()
+		current_version = get_installed_version()
+		daccess = get_data_access(current_version)
 		result = dispatch(args, daccess)
 		if result is not None:
 			feedback_code, *data = result
 			globals()['feedback_'+feedback_code](*data)
 		daccess.exit()
+
+
+def get_installed_version():
+	# 3 possibilities:
+	# - No database found -> before v3 (we assume 2.1)
+	# - A database installed, but no version file -> v3.0 or v3.0.1 (we assume 3.0.1)
+	# - Version file -> read the file
+	if not op.exists(DB_PATH):
+		return '2.1'
+	elif not op.exists(VERSION_PATH):
+		with open(VERSION_PATH, 'w') as version_file:
+			version_file.write(__version__)
+		return '3.0.1'
+	else:
+		with open(VERSION_PATH) as version_file:
+			return version_file.read()
 
 
 ## Argument parsing error messages
@@ -308,9 +325,10 @@ def fix_args(args):
 		args['<context>'] = None
 
 
-def get_data_access():
-	db_path = data_access.setup_data_access()
-	connection = sqlite3.connect(db_path)
+def get_data_access(current_version):
+	connection = data_access.setup_data_access(current_version)
+	if connection is None:
+		connection = sqlite3.connect(DB_PATH)
 	return DataAccess(connection)
 
 

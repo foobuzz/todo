@@ -1,5 +1,7 @@
 import sqlite3
 
+from . import utils
+
 
 INIT_DB = [
 	"""
@@ -27,8 +29,39 @@ INIT_DB = [
 	""",
 	"""
 	CREATE INDEX `PathIndex` ON `Context` (`path` ASC);
+	""",
+	"""
+	CREATE INDEX `DoneIndex` ON `Task` (`done`);
+	""",
+	"""
+	CREATE INDEX `DateCreatedIndex` ON `Task` (`created`);
 	"""
 ]
+
+
+VERSIONS_INDEX = [
+	('3.0', 0),
+	('3.1', 4)
+]
+
+
+def update_database(path, current_version):
+	# print('#'*40)
+	# print(current_version)
+	for i, (version, idx) in enumerate(VERSIONS_INDEX):
+		if utils.compare_versions(current_version, version) < 0:
+			index = idx
+	else:
+		index = len(INIT_DB)
+	
+	updates = INIT_DB[index:]
+	if len(updates) > 0:
+		conn = sqlite3.connect(path)
+		for stmt in updates:
+			conn.execute(stmt)
+		return conn
+	else:
+		return None
 
 
 def main():

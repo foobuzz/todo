@@ -2,47 +2,32 @@ import sqlite3, json, os
 import os.path as op
 from datetime import datetime
 
-from . import utils
+from . import utils, init_db
 from .utils import DATA_DIR, DB_PATH, DATAFILE_NAME, DATA_CTX_NAME
 
 DATETIME_MIN = '0001-01-01 00:00:00'
+END_OF_JSON = '2.1'
 
 
-def setup_data_access():
-	""" Prepare the sqlite database so that it's ready to be used by the
+def setup_data_access(current_version):
+	"""
+	Prepare the sqlite database so that it's ready to be used by the
 	application. It's supposed to work in any environment (new installation,
 	old version, etc) and will make any necessary conversion between different
 	versions (for example converting the json datafile from v2.2- into a
-	sqlite database)"""
+	sqlite database)
+	"""
 	if not op.exists(DATA_DIR):
 		os.makedirs(DATA_DIR)
-	# Three possibilities:
-	#  - We find the sqlite database (v3+). Nothing to do
-	#  - We find the JSON file (v2.2-). We need to set the database up and
-	#    transfer the data from JSON to the database
-	#  - We find nothing. We need to set the database up.
-	json_path = op.join(DATA_DIR, DATAFILE_NAME)
-	if op.exists(DB_PATH):
-		pass
-	elif op.exists(json_path):
-		connection = setup_database(DB_PATH)
+
+	connection = init_db.update_database(DB_PATH, current_version)
+	if utils.compare_versions(current_version, END_OF_JSON) <= 0:
+		json_path = op.join(DATA_DIR, DATAFILE_NAME)
 		with open(json_path) as datafile:
 			data = json.load(datafile)
 		transfer_data(connection, data)
-	else:
-		setup_database(DB_PATH).close()
-	return DB_PATH
 
-
-def setup_database(db_path):
-	""" Creates the sqlite database and creates its tables, indexes, etc."""
-	from .init_db import INIT_DB
-	conn = sqlite3.connect(db_path)
-	c = conn.cursor()
-	for stmt in INIT_DB:
-		c.execute(stmt)
-	conn.commit()
-	return conn
+	return connection
 
 
 def transfer_data(connection, data):
