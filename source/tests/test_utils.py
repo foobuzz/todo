@@ -96,3 +96,43 @@ class TestGetRelativePath(TestFunction, unittest.TestCase):
 
 	def test_get_relative_path(self):
 		self.run_test(tutils.get_relative_path)
+
+
+class TestParseVersion(TestFunction, unittest.TestCase):
+
+	cases = [
+		(['1'],        ((1, 0, 0), None, 0)),
+		(['1.0'],      ((1, 0, 0), None, 0)),
+		(['1.0.0'],    ((1, 0, 0), None, 0)),
+		(['1.0.1'],    ((1, 0, 1), None, 0)),
+		(['1.2.3'],    ((1, 2, 3), None, 0)),
+		(['1.2.3r'],   ((1, 2, 3), 'r', 0)),
+		(['1.2.3r1'],  ((1, 2, 3), 'r', 1)),
+		(['1.2.3r12'], ((1, 2, 3), 'r', 12)),
+		(['1.2r1'],    ((1, 2, 0), 'r', 1)),
+		(['1r1'],      ((1, 0, 0), 'r', 1)),
+	]
+
+	def test_parse_version(self):
+		self.run_test(tutils.parse_version)
+
+
+class TestCompareVersions(TestFunction, unittest.TestCase):
+
+	cases = [
+		(['1', '1'],            0),
+		(['1', '2'],            -1),
+		(['2', '1'],            1),
+		(['1.1', '1'],          1),
+		(['1.1.1', '1'],        1),
+		(['1.0.1', '1.1'],      -1),
+		(['1.0.0', '1'],        0),
+		(['1.0', '1'],          0),
+		(['1a', '1'],           -1),
+		(['1final', '1'],       1),
+		(['1.0r', '1r'],        0),
+		(['1.0.1a', '1.0.1a1'], -1)
+	]
+
+	def test_compare_versions(self):
+		self.run_test(tutils.compare_versions)
