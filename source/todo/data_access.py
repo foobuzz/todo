@@ -422,6 +422,8 @@ class DataAccess():
 	def remove_context(self, path):
 		""" Remove the context (and all subcontexts and tasks/subtasks)
 		pointed to by `path`."""
+		# We only have to remove the context and its subcontext as the foreign
+		# key on tasks to set up to cascade the delete
 		c = self.connection.cursor()
 		c.execute("""
 			DELETE FROM Context

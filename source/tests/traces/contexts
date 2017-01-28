@@ -47,3 +47,7 @@ $ ./todo.py
  1 | Root task
 ----------------------------------------
  # | sub2 (2)
+$ ./todo.py rmctx plouf --force
+Context does not exist: plouf
+$ ./todo.py ctx plouf --name plif
+Context does not exist: plouf

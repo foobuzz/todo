@@ -392,12 +392,14 @@ def manage_context(args, daccess):
 			if rcount is None:
 				return 'target_name_exists', renamed
 			else:
-				path = renamed
-				exists = rcount != 0
+				if rcount > 0:
+					path = renamed
+				else:
+					exists = False
 		if len(options) > 0:
 			daccess.set_context(path, options)
 		elif not exists:
-			return 'not_exists_no_options'
+			return 'not_exists', path
 
 
 def move(args, daccess):
@@ -405,13 +407,16 @@ def move(args, daccess):
 	ctx2 = args['<ctx2>']
 	source_exists = daccess.context_exists(ctx1)
 	if not source_exists:
-		return 'ctx_doesnt_exist', ctx1
+		return 'not_exists', ctx1
 	else:
 		daccess.move_all(ctx1, ctx2)
 
 
 def remove_context(args, daccess):
 	ctx = args['<context>']
+	if not daccess.context_exists(ctx):
+		return 'not_exists', ctx
+
 	force = args['--force']
 	go_ahead = False
 	if not force:
@@ -422,9 +427,7 @@ def remove_context(args, daccess):
 	else:
 		go_ahead = True
 	if go_ahead:
-		removed = daccess.remove_context(ctx)
-		if removed == 0:
-			return 'ctx_doesnt_exist', ctx
+		daccess.remove_context(ctx)
 
 
 def todo(args, daccess):
@@ -604,14 +607,17 @@ def feedback_todo(context, tasks, subcontexts, highlight=None):
 
 
 def feedback_target_name_exists(renamed):
-	print('Context {} already exists.'.format(
+	print('Context already exists: {}'.format(
 		utils.get_relative_path('', renamed)
 		)
 	)
 
 
-def feedback_not_exists_no_options(path, found):
-	print("Context does not exist and no option provided. No action done.")
+def feedback_not_exists(ctx):
+	print("Context does not exist: {}".format(
+		utils.get_relative_path('', ctx)
+		)
+	)
 
 
 def feedback_contexts(contexts):

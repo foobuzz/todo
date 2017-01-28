@@ -46,8 +46,6 @@ VERSIONS_INDEX = [
 
 
 def update_database(path, current_version):
-	# print('#'*40)
-	# print(current_version)
 	for i, (version, idx) in enumerate(VERSIONS_INDEX):
 		if utils.compare_versions(current_version, version) < 0:
 			index = idx
