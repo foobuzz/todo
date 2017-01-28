@@ -676,7 +676,7 @@ def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=Fa
 def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 	id_str = cstr(utils.to_hex(task['id']), clr('id'))
 
-	if highlight is not None:
+	if highlight is not None and CONFIG.getboolean('Colors', 'colors'):
 		term, case = highlight
 		content_str = utils.get_highlights_term(
 			task['title'],
