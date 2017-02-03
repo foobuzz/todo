@@ -74,7 +74,7 @@ By default, a task has a priority of 1.
 Set the tasks identified by `id`s as done. The ID of a task is shown at its left in lists output by `todo`.
 
 
-### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--visibility VISIBILITY] [--text CONTENT]`
+### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]`
 
 Apply the given options to the task identified by `id`. Options are described in the  `todo add` parts, with the addition of:
 
@@ -109,7 +109,7 @@ Remove done tasks from history that were created before `MOMENT`. Ask the user f
 
 ### `todo ctx <context> [--flat|--tidy] [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]`
 
-If no mutation option is given (priority or visibility), has the same effect of `todo <context>`.
+If no mutation option is given (priority or visibility), has the same effect than `todo <context>`.
 
 If at least one option is given, apply the option to the context.
 

@@ -136,12 +136,12 @@ You can also display tasks of contexts integrated with general tasks with the `-
 	    3 | Buy the gift for Stefany ⌛ 16 days remaining
 		7 | Read the article about chemistry #culture
 
-Notice how the `#` flag indicates the context of the task. You can set the `--flat` option to be the default way to display tasks in the [configuration file]. In such case, the original hierarchical display is achieved using the `--tidy` option.
+Notice how the `#` flag indicates the context of the task. You can set the `--flat` option to be the default way to display tasks in the [configuration file](https://github.com/foobuzz/todo/blob/master/doc/reference.md#configuration). In such case, the original hierarchical display is achieved using the `--tidy` option.
 
 
 ### Subcontexts
 
-Since contexts are the equivalent of directories, you can also create a hierarchy of contexts. You can define contexts within contexts using the dot notation:
+Since contexts are equivalent to directories, you can also create a hierarchy of contexts. You can define contexts within contexts using the dot notation:
 
 	$ todo task 7 -c culture.chemistry
 	$ todo culture
@@ -203,7 +203,7 @@ When doing a `todo`, contexts are sorted by:
  * Priority, descending
  * Number of tasks, descending
 
-[More about contexts: how to rename contexts, delete contexts, move all tasks from one context to another, list all existing contexts]
+[More about contexts: how to rename contexts, delete contexts, move all tasks from one context to another, list all existing contexts](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-ctx-context---flat--tidy---priority-priority---visibility-visibility---name-name)
 
 
 ## Sort summary
@@ -223,7 +223,7 @@ Showing the history of tasks, listing all existing contexts, editing tasks... Fi
 
 ## Configuration
 
-Configuration is done by editing a configuration file which sits at `~/.toduhrc`. It should already exist and contain a template even if you never touched it.
+Configuration is done by editing a configuration file which sits at `~/.toduhrc`.
 
 The configuration file is in the INI format. It's made of sections, each of which is introduced by a `[title]` enclosed in brackets. The lines of a section consist of `key = value` pairs.
 
