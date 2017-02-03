@@ -95,6 +95,13 @@ The editor used can be configured. See Configuration.
 Print the list of all tasks sorted by creation date, along with their properties.
 
 
+### `todo search <term> [--context CONTEXT] [--done|--undone] [--before MOMENT] [--after MOMENT] [--case]`
+
+Search for tasks whose title contains the substring `<term>`. The search is case unsensitive, unless the `--case` flag is set. The flag `--done` (resp. `--undone`) restricts the search to done (resp. undone) tasks. You can select a segment of time in which searching the tasks (by their creation date), `MOMENT` being in same the format than other `MOMENT`s (deadlines, etc).
+
+**Note:** if you want to perform an advanced search using regular expressions and such, use this command with the empty string for `<term>`, which will print all tasks matching the other options, and pipe the output to `grep` to do custom filtering on titles
+
+
 ### `todo rm <id>...`
 
 Remove tasks identified by the given `<id>`s (separated by spaces) from history.
