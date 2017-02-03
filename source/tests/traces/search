@@ -1,0 +1,29 @@
+$ ./todo.py add "Example with bird word"
+$ ./todo.py add "Another example with heisenberg word"
+$ ./todo.py search example
+ 1 | Example with bird word
+ 2 | Another example with heisenberg word
+$ ./todo.py search Example
+ 1 | Example with bird word
+ 2 | Another example with heisenberg word
+$ ./todo.py search example --case
+ 2 | Another example with heisenberg word
+$ ./todo.py search Example --case
+ 1 | Example with bird word
+$ ./todo.py search bird
+ 1 | Example with bird word
+$ ./todo.py search heisenberg
+ 2 | Another example with heisenberg word
+$ ./todo.py done 1
+$ ./todo.py search example
+ 1 | [DONE] Example with bird word
+ 2 | Another example with heisenberg word
+$ ./todo.py search example --done
+ 1 | [DONE] Example with bird word
+$ ./todo.py search example --undone
+ 2 | Another example with heisenberg word
+$ ./todo.py search bird
+ 1 | [DONE] Example with bird word
+$ ./todo.py search bird --done
+ 1 | [DONE] Example with bird word
+$ ./todo.py search bird --undone
