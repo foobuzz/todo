@@ -46,9 +46,12 @@ VERSIONS_INDEX = [
 
 
 def update_database(path, current_version):
+	if current_version is None:
+		current_version = '0'
 	for i, (version, idx) in enumerate(VERSIONS_INDEX):
 		if utils.compare_versions(current_version, version) < 0:
 			index = idx
+			break
 	else:
 		index = len(INIT_DB)
 	
@@ -57,9 +60,7 @@ def update_database(path, current_version):
 		conn = sqlite3.connect(path)
 		for stmt in updates:
 			conn.execute(stmt)
-		return conn
-	else:
-		return None
+		conn.close()
 
 
 def main():

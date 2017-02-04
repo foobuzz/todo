@@ -20,14 +20,14 @@ def setup_data_access(current_version):
 	if not op.exists(DATA_DIR):
 		os.makedirs(DATA_DIR)
 
-	connection = init_db.update_database(DB_PATH, current_version)
-	if utils.compare_versions(current_version, END_OF_JSON) <= 0:
+	init_db.update_database(DB_PATH, current_version)
+	if current_version is not None \
+	and utils.compare_versions(current_version, END_OF_JSON) <= 0:
 		json_path = op.join(DATA_DIR, DATAFILE_NAME)
 		with open(json_path) as datafile:
 			data = json.load(datafile)
+		connection = sqlite3.connect(DB_PATH)
 		transfer_data(connection, data)
-
-	return connection
 
 
 def transfer_data(connection, data):

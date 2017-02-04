@@ -46,7 +46,7 @@ from docopt import docopt
 from . import utils, data_access
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
-from .utils import DATA_DIR, DB_PATH, VERSION_PATH
+from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH
 
 
 __version__ = '3.1'
@@ -161,19 +161,18 @@ def main():
 
 
 def get_installed_version():
-	# 3 possibilities:
-	# - No database found -> before v3 (we assume 2.1)
-	# - A database installed, but no version file -> v3.0 or v3.0.1 (we assume 3.0.1)
-	# - Version file -> read the file
-	if not op.exists(DB_PATH):
-		return '2.1'
-	elif not op.exists(VERSION_PATH):
-		with open(VERSION_PATH, 'w') as version_file:
-			version_file.write(__version__)
-		return '3.0.1'
-	else:
+	if op.exists(VERSION_PATH):
 		with open(VERSION_PATH) as version_file:
 			return version_file.read()
+	else:
+		with open(VERSION_PATH, 'w') as version_file:
+			version_file.write(__version__)
+		if op.exists(DB_PATH):
+			return '3.0.1'
+		elif op.exists(DATAFILE_PATH):
+			return '2.1'
+		else:
+			return None
 
 
 ## Argument parsing error messages
@@ -326,9 +325,8 @@ def fix_args(args):
 
 
 def get_data_access(current_version):
-	connection = data_access.setup_data_access(current_version)
-	if connection is None:
-		connection = sqlite3.connect(DB_PATH)
+	data_access.setup_data_access(current_version)
+	connection = sqlite3.connect(DB_PATH)
 	return DataAccess(connection)
 
 
