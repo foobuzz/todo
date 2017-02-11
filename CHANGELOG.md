@@ -1,4 +1,20 @@
-## 3.0.1
+## 3.1
+
+### Features
+
+ * Search feature
+
+### Bugfixes
+
+ * Datetimes in the `history` output are converted to local time
+ * Negatime timedeltas (e.g. deadline in the past) are parsed too
+
+### Implementation
+
+ * System for adding stuff to the database (tables, indexes, etc) depending on what version is already installed
+
+
+#### 3.0.1
 
 Management of the temporary file created for editing purposes with the `edit` command is handled with a custom context manager instead of Python's `NamedTemporaryFile` as the documentation states that depending on platform external programs might not be able to write to such file.
 
