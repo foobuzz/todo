@@ -217,7 +217,10 @@ def get_terminal_width():
 def sqlite_date_to_local(sqlite_date):
 	if sqlite_date is None:
 		return ''
-	dt = datetime.strptime(sqlite_date, SQLITE_DT_FORMAT)
+	try:
+		dt = datetime.strptime(sqlite_date, SQLITE_DT_FORMAT)
+	except ValueError:
+		return ''
 	dt = dt.replace(tzinfo=timezone.utc)
 	try:
 		local_dt = dt.astimezone(tz=None)
