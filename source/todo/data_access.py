@@ -378,7 +378,7 @@ class DataAccess():
 		""", (path, '{}_%'.format(path)))
 		result = c.fetchall()
 		return result[0][0], result[1][0]
-		
+
 	def set_context(self, path, options=[]):
 		""" Set the context pointed to by `path` to have the given `options`.
 		If the context doesn't already exist, it's created, which is why this

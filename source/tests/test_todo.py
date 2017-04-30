@@ -7,7 +7,7 @@ from .utils import TestFunction
 
 sys.path.insert(1, op.abspath('./todo'))
 
-import todo.todo as todo
+import todo.cli_parser as cli_parser
 
 
 class TestParseId(TestFunction, unittest.TestCase):
@@ -24,4 +24,4 @@ class TestParseId(TestFunction, unittest.TestCase):
 	]
 
 	def test_parse_id(self):
-		self.run_test(todo.parse_id)
+		self.run_test(cli_parser.parse_id)

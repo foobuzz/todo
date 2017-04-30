@@ -54,7 +54,7 @@ def update_database(path, current_version):
 			break
 	else:
 		index = len(INIT_DB)
-	
+
 	updates = INIT_DB[index:]
 	if len(updates) > 0:
 		conn = sqlite3.connect(path)

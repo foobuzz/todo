@@ -1,61 +1,17 @@
 #! /usr/bin/env python3
 
-"""todo. CLI todo list manager.
-
-Usage:
-  todo [<context>] [--flat|--tidy]
-  todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority PRIORITY] [--visibility VISIBILITY]
-  todo search <term> [--context CONTEXT] [--done|--undone] [--before MOMENT] [--after MOMENT] [--case]
-  todo done <id>...
-  todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT]
-    [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]
-  todo edit <id>
-  todo rm <id>...
-  todo ctx <context> [--flat|--tidy] [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]
-  todo mv <ctx1> <ctx2>
-  todo rmctx <context> [--force]
-  todo contexts [<context>]
-  todo history
-  todo purge [--force] [--before MOMENT]
-  todo --help
-  todo --version
-  todo --location
-
-Options:
-  -d MOMENT, --deadline MOMENT            Set the deadline of a task
-  -s MOMENT, --start MOMENT               Set the start-line of a task
-  -c CONTEXT, --context CONTEXT           Set the context of a task
-  -p INTEGER, --priority INTEGER          Set the priority of a task, or of a
-                                          context
-  -t TITLE, --title TITLE                 Set the title of a task
-  -v VISIBILITY, --visibility VISIBILITY  Set the visibility of a task, or of a
-                                          context.
-  --name NAME                             Rename a context
-  --before MOMENT                         Select tasks created before a moment
-  --after MOMENT                          Select tasks created after a moment
-
-"""
-
 import os, sys, sqlite3, functools, configparser
 import os.path as op
 from datetime import datetime, timezone
 
-from docopt import docopt
-
-from . import utils, data_access
+from . import cli_parser, utils, data_access
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
-from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH
+from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW
 
 
 __version__ = '3.1'
 
-
-COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
-	'purge', 'mv', 'rmctx', 'search'}
-
-NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
 
 # Icons used to print tasks' properties in the terminal.
 # True is the ASCII version for challenged terminals.
@@ -136,16 +92,14 @@ def main():
 	if len(argv) == 1 and argv[0] == 'doduh':
 		print('Beethoven - Symphony No. 5')
 		sys.exit(0)
-	args = docopt(__doc__, argv=argv, help=False, version=__version__)
+	args = cli_parser.parse_cli()
 
-	if args['--help']:
-		print(__doc__)
-	elif args['--version']:
+	if args['version']:
 		print(__version__)
-	elif args['--location']:
+	elif args['location']:
 		print(DATA_DIR)
 	else:
-		report = parse_args(args)
+		report = cli_parser.parse_args(args)
 		if len(report) > 0:
 			for error in report:
 				print(error)
@@ -175,155 +129,6 @@ def get_installed_version():
 			return None
 
 
-## Argument parsing error messages
-
-INCORRECT_PRIORITY = 'PRIORITY must be an integer.'
-INCORRECT_VISIBILITY = "VISIBILITY must be 'normal' or 'hidden'."
-INCORRECT_MOMENT = "MOMENT must be in the YYYY-MM-DD format, or the "+\
-                   "YYYY-MM-DD HH:MM:SS format, or a delay in the "+\
-                   "([0-9]+)([wdhms]) forma."
-INCORRECT_CTX_RENAME = "Can't use '.' in context new name "+\
-                       "(only right-most context name is updated)."
-CANT_RENAME_ROOT = "Can't rename root context."
-INVALID_TID = "Invalid task{} ID: {}"
-
-
-# ARGUMENT PARSERS.
-#
-# Each function should return a 2-tuple where the first component is a boolean
-# indicating whether the value of the argument is correct and has been
-# successfully parsed. The second component contains either the parsed value
-# (if success) or an error message.
-
-def parse_id(tid_list):
-	valid = []
-	invalid = []
-	for tid in tid_list:
-		try:
-			valid.append(int(tid, 16))
-		except ValueError:
-			invalid.append(tid)
-	if len(invalid) == 0:
-		return True, valid
-	else:
-		s = 's' if len(invalid) > 1 else ''
-		string = ', '.join(invalid)
-		error = INVALID_TID.format(s, string)
-		return False, error
-
-
-def parse_priority(p):
-	try:
-		p_ = int(p)
-	except ValueError:
-		return False, INCORRECT_PRIORITY
-	else:
-		return True, p_
-
-
-def parse_visibility(v):
-	if v not in ['normal', 'hidden']:
-		return False, INCORRECT_VISIBILITY
-	else:
-		return True, v
-
-
-def parse_context(ctx):
-	return True, data_access.dbfy_context(ctx)
-
-
-def parse_moment(moment, direction=1):
-	""" Parse a moment, which can be either a string datetime in the allowed
-	datetimes format, either a delay (e.g. 2w). In the case of a delay,
-	direction indicates in which direction in time the delay is applied to the
-	current time. It can either be 1 (future) or -1 (past)."""
-	dt = utils.get_datetime(moment, NOW, direction)
-	if dt is None:
-		return False, INCORRECT_MOMENT
-	else:
-		return True, dt.strftime(utils.SQLITE_DT_FORMAT)
-
-
-def parse_deadline(moment):
-	""" A deadline-specific wrapper around parse_moment. Case-insensitive
-	'none' is accepted and is parsed as 'None' (the string)"""
-	# The reason why it returns the string 'None' and not the value None is
-	# that docopt gives the value None to all arguments and options that
-	# weren't used. Using 'None' (the string) allows us the make the difference
-	# between a deadline set as none and no deadline set.
-	if moment.lower() == 'none':
-		return True, 'None'
-	else:
-		return parse_moment(moment)
-
-
-def parse_new_context_name(name):
-	if '.' in name:
-		return False, INCORRECT_CTX_RENAME
-	elif name == '':
-		return False, CANT_RENAME_ROOT
-	else:
-		return True, name
-
-
-PARSERS = [
-	('<id>', parse_id),
-	('--priority', parse_priority),
-	('--visibility', parse_visibility),
-	('--context', parse_context),
-	('<context>', parse_context),
-	('<ctx1>', parse_context),
-	('<ctx2>', parse_context),
-	('--deadline', parse_deadline),
-	('--start', parse_moment),
-	('--before', functools.partial(parse_moment, direction=-1)),
-	('--after', functools.partial(parse_moment, direction=-1)),
-	('--name', parse_new_context_name)
-]
-
-
-def parse_args(args):
-	""" Apply application-level parsing of the values of the args dictionary
-	*in place*. Returns a report which is a list of errors (strings) that
-	might have occured during parsing. There's no waranty that the args
-	dictionary will work with the rest of the application if the report
-	list isn't empty."""
-	fix_args(args)
-	report = []
-	for arg_name, parser in PARSERS:
-		value = args.get(arg_name)
-		if value is not None:
-			success, result = parser(value)
-			if success:
-				args[arg_name] = result
-			else:
-				report.append(result)
-	return report
-
-
-def fix_args(args):
-	# The command-line interface is ambiguous. There is `todo [<context>]` to
-	# only show the tasks of a specific context. There's also all other
-	# commands such as `todo history`. The desired behavior is that an
-	# existing command always wins over a context's name. If a user has a
-	# context which happens to have the name of a command, he can still do
-	# `todo ctx history` for example.
-
-	# docopt has no problem making a command win over a context's name *if
-	# there are parameters or option accompanying the command*. This means
-	# that for parameters-free commands such as `todo history`, docopt thinks
-	# that it's `todo <context>` with <context> = 'history'. To make up for
-	# such behavior, what I do is that I look if there's a <context> value
-	# given for a command which doesn't accept context, this context value
-	# being the name of a command. In such case, I set the corresponding
-	# command flag to True and the context value to None.
-	if any(args[c] for c in COMMANDS):
-		return
-	if args['<context>'] in COMMANDS:
-		args[args['<context>']] = True
-		args['<context>'] = None
-
-
 def get_data_access(current_version):
 	data_access.setup_data_access(current_version)
 	connection = sqlite3.connect(DB_PATH)
@@ -339,24 +144,24 @@ def get_data_access(current_version):
 # return nothing (or None) if no feedback is intended.
 
 def add_task(args, daccess):
-	context = args.get('--context')
-	options = get_options(args, TASK_MUTATORS, {'--deadline': {'None': None}})
+	context = args.get('context')
+	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
 	if context is None:
 		context = ''
-	id_ = daccess.add_task(args['<title>'], context, options)
+	id_ = daccess.add_task(args['title'], context, options)
 	return 'add_task', id_
 
 
 def update_task(args, daccess):
-	tid = args['<id>'][0]
-	context = args.get('--context')
-	options = get_options(args, TASK_MUTATORS, {'--deadline': {'None': None}})
+	tid = args['id'][0]
+	context = args.get('context')
+	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
 	upt_count = daccess.update_task(tid, context, options)
 	return 'single_task_update', tid, upt_count != 0
 
 
 def edit_task(args, daccess):
-	tid = args['<id>'][0]
+	tid = args['id'][0]
 	task = daccess.get_task(tid, 'title')
 	new_content = utils.input_from_editor(task['title'], EDITOR)
 	if new_content.endswith('\n'):
@@ -367,26 +172,26 @@ def edit_task(args, daccess):
 
 
 def do_task(args, daccess):
-	not_found = daccess.set_done_many(args['<id>'])
+	not_found = daccess.set_done_many(args['id'])
 	return 'multiple_tasks_done', not_found
 
 
 def remove_task(args, daccess):
-	not_found = daccess.remove_many(args['<id>'])
+	not_found = daccess.remove_many(args['id'])
 	return 'multiple_tasks_update', not_found
 
 
 def manage_context(args, daccess):
-	path = args['<context>']
-	name = args.get('--name')
+	path = args['context']
+	name = args.get('name')
 	options = get_options(args, CONTEXT_MUTATORS)
 	exists = True
 	if len(options) == 0 and name is None:
 		return todo(args, daccess)
 	else:
 		if name is not None:
-			renamed = data_access.rename_context(args['<context>'], name)
-			rcount = daccess.rename_context(args['<context>'], name)
+			renamed = data_access.rename_context(args['context'], name)
+			rcount = daccess.rename_context(args['context'], name)
 			if rcount is None:
 				return 'target_name_exists', renamed
 			else:
@@ -401,8 +206,8 @@ def manage_context(args, daccess):
 
 
 def move(args, daccess):
-	ctx1 = args['<ctx1>']
-	ctx2 = args['<ctx2>']
+	ctx1 = args['ctx1']
+	ctx2 = args['ctx2']
 	source_exists = daccess.context_exists(ctx1)
 	if not source_exists:
 		return 'not_exists', ctx1
@@ -411,11 +216,11 @@ def move(args, daccess):
 
 
 def remove_context(args, daccess):
-	ctx = args['<context>']
+	ctx = args['context']
 	if not daccess.context_exists(ctx):
 		return 'not_exists', ctx
 
-	force = args['--force']
+	force = args['force']
 	go_ahead = False
 	if not force:
 		nb_tasks, nb_subctx = daccess.get_basic_context_tally(ctx)
@@ -429,12 +234,12 @@ def remove_context(args, daccess):
 
 
 def todo(args, daccess):
-	fashion = 'flat' if args['--flat'] else None
+	fashion = 'flat' if args['flat'] else None
 	if fashion is None:
-		fashion = 'tidy' if args['--tidy'] else None
+		fashion = 'tidy' if args['tidy'] else None
 	if fashion is None:
 		fashion = CONFIG.get('App', 'todo_fashion')
-	ctx = args.get('<context>', '')
+	ctx = args.get('context', '')
 	if ctx is None:
 		ctx = ''
 	tasks = daccess.todo(ctx, recursive=(fashion == 'flat'))
@@ -447,7 +252,7 @@ def todo(args, daccess):
 
 
 def get_contexts(args, daccess):
-	path = args['<context>']
+	path = args['context']
 	if path is None:
 		path = ''
 	contexts = daccess.get_descendants(path)
@@ -461,8 +266,8 @@ def get_history(args, daccess):
 
 
 def purge(args, daccess):
-	force = args['--force']
-	before = args['--before']
+	force = args['force']
+	before = args['before']
 	go_ahead = False
 	if force:
 		go_ahead = True
@@ -482,79 +287,78 @@ def purge(args, daccess):
 
 
 def search(args, daccess):
-	term = args['<term>']
+	term = args['term']
 	done = None
-	if args['--done']:
+	if args['done']:
 		done = True
-	elif args['--undone']:
+	elif args['undone']:
 		done = False
-	if args['--context'] is None:
+	if args['context'] is None:
 		ctx = ''
 	else:
-		ctx = args['--context']
+		ctx = args['context']
 	tasks = daccess.search(
 		term,
 		ctx=ctx,
 		done=done,
-		before=args.get('--before'),
-		after=args.get('--after'),
-		case=args['--case']
+		before=args.get('before'),
+		after=args.get('after'),
+		case=args['case']
 	)
-	return 'todo', '', tasks, [], (term, args['--case'])
+	return 'todo', '', tasks, [], (term, args['case'])
 
 ## DISPATCHING
 
 # Map of the names of the commands to handlers defined above.
 
-DISPATCHER = [
-	('add', add_task),
-	('task', update_task),
-	('edit', edit_task),
-	('done', do_task),
-	('rm', remove_task),
-	('ctx', manage_context),
-	('rmctx', remove_context),
-	('mv', move),
-	('contexts', get_contexts),
-	('history', get_history),
-	('purge', purge),
-	('search', search)
-]
+DISPATCHER = {
+	'add': add_task,
+	'task': update_task,
+	'edit': edit_task,
+	'done': do_task,
+	'rm': remove_task,
+	'ctx': manage_context,
+	'rmctx': remove_context,
+	'mv': move,
+	'contexts': get_contexts,
+	'history': get_history,
+	'purge': purge,
+	'search': search
+}
 
 
 def dispatch(args, daccess):
-	for command, handler in DISPATCHER:
-		if args[command]:
-			return handler(args, daccess)
+	if 'command' in args:
+		return DISPATCHER[args['command']](args, daccess)
 	# If no command, fallback to the todo handler
 	return todo(args, daccess)
 
 
 def get_options(args, mutators, converters={}):
-	""" Returns a list of 2-tuple in the form (option, value) for all options
+	"""
+	Returns a list of 2-tuple in the form (option, value) for all options
 	contained in the `mutators` collection if they're also keys of the `args`
-	dictionary prefixed by '--' and have a non-None value. If the option (non-
-	prefixed) is also a key of the `converters` dictionary then the associated
-	value should be another dictionary indicating convertions to be done on
-	the value found in `args`.
+	and have a non-None value. If the option (non- prefixed) is also a key of
+	the `converters` dictionary then the associated value should be another
+	dictionary indicating convertions to be done on the value found in `args`.
 	e.g.
-	args = {'--deadline': 'none'}
+	args = {'deadline': 'none'}
 	mutators = {'deadline'}
 	converters = {'deadline': {'none': None}}
-	=> [('deadline', None)]"""
+	=> [('deadline', None)]
+	"""
 	options = []
 	for mutator in mutators:
-		cl_opt = '--' + mutator
-		if cl_opt in args and args[cl_opt] is not None:
-			val = args[cl_opt]
-			convertions = converters.get(cl_opt)
+		if mutator in args and args[mutator] is not None:
+			val = args[mutator]
+			convertions = converters.get(mutator)
 			if convertions is not None and val in convertions:
 				val = convertions[val]
 			options.append((mutator, val))
 	return options
 
 
-## FEEDBACK FUNCTIONS 
+## FEEDBACK FUNCTIONS
 
 TASK_SUBCTX_SEP = '-'*40
 
@@ -592,7 +396,7 @@ def feedback_todo(context, tasks, subcontexts, highlight=None):
 		id_width = max(len(utils.to_hex(task['id'])) for task in tasks)
 	else:
 		id_width = 1
-		
+
 	for task in tasks:
 		partial = functools.partial(stringyfier, context, id_width, task,
 			highlight=highlight)
@@ -626,7 +430,7 @@ def feedback_contexts(contexts):
 		('visibility', 10, '<', 'visibility', None),
 		('priority', 8, '<', 'priority', None),
 		('undone tasks', 12, '<', None, get_tally)
-	]	
+	]
 	utils.print_table(struct, contexts, is_context_default)
 
 

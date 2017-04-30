@@ -41,6 +41,8 @@ REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 
 SQLITE_DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+NOW = datetime.utcnow().replace(tzinfo=timezone.utc)
+
 
 def print_table(struct, iterable, is_default=lambda obj, p: False):
 	""" This function, which is responsible for printing tables to the
