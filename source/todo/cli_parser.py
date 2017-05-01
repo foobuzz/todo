@@ -30,6 +30,9 @@ INVALID_TID = "Invalid task{} ID: {}"
 # (if success) or an error message.
 
 def parse_id(tid_list):
+	if isinstance(tid_list, str):
+		# In the case of the task command, we actually get a lone ID
+		tid_list = [tid_list]
 	valid = []
 	invalid = []
 	for tid in tid_list:
