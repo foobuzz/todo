@@ -195,6 +195,9 @@ def parse_command(argv):
 		help="Priority of the task, as an integer. Higher the interger, "
 		     "higher the priority"
 	)
+	add_parser.add_argument('-e', '--edit', action='store_true',
+		help="Edit the task in a text editor before adding it"
+	)
 
 	search_parser = subparsers.add_parser('search',
 		help="Search for tasks")

@@ -35,13 +35,17 @@ INIT_DB = [
 	""",
 	"""
 	CREATE INDEX `DateCreatedIndex` ON `Task` (`created`);
+	""",
+	"""
+	ALTER TABLE Task ADD COLUMN `content` TEXT
 	"""
 ]
 
 
 VERSIONS_INDEX = [
 	('3.0', 0),
-	('3.1', 4)
+	('3.1', 4),
+	('3.2', 6)
 ]
 
 

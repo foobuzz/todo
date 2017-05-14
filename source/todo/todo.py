@@ -4,13 +4,13 @@ import os, sys, sqlite3, functools, configparser
 import os.path as op
 from datetime import datetime, timezone
 
-from . import cli_parser, utils, data_access
+from . import cli_parser, utils, data_access, core
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
 from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW
 
 
-__version__ = '3.1'
+__version__ = '3.2'
 
 
 # Icons used to print tasks' properties in the terminal.
@@ -106,6 +106,10 @@ def main():
 			sys.exit(1)
 
 		current_version = get_installed_version()
+		if current_version != __version__:
+			with open(VERSION_PATH, 'w') as version_file:
+				version_file.write(__version__)
+
 		daccess = get_data_access(current_version)
 		result = dispatch(args, daccess)
 		if result is not None:
@@ -119,8 +123,6 @@ def get_installed_version():
 		with open(VERSION_PATH) as version_file:
 			return version_file.read()
 	else:
-		with open(VERSION_PATH, 'w') as version_file:
-			version_file.write(__version__)
 		if op.exists(DB_PATH):
 			return '3.0.1'
 		elif op.exists(DATAFILE_PATH):
@@ -148,26 +150,44 @@ def add_task(args, daccess):
 	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
 	if context is None:
 		context = ''
-	id_ = daccess.add_task(args['title'], context, options)
+
+	if args['edit']:
+		title, content = core.editor_edit_task(args['title'], None, EDITOR)
+	else:
+		title, content = args['title'], None
+
+	id_ = daccess.add_task(title, content, context, options)
 	return 'add_task', id_
 
 
-def update_task(args, daccess):
+def manage_task(args, daccess):
 	tid = args['id'][0]
 	context = args.get('context')
 	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
-	upt_count = daccess.update_task(tid, context, options)
-	return 'single_task_update', tid, upt_count != 0
+
+	if len(options) == 0:
+		return show_task(tid, daccess)
+	else:
+		upt_count = daccess.update_task(tid, context, options)
+		return 'single_task_update', tid, upt_count != 0
+
+
+def show_task(tid, daccess):
+	print('<Not implemented yet>')
 
 
 def edit_task(args, daccess):
 	tid = args['id'][0]
-	task = daccess.get_task(tid, 'title')
-	new_content = utils.input_from_editor(task['title'], EDITOR)
-	if new_content.endswith('\n'):
-	# hurr durr I'm a text editor I append a newline at the end of files
-		new_content = new_content[:-1]
-	upt_count = daccess.update_task(tid, options=[('title', new_content)])
+	task = daccess.get_task(tid, 'title,content')
+	new_title, new_content = core.editor_edit_task(
+		task['title'],
+		task['content'],
+		EDITOR
+	)
+	upt_count = daccess.update_task(tid, options=[
+		('title', new_title),
+		('content', new_content)
+	])
 	return 'single_task_update', tid, upt_count != 0
 
 
@@ -313,7 +333,7 @@ def search(args, daccess):
 
 DISPATCHER = {
 	'add': add_task,
-	'task': update_task,
+	'task': manage_task,
 	'edit': edit_task,
 	'done': do_task,
 	'rm': remove_task,

@@ -63,7 +63,7 @@ def transfer_data(connection, data):
 			options.append(('done', '1'))
 		if 'priority' in task:
 			options.append(('priority', task['priority']))
-		daccess.add_task(title, ctx, options)
+		daccess.add_task(title, None, ctx, options)
 	daccess.exit()
 
 
@@ -138,6 +138,7 @@ def rename_context(path, name):
 
 TASK_OPTIONS = {
 	'title',
+	'content',
 	'created',
 	'deadline',
 	'start',
@@ -207,18 +208,18 @@ class DataAccess():
 		c.execute('PRAGMA case_sensitive_like = {};'.format(value))
 		self.case_sensitive_like = switch
 
-	def add_task(self, title, context='', options=[]):
+	def add_task(self, title, content, context='', options=[]):
 		""" Add a task titled `title` and associated to the given `context`,
 		with the given `options`. The context is created if not already
 		existing."""
 		check_options(options, TASK_OPTIONS)
 		cid = self.get_or_create_context(context)
 		query_tmp = """
-			INSERT INTO Task (title, context {})
-			VALUES (?, ? {})
+			INSERT INTO Task (title, content, context {})
+			VALUES (?, ?, ? {})
 		"""
 		col_names, placeholders, values = get_insert_components(options)
-		values = (title, cid) + values
+		values = (title, content, cid) + values
 		query = query_tmp.format(col_names, placeholders)
 
 		c = self.connection.cursor()
