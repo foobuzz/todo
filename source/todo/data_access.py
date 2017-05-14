@@ -248,22 +248,14 @@ class DataAccess():
 		c.execute(query, values)
 		return c.rowcount
 
-	def get_task(self, tid, columns='*'):
-		""" Get the task identified by ID `tid` (int). Return a Row object
-		which supports the mapping protocol with database column names as
-		keys. A subset of the columns can be retrieved by changing the value
-		of the `columns` argument which must contain a comma-separated list of
-		columns (a string)."""
-		if columns != '*':
-			for c in columns.split(','):
-				if c.strip() not in TASK_OPTIONS:
-					raise ValueError('Illegal column')
+	def get_task(self, tid):
+		""" Get the task identified by ID `tid` (int). Return a Row-Task object."""
 		query = """
-			SELECT {}
-			FROM Task
-			WHERE id = ?
-		""".format(columns)
-
+			SELECT t.*, c.path as ctx_path
+			FROM Task t JOIN Context c
+			ON t.context = c.id
+			WHERE t.id = ?
+		"""
 		c = self.connection.cursor()
 		c.execute(query, (tid,))
 		row = c.fetchone()

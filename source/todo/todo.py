@@ -59,6 +59,12 @@ DEFAULT_CONFIG['Colors'] = {
 	'priority': 'green',
 	'done': 'green'
 }
+DEFAULT_CONFIG['Word-wrapping'] = {
+	'title': True,
+	'content': False,
+	'smart': True,
+	'width': -1
+}
 
 CONFIG = configparser.ConfigParser(
 	allow_no_value=True,
@@ -173,12 +179,29 @@ def manage_task(args, daccess):
 
 
 def show_task(tid, daccess):
-	print('<Not implemented yet>')
+	task = daccess.get_task(tid)
+	# w3 = word-wrap width
+	w3 = CONFIG.getboolean('Word-wrapping', 'content')
+	if w3:
+		w3 = CONFIG.getint('Word-wrapping', 'width')
+		if w3 == -1:
+			w3 = utils.get_terminal_width()
+	else:
+		w3 = None
+
+	full_content = core.get_task_full_content(
+		task['title'],
+		task['content'],
+		wrap_width=w3,
+		smart_wrap=CONFIG.getboolean('Word-wrapping', 'smart')
+	)
+
+	return 'show_task', task, full_content
 
 
 def edit_task(args, daccess):
 	tid = args['id'][0]
-	task = daccess.get_task(tid, 'title,content')
+	task = daccess.get_task(tid)
 	new_title, new_content = core.editor_edit_task(
 		task['title'],
 		task['content'],
@@ -465,6 +488,32 @@ def feedback_history(tasks, gid):
 def feedback_purge(count):
 	s = 's' if count > 1 else ''
 	print('{} task{} deleted'.format(count, s))
+
+
+def feedback_show_task(task, full_content):
+	print(cstr("     ID:", '6'), utils.to_hex(task['id']))
+	print(cstr("Created:", '6'), utils.sqlite_date_to_local(task['created']))
+	if task['start'] == task['created']:
+		print(cstr("  Start:", '6'), "@created")
+	else:
+		print(cstr("  Start:", '6'), utils.sqlite_date_to_local(task['start']))
+	print(
+		cstr(" Status:", '6'),
+		"DONE" if task['done'] is not None else "TODO"
+	)
+
+	def print_metaline(ascii_):
+		c = get_task_string_components(task, '', ascii_, highlight=None)
+		if task['done'] is None:
+			stuff = ['deadline', 'priority', 'context']
+		else:
+			stuff = ['priority', 'context']
+		return ' ' + ' '.join(c[a] for a in stuff if c[a] != '')
+
+	safe_print(print_metaline)
+
+	print(cstr('-'*utils.get_terminal_width(), '3'))
+	print(full_content)
 
 
 # String building for todo feedback

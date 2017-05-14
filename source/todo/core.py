@@ -1,4 +1,4 @@
-from . import utils
+from . import utils, text_wrap
 
 
 def editor_edit_task(title, content, editor):
@@ -6,21 +6,28 @@ def editor_edit_task(title, content, editor):
 	Opens the text editor `editor` to edit a task's `title` and `content`.
 	Returns the updated title and content after editing is done.
 	"""
-	init_content = get_task_init_content(title, content)
+	init_content = get_task_full_content(title, content)
 	full_content = utils.input_from_editor(init_content, editor)
 	title, content = parse_task_full_content(full_content)
 	return title, content
 
 
-def get_task_init_content(title, content):
+def get_task_full_content(title, content, wrap_width=None, smart_wrap=False):
 	"""
-	Return the initial content to load a text editor with when `todo add
-	[<title>] --edit` or `todo edit` is called.
+	Return the full text of a task from its `title` and `content`. If
+	`wrap_width` is not None, then both the title and content are word-wrapped
+	to be contained in the given width. If `smart_wrap` is True, then the
+	word-wrapping cleverly handles things such as list, quotes, etc.
 	"""
+	if wrap_width is not None:
+		title = text_wrap.wrap_text(title, wrap_width, smart_wrap)
+		if content is not None:
+			content = text_wrap.wrap_text(content, wrap_width, smart_wrap)
+	title_width = max(len(line) for line in title.splitlines())
 	if content is None:
-		return '{}\n{}'.format(title, '='*len(title))
+		return title
 	else:
-		return '{}\n{}\n{}'.format(title, '='*len(title), content)
+		return '{}\n{}\n{}'.format(title, '='*title_width, content)
 
 
 def parse_task_full_content(full_content):
@@ -28,7 +35,7 @@ def parse_task_full_content(full_content):
 	Return a tuple (title, content) extracted from the content found in a file
 	edited through `todo edit` or `todo add [<title>] --edit`
 	"""
-	title, content = '', ''
+	title, content = '', None
 	state = 'title'
 	lines = full_content.splitlines(keepends=True)
 	for i, line in enumerate(lines):
@@ -38,6 +45,8 @@ def parse_task_full_content(full_content):
 		if state == 'title':
 			title += line
 		elif state == 'content':
+			if content is None:
+				content = ''
 			content += line
 
 	# Removes blank characters at the right of the title (newline leading to
