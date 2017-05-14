@@ -171,7 +171,7 @@ def manage_task(args, daccess):
 	context = args.get('context')
 	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
 
-	if len(options) == 0:
+	if len(options) == 0 and context is None:
 		return show_task(tid, daccess)
 	else:
 		upt_count = daccess.update_task(tid, context, options)
@@ -508,7 +508,11 @@ def feedback_show_task(task, full_content):
 			stuff = ['deadline', 'priority', 'context']
 		else:
 			stuff = ['priority', 'context']
-		return ' ' + ' '.join(c[a] for a in stuff if c[a] != '')
+		metaline = ' '.join(c[a] for a in stuff if c[a] != '')
+		if len(metaline) > 0:
+			return ' ' + metaline
+		else:
+			return None
 
 	safe_print(print_metaline)
 
@@ -620,9 +624,13 @@ def get_context_string(context, id_width, ctx, ascii_=False):
 
 def safe_print(partial):
 	try:
-		print(partial(ascii_=False))
+		result = partial(ascii_=False)
+		if result is not None:
+			print(result)
 	except UnicodeEncodeError:
-		print(partial(ascii_=True))
+		result = partial(ascii_=True)
+		if result is not None:
+			print(result)
 
 
 def get_datetime(db_dt):
