@@ -666,6 +666,7 @@ class DataAccess():
 			SET editing = 0
 			WHERE id = ?
 		""", (tid,))
+		self.connection.commit()
 
 	def exit(self, save=True):
 		""" Close the database and save all operations done to it if `save` is

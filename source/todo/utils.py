@@ -164,10 +164,20 @@ def input_from_editor(init_content, editor):
 	with CustomTemporaryFile() as filename:
 		with open(filename, 'w') as edit_file:
 			edit_file.write(init_content)
-		subprocess.call([editor, filename])
+		try:
+			subprocess.call([editor, filename])
+		except FileNotFoundError:
+			raise CannotOpenEditorError('Cannot open editor', editor=editor)
 		with open(filename) as edit_file:
 			new_content = edit_file.read()
 	return new_content
+
+
+class CannotOpenEditorError(Exception):
+
+	def __init__(self, message, editor):
+		super().__init__(message)
+		self.editor = editor
 
 
 class CustomTemporaryFile:

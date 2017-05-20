@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from . import cli_parser, utils, data_access, core
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
-from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW
+from .utils import (
+	DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW,
+	CannotOpenEditorError
+)
 
 
 __version__ = '3.2'
@@ -208,16 +211,21 @@ def edit_task(args, daccess):
 	can_edit = daccess.take_editing_lock(tid)
 	if not can_edit:
 		return 'cannot_edit', tid
-	new_title, new_content = core.editor_edit_task(
-		task['title'],
-		task['content'],
-		EDITOR
-	)
-	upt_count = daccess.update_task(tid, options=[
-		('title', new_title),
-		('content', new_content)
-	])
-	daccess.release_editing_lock(tid)
+	try:
+		try:
+			new_title, new_content = core.editor_edit_task(
+				task['title'],
+				task['content'],
+				EDITOR
+			)
+		except CannotOpenEditorError as err:
+			return 'cannot_open_editor', err.editor
+		daccess.update_task(tid, options=[
+			('title', new_title),
+			('content', new_content)
+		])
+	finally:
+		daccess.release_editing_lock(tid)
 
 
 def do_task(args, daccess):
@@ -422,6 +430,10 @@ def feedback_task_not_found(tid):
 
 def feedback_cannot_edit(tid):
 	print('Task {} is already being edited'.format(utils.to_hex(tid)))
+
+
+def feedback_cannot_open_editor(editor):
+	print('Cannot open editor: {}'.format(editor))
 
 
 def feedback_multiple_tasks_update(not_found):
