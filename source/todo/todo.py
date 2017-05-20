@@ -175,7 +175,8 @@ def manage_task(args, daccess):
 		return show_task(tid, daccess)
 	else:
 		upt_count = daccess.update_task(tid, context, options)
-		return 'single_task_update', tid, upt_count != 0
+		if upt_count == 0:
+			return 'task_not_found', tid
 
 
 def show_task(tid, daccess):
@@ -202,6 +203,11 @@ def show_task(tid, daccess):
 def edit_task(args, daccess):
 	tid = args['id'][0]
 	task = daccess.get_task(tid)
+	if task is None:
+		return 'task_not_found', tid
+	can_edit = daccess.take_editing_lock(tid)
+	if not can_edit:
+		return 'cannot_edit', tid
 	new_title, new_content = core.editor_edit_task(
 		task['title'],
 		task['content'],
@@ -211,7 +217,7 @@ def edit_task(args, daccess):
 		('title', new_title),
 		('content', new_content)
 	])
-	return 'single_task_update', tid, upt_count != 0
+	daccess.release_editing_lock(tid)
 
 
 def do_task(args, daccess):
@@ -410,9 +416,12 @@ def feedback_add_task(id_):
 	pass
 
 
-def feedback_single_task_update(tid, found):
-	if not found:
-		print('Task {} not found'.format(tid))
+def feedback_task_not_found(tid):
+	print('Task {} not found'.format(utils.to_hex(tid)))
+
+
+def feedback_cannot_edit(tid):
+	print('Task {} is already being edited'.format(utils.to_hex(tid)))
 
 
 def feedback_multiple_tasks_update(not_found):

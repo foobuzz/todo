@@ -38,6 +38,9 @@ INIT_DB = [
 	""",
 	"""
 	ALTER TABLE Task ADD COLUMN `content` TEXT
+	""",
+	"""
+	ALTER TABLE Task ADD COLUMN `editing` INTEGER NOT NULL DEFAULT 0
 	"""
 ]
 

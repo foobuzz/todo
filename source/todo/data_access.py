@@ -640,6 +640,33 @@ class DataAccess():
 		self.set_case_sensitive_like(original)
 		return c.fetchall()
 
+	def take_editing_lock(self, tid):
+		"""
+		Set the column `editing` to 1 iff it's 0. Return True if the column was effectively set, False otherwise.
+		"""
+		c = self.connection.cursor()
+		c.execute("""
+			UPDATE Task
+			SET editing = 1
+			WHERE id = ?
+			  AND editing = 0
+		""", (tid,))
+		taken = c.rowcount == 1
+		self.connection.commit()
+		return taken
+
+	def release_editing_lock(self, tid):
+		"""
+		Release the editing lock on a task. The caller is trusted to have the
+		lock and no verification is made.
+		"""
+		c = self.connection.cursor()
+		c.execute("""
+			UPDATE Task
+			SET editing = 0
+			WHERE id = ?
+		""", (tid,))
+
 	def exit(self, save=True):
 		""" Close the database and save all operations done to it if `save` is
 		True. Write all contexts paths (NON fully-dotted) to the contexts file
