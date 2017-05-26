@@ -305,7 +305,7 @@ class DataAccess():
 
 		Return the ID of the context."""
 		check_options(options, CONTEXT_OPTIONS)
-		ctxs = path.split('.')[1:]
+		ctxs = path.split('.')[1:-1]
 		path_so_far = ''
 		c = self.connection.cursor()
 		for ctx in ctxs:
