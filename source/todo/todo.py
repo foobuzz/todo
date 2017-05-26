@@ -618,8 +618,17 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 
 def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
 	c = get_task_string_components(task, context, ascii_, highlight=highlight)
-	template = ' {id} {done} / {deadline} {priority} {context}\n {title}\n'
-	return template.format(**c)
+	template = ' {id} {done} / {deadline} {priority} {context}\n'
+	result =  template.format(**c)
+
+	wrap_width = CONFIG.getint('Word-wrapping', 'width')
+	if wrap_width == -1:
+		wrap_width = utils.get_terminal_width()
+	title = c['title']
+	if CONFIG.getboolean('Word-wrapping', 'title'):
+		title = '\n'.join(textwrap.wrap(c['title'], width=wrap_width))
+	result += title + '\n'
+	return result
 
 
 def get_task_string_components(task, ctx, ascii_=False, highlight=None):
