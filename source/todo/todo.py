@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import os, sys, sqlite3, functools, configparser
+import os, sys, sqlite3, functools, configparser, textwrap
 import os.path as op
 from datetime import datetime, timezone
 
@@ -94,6 +94,9 @@ else:
 		cstr,
 		no_color=True
 	)
+
+
+DONE_STR = '[DONE]'
 
 
 def main():
@@ -553,14 +556,64 @@ def feedback_show_task(task, full_content):
 
 def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False):
 	c = get_task_string_components(task, context, ascii_, highlight=highlight)
+
 	if isinstance(c['id'], ColoredStr):
 		ansi_offset = c['id'].lenesc
 	else:
 		ansi_offset = 0
-	left = '{id:>{width}}'.format(width=id_width + ansi_offset + 1, **c)
-	right = ['done', 'title', 'deadline', 'priority', 'context']
-	right = ' '.join(c[a] for a in right if c[a] != '')
-	return '{} | {}'.format(left, right)
+	result = ' {id:>{width}} | '.format(width=id_width + ansi_offset, **c)
+	left_width = id_width + 4
+	init_indent = left_width
+
+	if len(c['done']):
+		adding = c['done'] + ' '
+		result += adding
+		init_indent += len(DONE_STR) + 1 # [DONE] followed by space
+
+	wrap_width = CONFIG.getint('Word-wrapping', 'width')
+	if wrap_width == -1:
+		wrap_width = utils.get_terminal_width()
+
+	if CONFIG.getboolean('Word-wrapping', 'title'):
+		title_subindent = ' '*left_width
+
+		# The correct way to wrap would be to order textwrap to wrap the whole
+		# ` {id} | {title}` with the subsequent indent being the length of `
+		# {id} | `. However, {id} containing ANSI escape characters for
+		# coloring will mess up textwrap character counting, so what we do
+		# instead is wrapping only {title} prefixed with the length of ` {id}
+		# | `, and we remove the prefix afterwards, ` {id} | ` taking its
+		# place.
+
+		lines = textwrap.wrap(
+			' '*init_indent + c['title'],
+			width=wrap_width,
+			subsequent_indent=' '*left_width
+		)
+		lines[0] = lines[0][init_indent:]
+	else:
+		lines = [c['title']]
+
+	len_last_line = len(lines[-1])
+	title = '\n'.join(lines)
+
+	start_title = len(result)
+	result += title
+	end_title = len(result)
+
+	metadata = [c['deadline'], c['priority'], c['context']]
+	metatext = ' '.join(stuff for stuff in metadata if stuff != '')
+
+	if len(metatext) > 0:
+		wrap_title = CONFIG.getboolean('Word-wrapping', 'title')
+		not_enough_space = wrap_width - len_last_line <= 0
+		if wrap_title and not_enough_space:
+			result += '\n' + ' '*left_width
+		else:
+			result += ' '
+		result += metatext
+
+	return result
 
 
 def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
@@ -609,7 +662,7 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 
 	done_str = ''
 	if task['done'] is not None:
-		done_str = '[DONE]'
+		done_str = DONE_STR
 	if done_str != '':
 		done_str = cstr(done_str, clr('done'))
 

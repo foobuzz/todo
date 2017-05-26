@@ -245,13 +245,20 @@ class ColoredStr(str):
 		ansi_seq = get_escape(color, palette)
 		literal = ansi_seq + string + ANSI_RESET
 		the_string = super().__new__(cls, literal)
-		setattr(the_string, 'length', len(string))
-		setattr(the_string, 'true_length', len(the_string))
-		setattr(the_string, 'lenesc', len(ansi_seq) + len(ANSI_RESET))
+		the_string.length = len(string)
+		the_string.true_length = len(the_string)
+		the_string.lenesc = len(ansi_seq) + len(ANSI_RESET)
+		the_string.original = string
 		return the_string
 
 	def __len__(self):
 		return self.length
+
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		yield next(self.original)
 
 
 def cstr(string, color, palette='xterm-256', no_color=False):
