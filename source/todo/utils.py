@@ -204,26 +204,11 @@ def to_hex(integer):
 
 
 def get_terminal_width():
-	fallback = 80
-	import subprocess
-	process = subprocess.Popen('stty size', shell=True,
-		universal_newlines=True,
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE
-	)
-	stdout, stderr = process.communicate()
-	status = process.returncode
-	if status != 0 or stderr != '':
-		return fallback
-	result = stdout.split()
-	if len(result) != 2:
-		return fallback
-	cols = result[1]
 	try:
-		cols = int(cols)
-	except ValueError:
-		return fallback
-	return cols
+		size = os.get_terminal_size()[0]
+	except OSError:
+		size = 80
+	return size
 
 
 def sqlite_date_to_local(sqlite_date):
