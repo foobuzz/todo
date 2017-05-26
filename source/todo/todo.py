@@ -187,6 +187,8 @@ def manage_task(args, daccess):
 
 def show_task(tid, daccess):
 	task = daccess.get_task(tid)
+	if task is None:
+		return 'task_not_found', tid
 	# w3 = word-wrap width
 	w3 = CONFIG.getboolean('Word-wrapping', 'content')
 	if w3:
