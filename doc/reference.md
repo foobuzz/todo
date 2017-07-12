@@ -27,7 +27,7 @@ Subcontexts are sorted in the following order:
 **Note:** If `<context>` happens to be the name of one of the built-in todo command, then you can use `todo ctx <context>` instead.
 
 
-### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--visibility VISIBILITY]`
+### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY]`
 
 Add a task titled `<title>` and apply to it the options:
 
@@ -53,7 +53,7 @@ By default, a task starts at the moment it is created.
 
 #### `-c --context CONTEXT`
 
-The path of the context the task belongs to. It's a sequence of string separated by dots where each string indicate the name of a context in the contexts hierarchy.
+The path of the context the task belongs to. It's a sequence of strings separated by dots where each string indicate the name of a context in the contexts hierarchy.
 
 Any intermediary contexts will be created automatically.
 
@@ -74,20 +74,20 @@ By default, a task has a priority of 1.
 Set the tasks identified by `id`s as done. The ID of a task is shown at its left in lists output by `todo`.
 
 
-### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--visibility VISIBILITY] [--title TITLE]`
+### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE]`
 
 Apply the given options to the task identified by `id`. Options are described in the  `todo add` parts, with the addition of:
 
 #### `-t --title TITLE`
 
-Overwrite the title of a task with `CONTENT`
+Overwrite the title of a task with `TITLE`
 
 
 ### `todo edit <id>`
 
 Open the text editor with a file containing the description of the task identified by `<id>`. Update the description of the task with the content of the file upon closing the editor.
 
-The editor used can be configured. See Configuration.
+The editor used can be configured. See [Configuration](#configuration).
 
 
 ### `todo history`
@@ -116,9 +116,9 @@ Remove done tasks from history that were created before `MOMENT`. Ask the user f
 
 ### `todo ctx <context> [--flat|--tidy] [--priority PRIORITY] [--visibility VISIBILITY] [--name NAME]`
 
-If no mutation option is given (priority or visibility), has the same effect than `todo <context>`.
+If no mutation option is given, has the same effect than `todo <context>`.
 
-If at least one option is given, apply the option to the context.
+If at least one mutation option is given, apply the option to the context and prints nothing.
 
 `--name` renames the context. In the context's path, the name of the context is the last part among parts separated by dots. For example, renaming `culture.movies` with `films` will lead to the new path `culture.films`. An error is printed if the new name contains a dot or if the destination context already exists.
 
@@ -145,7 +145,7 @@ Print basic help.
 
 ### `todo --location`
 
-Print the path of the data directory. By default, the location is `~/.toduh`. However, it's possible to set a different dataset for a working directory, by creating a folder named `.toduh` inside it.
+Print the path of the data directory. By default, the location is `~/.toduh`. However, it's possible to set a different dataset for a specific directory, by creating a folder named `.toduh` inside it and then calling todo from this directory.
 
 
 ## Configuration

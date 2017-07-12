@@ -71,7 +71,7 @@ Let's schedule the buying of a fireworks package for the 4th of July:
 
 Since it's a long-term task, you probably don't want it to be shown in the middle of tasks that need to be done quickly.
 
-You can use the `-s` or `--start` option in order to set a start-point to the task. The task will show up in the todo list only starting from the start-point. The value of `-s` is in the same format than for `--deadline`: a date or a delay. Let's say we want to be bothered by the fireworks thing starting from the middle of June.
+You can use the `-s` or `--start` option in order to set a start-point to the task. The task will show up in the todolist only starting from the start-point. The value of `-s` is in the same format than for `--deadline`: a date or a delay. Let's say we want to be bothered by the fireworks thing starting from the middle of June.
 
 	$ todo task 5 -s 2016-06-15
 	$ todo
@@ -110,10 +110,10 @@ You can put the task in a context using the `-c` or `--context` option. Contexts
 	    2 | Fix the stuff ★2
 	    4 | Send the documents for the house ⌛ 6 days remaining
 	    3 | Buy the gift for Stefany ⌛ 16 days remaining
-		----------------------------------------
- 		# | culture (1)
+	----------------------------------------
+	    # | culture (1)
 
-You can think of contexts as of directories in which you put tasks. Contexts are listed after the list of tasks, and the number of tasks of each context is indicated.
+You can think of contexts as directories in which you put tasks. Contexts are listed after the list of tasks, and the number of tasks of each context is indicated.
 
 To see the todolist of a specific context, you need to indicate the name of the context:
 
@@ -125,7 +125,7 @@ Another way to accomplish that is though the `ctx` command:
 	$ todo ctx culture
 	    7 | Read the article about chemistry #culture
 
-This helps removing any ambiguity if you ever have a context whose name happens to be the name of a command.
+This helps removing any ambiguity if you ever have a context whose name happens to be the name of a command (a command wins over a context).
 
 You can also display tasks of contexts integrated with general tasks with the `--flat` option:
 
@@ -134,7 +134,7 @@ You can also display tasks of contexts integrated with general tasks with the `-
 	    2 | Fix the stuff ★2		
 	    4 | Send the documents for the house ⌛ 6 days remaining
 	    3 | Buy the gift for Stefany ⌛ 16 days remaining
-		7 | Read the article about chemistry #culture
+	    7 | Read the article about chemistry #culture
 
 Notice how the `#` flag indicates the context of the task. You can set the `--flat` option to be the default way to display tasks in the [configuration file](https://github.com/foobuzz/todo/blob/master/doc/reference.md#configuration). In such case, the original hierarchical display is achieved using the `--tidy` option.
 
@@ -218,31 +218,26 @@ When showing the todolist, tasks are sorted in the following order:
 
 ## More
 
-Showing the history of tasks, listing all existing contexts, editing tasks... Find more in the [Reference](https://github.com/foobuzz/todo/blob/master/doc/reference.md).
+Find out more commands and details in the [Reference](https://github.com/foobuzz/todo/blob/master/doc/reference.md).
 
 
 ## Configuration
 
 Configuration is done by editing a configuration file which sits at `~/.toduhrc`.
 
-The configuration file is in the INI format. It's made of sections, each of which is introduced by a `[title]` enclosed in brackets. The lines of a section consist of `key = value` pairs.
+The configuration file is in the INI format. It's made of sections, each of which is introduced by a `[Title]` enclosed in brackets. The lines of a section consist of `key = value` pairs.
 
 
 ### App
 
-The App section contains general parameter for the application. Two keys are recognized:
+The App section contains general parameter for the application. Most notably, `editor` indicates the editor to use with the `edit` command. The name given should be the command used to run the editor via the command-line. This command should accept a filename to open as first argument. `vi` and `emacs` are examples of editors working this way.
 
-`editor` indicates the editor to use with the `edit` command. The name given should be the command used to run the editor via the command-line. This command should accept a filename to open as first argument. `vi` and `emacs` are examples of editors working this way.
-
-Example:
-
-	editor = emacs
 
 ### Colors
 
 The Colors section allow you to customize colors.
 
-`colors` should have either `on` or `off` for values. It indicates whether todo should use colors at all, or not.
+The `colors` key should have either `on` or `off` for value. It indicates whether todo should use colors at all.
 
 Example:
 
@@ -250,21 +245,21 @@ Example:
 
 This turns coloring off.
 
-`palette` indicates how to print the colors. 3 values are recognized:
+The `palette` key indicates how to print the colors. 3 values are recognized:
 
- - `8` instruct to use the 8 primary colors
+ - `8` instruct to use a palette of 8 colors
 
  - `xterm-256` instruct to use the xterm color palette, made of 256 colors
 
  - `rgb` instruct to use true colors
 
-Support for these palettes varies among terminals. `8` is supported virtually everywhere, `xterm-256` on xterm, `rgb` only on some advanced terminals. Using a palette not supported by your terminal can result in no color at all, wrong colors, or scrambled text.
+Support for these palettes varies among terminals. `8` is supported virtually everywhere, `xterm-256` on xterm, `rgb` only on some advanced terminals. Using a palette not supported by your terminal can result in no color at all, wrong colors, or scrambled text. The default is `8`.
 
-The following keys can be used to customize the color of the different parts of the `todo` command output: `id`, `context`, `deadline` and `priority`.
+The following keys can be used to customize the color of the different parts of the `todo` command output: `id`, `context`, `deadline` and `priority`. Accepted values for colors are described in the [Reference](https://github.com/foobuzz/todo/blob/master/doc/reference.md#color-format
 
 Here's an example of a complete configuration file:
 
-**.toduhrc**
+**~/.toduhrc**
 
 	[App]
 	editor = emacs

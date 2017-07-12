@@ -1,7 +1,7 @@
 todo
 ====
 
-A simple command line todo list manager which can be as powerful as you want it do be.
+A simple command-line todolist manager which can be as powerful as you want it to be.
 
 	$ todo add "Fix the stuff"
 	$ todo
