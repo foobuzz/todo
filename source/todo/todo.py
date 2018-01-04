@@ -181,7 +181,7 @@ INCORRECT_PRIORITY = 'PRIORITY must be an integer.'
 INCORRECT_VISIBILITY = "VISIBILITY must be 'normal' or 'hidden'."
 INCORRECT_MOMENT = "MOMENT must be in the YYYY-MM-DD format, or the "+\
                    "YYYY-MM-DD HH:MM:SS format, or a delay in the "+\
-                   "([0-9]+)([wdhms]) forma."
+                   "([0-9]+)([wdhms]) format."
 INCORRECT_CTX_RENAME = "Can't use '.' in context new name "+\
                        "(only right-most context name is updated)."
 CANT_RENAME_ROOT = "Can't rename root context."
