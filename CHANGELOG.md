@@ -1,3 +1,7 @@
+## 3.1.1
+
+ * The YYYY-MM-DD HH:MM:SS format for MOMENT arguments wasn't working, contrarily to what was specified in the documentation. The format that was supported was actually YYYY-MM-DDTHH:MM:SS. This hotfix introduces support for the YYYY-MM-DD HH:MM:SS format. It also keeps support for the YYYY-MM-DDTHH:MM:SS format and adds it to the documentation.
+
 ## 3.1
 
 ### Features
