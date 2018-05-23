@@ -49,7 +49,7 @@ from .data_access import DataAccess
 from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH
 
 
-__version__ = '3.1.1'
+__version__ = '3.1.2'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
@@ -165,6 +165,8 @@ def get_installed_version():
 		with open(VERSION_PATH) as version_file:
 			return version_file.read()
 	else:
+		if not op.exists(DATA_DIR):
+			os.mkdir(DATA_DIR)
 		with open(VERSION_PATH, 'w') as version_file:
 			version_file.write(__version__)
 		if op.exists(DB_PATH):
