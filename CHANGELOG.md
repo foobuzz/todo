@@ -1,3 +1,7 @@
+## 3.1.3
+
+Fix https://github.com/foobuzz/todo/issues/10 and https://github.com/foobuzz/todo/issues/12
+
 ## 3.1.2
 
 Bugfix at intialization: todo was trying to create its version file into its directory (`~/.toduh`) without the directory having been created in a first place.

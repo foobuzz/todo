@@ -49,7 +49,7 @@ from .data_access import DataAccess
 from .utils import DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH
 
 
-__version__ = '3.1.2'
+__version__ = '3.1.3'
 
 
 COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
