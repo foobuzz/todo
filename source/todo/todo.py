@@ -366,6 +366,8 @@ def update_task(args, daccess):
 def edit_task(args, daccess):
 	tid = args['<id>'][0]
 	task = daccess.get_task(tid, 'title')
+	if task is None:
+		return 'single_task_update', tid, False
 	new_content = utils.input_from_editor(task['title'], EDITOR)
 	if new_content.endswith('\n'):
 	# hurr durr I'm a text editor I append a newline at the end of files
