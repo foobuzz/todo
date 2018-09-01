@@ -188,6 +188,7 @@ INCORRECT_CTX_RENAME = "Can't use '.' in context new name "+\
                        "(only right-most context name is updated)."
 CANT_RENAME_ROOT = "Can't rename root context."
 INVALID_TID = "Invalid task{} ID: {}"
+COMMAND_NEED_ID = "Exactly one task ID must been given for this command"
 
 
 # ARGUMENT PARSERS.
@@ -300,6 +301,11 @@ def parse_args(args):
 				args[arg_name] = result
 			else:
 				report.append(result)
+
+	# Command-line errors not handled by docopt
+	if any([args['edit'], args['task']]) and len(args['<id>']) == 0:
+		report.append(COMMAND_NEED_ID)
+
 	return report
 
 
