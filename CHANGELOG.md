@@ -1,3 +1,20 @@
+## 3.2
+
+### Features
+
+ * New command: `todo task <id>` shows the detail of a task
+ * Full-text editing of task with title interpreted as a settext heading
+
+### Minor
+
+ * Title word-wrapping
+
+### Bugfixes & Details
+
+ * Various bugfixes
+ * Argument parsing is handled by standard argparse for better performance
+
+
 ## 3.1
 
 ### Features
