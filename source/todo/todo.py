@@ -64,8 +64,8 @@ DEFAULT_CONFIG['Colors'] = {
 }
 DEFAULT_CONFIG['Word-wrapping'] = {
 	'title': True,
-	'content': False,
-	'smart': True,
+	'content': True,
+	'smart': False,
 	'width': -1
 }
 
