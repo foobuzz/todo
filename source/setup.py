@@ -26,7 +26,7 @@ class PostInstallCommand(install):
 
 setup(
 	name='todocli',
-	version='3.1.3',
+	version='3.2',
 	packages=['todo'],
 	entry_points={
 		'console_scripts': [
@@ -40,7 +40,6 @@ setup(
 	cmdclass={
 		'install': PostInstallCommand
 	},
-	install_requires=['docopt==0.6.2'],
 	author='foobuzz',
 	author_email='dprosium@gmail.com',
 	description='A command line todo list manager',
