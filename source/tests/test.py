@@ -4,7 +4,7 @@ import unittest, sys, os, functools, argparse
 import os.path as op
 
 from . import utils
-from . import test_todo, test_utils, test_rainbow # pylint: disable=W0611
+from . import test_todo, test_utils, test_rainbow, test_text_wrap # pylint: disable=W0611
 
 sys.path.insert(0, op.abspath('.'))
 
@@ -22,7 +22,8 @@ TEST_DATA_FILE = 'tests/empty_data.sqlite'
 UNIT_TESTS = [
 	'tests.test_todo',
 	'tests.test_utils',
-	'tests.test_rainbow'
+	'tests.test_rainbow',
+	'tests.test_text_wrap'
 ]
 
 TRACES_DIR = 'tests/traces'
