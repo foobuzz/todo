@@ -39,6 +39,8 @@ Define a dealine for the task. MOMENT can be a specific moment in time, in the f
 
  - YYYY-MM-DD HH:MM:SS
 
+ - YYYY-MM-DDTHH:MM:SS
+
 It can also be a delay, such as `2w` which means "2 weeks from now". Other accepted characters are `s`, `m`, `h`, `d`, `w`, which respectively correspond to seconds, minutes, hours, days and weeks. An integer must preeced the letter.
 
 A task with no deadline is considered to have a deadline set to infinity.

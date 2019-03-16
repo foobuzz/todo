@@ -118,6 +118,8 @@ def main():
 			sys.exit(1)
 
 		current_version = get_installed_version()
+		if not op.exists(DATA_DIR):
+			os.mkdir(DATA_DIR)
 		if current_version != __version__:
 			with open(VERSION_PATH, 'w') as version_file:
 				version_file.write(__version__)

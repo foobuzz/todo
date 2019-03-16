@@ -28,6 +28,7 @@ ISO_DATE = ISO_SHORT+'T%H:%M:%SZ'
 USER_DATE_FORMATS = [
 	ISO_SHORT,
 	ISO_SHORT+'T%H:%M:%S',
+	ISO_SHORT+' %H:%M:%S'
 ]
 
 REMAINING = {
@@ -100,6 +101,7 @@ def print_table(struct, iterable, is_default=lambda obj, p: False):
 				value = f(value)
 			if value is None:
 				value = ''
+			value = str(value).split('\n')[0]
 			value = limit_str(str(value), widths[h])
 			values.append(value)
 		line = template.format(*values)
