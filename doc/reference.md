@@ -78,7 +78,9 @@ Set the tasks identified by `id`s as done. The ID of a task is shown at its left
 
 ### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE]`
 
-Apply the given options to the task identified by `id`. Options are described in the  `todo add` parts, with the addition of:
+Without any option, print the contents of the task (its metadata followed by its body).
+
+With at least one option: apply the given options to the task identified by `id`. Options are described in the  `todo add` parts, with the addition of:
 
 #### `-t --title TITLE`
 
@@ -188,3 +190,13 @@ Colors can be defined in multiple way:
  * `#RRGGBB`where RR, GG, BB are integers between 0 and 255 in their hexadecimal representation
 
 All formats work with any palette used, as necessary conversions will be made automatically.
+
+
+### `[Word-wrapping]`
+
+Key      |  Behavior  |  Value format  |  Default value
+---------|------------|----------------|-----------------
+`title`  | Enable word-wrapping for tasks' titles in `todo` listing | `on` or `off` | `on`
+`content` | Enable word-wrapping for tasks' content in `todo task <id>` output | `on` or `off` | `on`
+`smart`  | Enable "smart" word-wrapping for Markdown content (experimental) | `on` or `off` | `off`
+`width` | Width to use for word-wrapping | integer | `-1` (means: use current terminal width)

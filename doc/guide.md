@@ -206,6 +206,38 @@ When doing a `todo`, contexts are sorted by:
 [More about contexts: how to rename contexts, delete contexts, move all tasks from one context to another, list all existing contexts](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-ctx-context---flat--tidy---priority-priority---visibility-visibility---name-name)
 
 
+## Editing
+
+Once a task has been created, you can edit its content using the `edit` command:
+
+	$ todo edit 1
+
+This opens a text editor with the content of the task. Upon saving and quitting the editor, the task's content is updated.
+
+The text displayed in `todo`'s listing is actually only the title of the task. You can add any arbitrary content to the task by underlining the title with equal signs (`=`) and writing more text after it. For example, with such text:
+
+	Do the thing
+	============
+
+	Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+Only the title `Do the thing` will appear in the task listing. This way of highlighting a title from the rest of the text is called a *settext header* in the [Markdown](https://en.wikipedia.org/wiki/Markdown) format. If you want to read the entire content of a given task, you can simply use the `task` command:
+
+	$ todo task 1
+	     ID: 1
+	Created: 2019-03-16 16:14:37
+	  Start: @created
+	 Status: TODO
+	-------------------------------------------------------------------------------------
+	Do the thing
+	============
+
+	Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+	incididunt ut labore et dolore magna aliqua.
+
+This command first prints a bunch of metadata about the task, then its contents. When using this command, the body of the task is [word-wrapped](https://en.wikipedia.org/wiki/Line_wrap_and_word_wrap) to fit in your terminal. 
+
+
 ## Sort summary
 
 When showing the todolist, tasks are sorted in the following order:
