@@ -13,7 +13,8 @@ INIT_DB = [
 		`start`	TEXT NOT NULL DEFAULT (datetime('now')),
 		`priority`	INTEGER NOT NULL DEFAULT 1,
 		`done`	TEXT,
-		`context`	INTEGER NOT NULL REFERENCES Context(id) ON DELETE CASCADE
+		`context`	INTEGER NOT NULL REFERENCES Context(id) ON DELETE CASCADE,
+		`content`	TEXT
 	);
 	""",
 	"""
