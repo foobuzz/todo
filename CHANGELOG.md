@@ -1,3 +1,7 @@
+## 3.2.1
+
+Fix https://github.com/foobuzz/todo/pull/15 by https://github.com/xu4wang.
+
 ## 3.2
 
 ### Features
