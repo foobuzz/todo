@@ -64,7 +64,7 @@ def update_database(path, current_version):
 
 	updates = INIT_DB[index:]
 	if len(updates) > 0:
-		conn = sqlite3.connect(path)
+		conn = sqlite3.connect(path, isolation_level=None)
 		for stmt in updates:
 			conn.execute(stmt)
 		conn.close()
