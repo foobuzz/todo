@@ -4,8 +4,9 @@ from . import data_access, utils
 from .utils import NOW
 
 
-COMMANDS = {'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
-	'purge', 'mv', 'rmctx', 'search', '-h', '--help', '--location',
+COMMANDS = {
+	'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
+	'purge', 'mv', 'rmctx', 'search', 'future', '-h', '--help', '--location',
 	'--version'}
 
 
@@ -334,5 +335,10 @@ def parse_command(argv):
 		help="Only remove done tasks that were created before the given "
 		     "moment. Same format than <search --before>"
 	)
+
+	future_parser = subparsers.add_parser('future',
+		help="Show tasks that will start in the future"
+	)
+	future_parser.set_defaults(command='future')
 
 	return vars(parser.parse_args(argv))

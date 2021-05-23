@@ -1,0 +1,4 @@
+$ ./todo.py add "Starts in the future" -s {NOW+2w}
+$ ./todo.py 
+$ ./todo.py future
+ 1 | Starts in the future [starts: {NOW+2w}]

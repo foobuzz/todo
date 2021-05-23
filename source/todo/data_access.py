@@ -640,6 +640,18 @@ class DataAccess():
 		self.set_case_sensitive_like(original)
 		return c.fetchall()
 
+	def get_future_tasks(self):
+		c = self.connection.cursor()
+		now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+		query = """
+			SELECT t.*, c.path as ctx_path
+			FROM Task t JOIN Context c
+			ON t.context = c.id
+			WHERE t.start > ?
+		"""
+		c.execute(query, (now,))
+		return c.fetchall()
+
 	def take_editing_lock(self, tid):
 		"""
 		Set the column `editing` to 1 iff it's 0. Return True if the column was effectively set, False otherwise.

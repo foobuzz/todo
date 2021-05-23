@@ -2,7 +2,7 @@
 
 import os, sys, sqlite3, functools, configparser, textwrap
 import os.path as op
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from . import cli_parser, utils, data_access, core
 from .rainbow import ColoredStr, cstr
@@ -14,6 +14,9 @@ from .utils import (
 
 
 __version__ = '3.2.1'
+
+
+ISO_DATE_LENGTH = 10
 
 
 # Icons used to print tasks' properties in the terminal.
@@ -60,7 +63,8 @@ DEFAULT_CONFIG['Colors'] = {
 	'context': 'cyan',
 	'deadline': 'cyan',
 	'priority': 'green',
-	'done': 'green'
+	'done': 'green',
+	'start': 'green',
 }
 DEFAULT_CONFIG['Word-wrapping'] = {
 	'title': True,
@@ -371,6 +375,12 @@ def search(args, daccess):
 	)
 	return 'todo', '', tasks, [], (term, args['case'])
 
+
+def list_future_tasks(args, daccess):
+	tasks = daccess.get_future_tasks()
+	return 'todo', '', tasks, [], None
+
+
 ## DISPATCHING
 
 # Map of the names of the commands to handlers defined above.
@@ -387,7 +397,8 @@ DISPATCHER = {
 	'contexts': get_contexts,
 	'history': get_history,
 	'purge': purge,
-	'search': search
+	'search': search,
+	'future': list_future_tasks,
 }
 
 
@@ -569,7 +580,7 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 	left_width = id_width + 4
 	init_indent = left_width
 
-	if len(c['done']):
+	if c['done']:
 		adding = c['done'] + ' '
 		result += adding
 		init_indent += len(DONE_STR) + 1 # [DONE] followed by space
@@ -605,7 +616,7 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 	result += title
 	end_title = len(result)
 
-	metadata = [c['deadline'], c['priority'], c['context']]
+	metadata = [c['deadline'], c['priority'], c['context'], c['start']]
 	metatext = ' '.join(stuff for stuff in metadata if stuff != '')
 
 	if len(metatext) > 0:
@@ -622,7 +633,7 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 
 def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
 	c = get_task_string_components(task, context, ascii_, highlight=highlight)
-	template = ' {id} {done} / {deadline} {priority} {context}\n'
+	template = ' {id} {done} / {deadline} {priority} {context} {start}\n'
 	result =  template.format(**c)
 
 	wrap_width = CONFIG.getint('Word-wrapping', 'width')
@@ -675,9 +686,12 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 
 	done_str = ''
 	if task['done'] is not None:
-		done_str = DONE_STR
-	if done_str != '':
-		done_str = cstr(done_str, clr('done'))
+		done_str = cstr(DONE_STR, clr('done'))
+
+	start_str = ''
+	start_date = utils.sqlite_date_to_local(task['start'])[:ISO_DATE_LENGTH]
+	if start_date > date.today().isoformat():
+		start_str = cstr('[starts: {}]'.format(start_date), clr('start'))
 
 	return {
 		'id': id_str,
@@ -685,7 +699,8 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 		'deadline': remaining_str,
 		'priority': prio_str,
 		'context': ctx_str,
-		'done': done_str
+		'done': done_str,
+		'start': start_str,
 	}
 
 

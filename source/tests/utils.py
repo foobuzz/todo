@@ -22,18 +22,22 @@ def parse_trace(trace_file, get_datetime):
 		if line.startswith('$ '):
 			if command is not None:
 				sequence.append((command, out))
-			command = line[2:-1]
-			match = re.search(COMMAND_W_DT, command)
-			if match is not None and get_datetime is not None:
-				delay = match.group(1)
-				dt = get_datetime(delay)
-				dt_string = dt.strftime('%Y-%m-%d')
-				command = re.sub(COMMAND_W_DT, dt_string, command)
+			command = replace_datetime_refs(line[2:-1], get_datetime)
 			out = ''
 		else:
-			out += line
+			out += replace_datetime_refs(line, get_datetime)
 	sequence.append((command, out))
 	return sequence
+
+
+def replace_datetime_refs(string, get_datetime):
+	match = re.search(COMMAND_W_DT, string)
+	if match is not None and get_datetime is not None:
+		delay = match.group(1)
+		dt = get_datetime(delay)
+		dt_string = dt.strftime('%Y-%m-%d')
+		return re.sub(COMMAND_W_DT, dt_string, string)
+	return string
 
 
 def run_command(command):
