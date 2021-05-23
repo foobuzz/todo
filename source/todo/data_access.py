@@ -648,6 +648,7 @@ class DataAccess():
 			FROM Task t JOIN Context c
 			ON t.context = c.id
 			WHERE t.start > ?
+			ORDER BY t.created
 		"""
 		c.execute(query, (now,))
 		return c.fetchall()
