@@ -52,6 +52,8 @@ Set the time at which a task starts. Non-started tasks aren't printed in the tod
 
 By default, a task starts at the moment it is created.
 
+Tasks that have not yet started can be listed with the [future](#todo-future) command.
+
 
 #### `-c --context CONTEXT`
 
@@ -135,6 +137,11 @@ Move all tasks and subcontexts from `<ctx1>` to `<ctx2>`. Any necessary new cont
 ### `todo rmctx <context> [--force]`
 
 Remove the context `<context>`, including all of its tasks (done and undone) and subcontexts recursively. Ask the user for confirmation, unless the `--force` flag is given.
+
+
+### `todo future`
+
+Show tasks that have not yet started. See [#-s---start-moment](--start).
 
 
 ### `todo --version`
