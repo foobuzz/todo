@@ -41,7 +41,7 @@ setup(
 		'install': PostInstallCommand
 	},
 	author='foobuzz',
-	author_email='dprosium@gmail.com',
+	author_email='foobuzz@fastmail.com',
 	description='A command line todo list manager',
 	keywords='command line todo list',
 	url='https://github.com/foobuzz/todo',
