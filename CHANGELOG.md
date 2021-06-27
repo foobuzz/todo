@@ -1,8 +1,13 @@
+## 3.3.0
+
+ * New command: `todo future` to list tasks not started yet.
+
+
 ## 3.2.1
 
 Fix https://github.com/foobuzz/todo/pull/15 by https://github.com/xu4wang.
 
-## 3.2
+## 3.2
 
 ### Features
 
