@@ -491,11 +491,12 @@ class DataAccess():
 		return c.fetchall()
 
 	def get_subcontexts(self, path='', get_empty=True):
-		""" Return a list of Row-contexts that are direct children of the
-		context pointed to by `path`. The list doesn't contain contexts that
-		have a "hidden" visibility. If `get_empty` is False, then contexts
-		that have 0 total tasks are excluded from the list. In the list,
-		contexts are sorted by:
+		"""
+		Return a list of Row-contexts that are direct children of the context
+		pointed to by `path`. The list doesn't contain contexts that have a
+		"hidden" visibility. If `get_empty` is False, then contexts that have
+		0 total tasks are excluded from the list. Tasks in hidden contexts are
+		not counted. In the list, contexts are sorted by:
 		 * priority, descending
 		 * total number of tasks (including tasks in descendance), ascending
 		"""
@@ -512,7 +513,8 @@ class DataAccess():
 				  ON t.context = c1.id
 				 AND t.start <= (datetime('now'))
 				 AND t.done IS NULL
-				WHERE c1.path LIKE c.path||'%' 
+				WHERE c1.path LIKE c.path||'%'
+				  AND c1.visibility = 'normal'
 			) as total_tasks
 			FROM Context c
 			LEFT JOIN Task own

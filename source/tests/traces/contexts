@@ -51,3 +51,16 @@ $ ./todo.py rmctx plouf --force
 Context does not exist: plouf
 $ ./todo.py ctx plouf --name plif
 Context does not exist: plouf
+$ ./todo.py add "Task in subcontext 3" -c sub3
+$ ./todo.py add "Task in sub-subcontext 3" -c sub3.sub
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub2 (2)
+ # | sub3 (2)
+$ ./todo.py ctx sub3.sub -v hidden
+$ ./todo.py
+ 1 | Root task
+----------------------------------------
+ # | sub2 (2)
+ # | sub3 (1)
