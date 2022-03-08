@@ -5,6 +5,7 @@ import os.path as op
 from datetime import date, datetime, timezone
 
 from . import cli_parser, utils, data_access, core
+from .bash_completion import installation as bash_completion_installation
 from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
 from .utils import (
@@ -110,10 +111,12 @@ def main():
 		sys.exit(0)
 	args = cli_parser.parse_cli()
 
-	if args['version']:
+	if args.get('version'):
 		print(__version__)
-	elif args['location']:
+	elif args.get('location'):
 		print(DATA_DIR)
+	elif args.get('install_autocompletion'):
+		bash_completion_installation.install_autocompletion()
 	else:
 		report = cli_parser.parse_args(args)
 		if len(report) > 0:

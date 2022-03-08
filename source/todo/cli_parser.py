@@ -7,7 +7,7 @@ from .utils import NOW
 COMMANDS = {
 	'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge', 'mv', 'rmctx', 'search', 'future', '-h', '--help', '--location',
-	'--version'}
+	'--version', '--install-autocompletion'}
 
 
 ## Argument parsing error messages
@@ -136,12 +136,6 @@ def parse_bare_todo(argv):
 		help="Context to show the tasks of. Defaults to the root context "
 		     "(represented by an empty string)"
 	)
-	parser.add_argument('--location', action='store_true',
-		help="Print the location of the todo data directory"
-	)
-	parser.add_argument('--version', action='store_true',
-		help="Print the version of the program"
-	)
 
 	style_group = parser.add_mutually_exclusive_group()
 	style_group.add_argument('--flat', action='store_true',
@@ -169,6 +163,9 @@ def parse_command(argv):
 	)
 	root_group.add_argument('--version', action='store_true',
 		help="Print the version of the program"
+	)
+	root_group.add_argument('--install-autocompletion', action='store_true',
+		help="Install command-line autocompletion for todo",
 	)
 
 	subparsers = parser.add_subparsers()

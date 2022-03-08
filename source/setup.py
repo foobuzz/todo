@@ -3,43 +3,21 @@ import os.path as op
 
 from setuptools import setup
 from setuptools.command.install import install
-from pkg_resources import Requirement, resource_filename
-
-
-BASH_COMPLETION = '/etc/bash_completion.d'
-SOURCE_COMPLETION = 'bash_completion/toduh.sh'
-
-
-class PostInstallCommand(install):
-
-	def run(self):
-		install.run(self)
-		if op.exists(BASH_COMPLETION) and op.isdir(BASH_COMPLETION):
-			requirement = Requirement.parse("todocli")
-			filename = resource_filename(requirement, SOURCE_COMPLETION)
-			try:
-				shutil.copy(filename, BASH_COMPLETION)
-			except:
-				print('Installation of auto-completion script failed. '
-					'Please use sudo.')
 
 
 setup(
 	name='todocli',
 	version='3.3.0',
-	packages=['todo'],
+	packages=['todo', 'todo.bash_completion'],
 	entry_points={
 		'console_scripts': [
 			'todo = todo.todo:main'
 		]
 	},
-	include_package_data = True,
-	data_files=[
-		('bash_completion/toduh.sh', ['bash_completion/toduh.sh'])
-	],
-	cmdclass={
-		'install': PostInstallCommand
-	},
+	include_package_data=True,
+    install_requires=[
+        'setuptools==60.9.3',
+    ],
 	author='foobuzz',
 	author_email='foobuzz@fastmail.com',
 	description='A command line todo list manager',
