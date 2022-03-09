@@ -18,6 +18,11 @@ setup(
     install_requires=[
         'setuptools==60.9.3',
     ],
+    extras_require={
+        'tests': {
+            'pyfakefs==4.5.5',
+        },
+    },
 	author='foobuzz',
 	author_email='foobuzz@fastmail.com',
 	description='A command line todo list manager',
