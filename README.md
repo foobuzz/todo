@@ -17,12 +17,13 @@ A simple command-line todolist manager which can be as powerful as you want it t
 
 ## Installation
 
-	pip3 install todocli
+	pip install todocli
 
-`sudo` would be needed for:
+If you wish to install auto-completion for the `todo` CLI, you can run:
 
- * a system-wide installation (that is, without the `--user` flag)
- * the installation of auto-completion for the `todo` command
+	todo --install-autocompletion
+
+This will add an [auto-complete function](https://github.com/foobuzz/todo/blob/master/source/todo/bash_completion/toduh.sh) to your .zshrc or .bashrc file, whichever is found first. You must `source` your config file again if you want it to work on your current terminal.
 
 
 ## Documentation

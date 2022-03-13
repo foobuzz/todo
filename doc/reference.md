@@ -159,6 +159,11 @@ Print basic help.
 Print the path of the data directory. By default, the location is `~/.toduh`. However, it's possible to set a different dataset for a specific directory, by creating a folder named `.toduh` inside it and then calling todo from this directory.
 
 
+### `todo --install-autocompletion`
+
+Add an [auto-complete function](https://github.com/foobuzz/todo/blob/master/source/todo/bash_completion/toduh.sh) to your .zshrc or .bashrc file, whichever is found first. You must `source` your config file again if you want it to work on your current terminal.
+
+
 ## Configuration
 
 Configuration is done by editing a configuration file which sits at `~/.toduhrc`.
