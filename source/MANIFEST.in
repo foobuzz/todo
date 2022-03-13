@@ -1,1 +1,1 @@
-include bash_completion/toduh.sh
+include todo/bash_completion/toduh.sh

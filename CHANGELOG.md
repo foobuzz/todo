@@ -1,4 +1,4 @@
-## 3.4.0 (2022-03-13)
+## 3.4.2 (2022-03-13)
 
  * New command: `todo --install-autocompletion` to install autocompletion in user's shell config.
 
