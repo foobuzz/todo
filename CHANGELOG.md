@@ -1,3 +1,8 @@
+## 3.4.0 (2022-03-13)
+
+ * New command: `todo --install-autocompletion` to install autocompletion in user's shell config.
+
+
 ## 3.3.0
 
  * New command: `todo future` to list tasks not started yet.
