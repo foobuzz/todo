@@ -3,16 +3,16 @@
  * New command: `todo --install-autocompletion` to install autocompletion in user's shell config.
 
 
-## 3.3.0
+## 3.3.0 (2021-06-27)
 
  * New command: `todo future` to list tasks not started yet.
 
 
-## 3.2.1
+## 3.2.1 (2019-07-29)
 
-Fix https://github.com/foobuzz/todo/pull/15 by https://github.com/xu4wang.
+ * Fix failing to initialize the DB on fresh installs in some systems (https://github.com/foobuzz/todo/pull/15 by https://github.com/xu4wang).
 
-## 3.2
+## 3.2 (2019-03-16)
 
 ### Features
 
@@ -25,20 +25,21 @@ Fix https://github.com/foobuzz/todo/pull/15 by https://github.com/xu4wang.
  * Various bugfixes
  * Argument parsing is handled by standard argparse for better performance
 
-## 3.1.3
+## 3.1.3 (2018-09-01)
 
-Fix https://github.com/foobuzz/todo/issues/10 and https://github.com/foobuzz/todo/issues/12
+ * Check that a task ID exists when `todo edit <task_id>` (https://github.com/foobuzz/todo/issues/10)
+ * Improve formatting of `todo history` (https://github.com/foobuzz/todo/issues/12)
 
-## 3.1.2
+## 3.1.2 (2018-05-23)
 
-Bugfix at intialization: todo was trying to create its version file into its directory (`~/.toduh`) without the directory having been created in a first place.
+ * Bugfix at intialization: todo was trying to create its version file into its directory (`~/.toduh`) without the directory having been created in a first place. (https://github.com/foobuzz/todo/issues/9)
 
-## 3.1.1
+## 3.1.1 (2018-01-04)
 
-The YYYY-MM-DD HH:MM:SS format for MOMENT arguments wasn't working, contrarily to what was specified in the documentation. The format that was supported was actually YYYY-MM-DDTHH:MM:SS. This hotfix introduces support for the YYYY-MM-DD HH:MM:SS format. It also keeps support for the YYYY-MM-DDTHH:MM:SS format and adds it to the documentation.
+The YYYY-MM-DD HH:MM:SS format for MOMENT arguments wasn't working, contrarily to what was specified in the documentation. (https://github.com/foobuzz/todo/issues/8) The format that was supported was actually YYYY-MM-DDTHH:MM:SS. This hotfix introduces support for the YYYY-MM-DD HH:MM:SS format. It also keeps support for the YYYY-MM-DDTHH:MM:SS format and adds it to the documentation.
 
 
-## 3.1
+## 3.1 (2017-02-12)
 
 ### Features
 
@@ -51,12 +52,12 @@ The YYYY-MM-DD HH:MM:SS format for MOMENT arguments wasn't working, contrarily t
  * System for adding stuff to the database (tables, indexes, etc) depending on what version is already installed
 
 
-## 3.0.1
+## 3.0.1 (2016-12-21)
 
 Management of the temporary file created for editing purposes with the `edit` command is handled with a custom context manager instead of Python's `NamedTemporaryFile` as the documentation states that depending on platform external programs might not be able to write to such file.
 
 
-## 3.0
+## 3.0 (2016-11-27)
 
 ### Breaking
 
@@ -79,7 +80,7 @@ Management of the temporary file created for editing purposes with the `edit` co
 The persistance is now handled by sqlite3 instead of a JSON datafile. Performance if similar on small todolists but will obvously increase for huge task bases. Most of the codebase had to be rewritten to handle such change, for the greater good!
 
 
-## 2.1
+## 2.1 (2016-07-20)
 
 ### Features
 
@@ -100,7 +101,7 @@ The persistance is now handled by sqlite3 instead of a JSON datafile. Performanc
  * The Context object is now a tree. The TodoList has a reference to the root of the main context tree.
 
 
-## 2
+## 2 (2016-04-10)
 
 ### Breaking
 
@@ -128,7 +129,7 @@ New template for command-line interface: `todo <command> <value> [<options>]`. T
  * Most new code is the function to print tables (used by `history` and `contexts`).
 
 
-## 1.0.2
+## 1.0.2 (2016-03-04)
 
 Tasks's creation date wasn't stored in the JSON data-file. This wasn't critical because the sort was working properly anyway. The tasks were stored in an array to which each new task was appended. This array was therefore sorted by the creation date, which allowed the sort to work properly.
 
@@ -138,7 +139,7 @@ When tasks were sorted, the creation date criteria was futile since it was set f
 
 To fix the issue, the default creation date has been set to Python's datetime.datetime.min. From now on, new tasks have their creation date stored on the data-file. Old tasks aren't altered and are considered to be have been created at datetime.datetime.min after loading.
 
-## 1.0.1
+## 1.0.1 (2016-02-16)
 
  * A single task visibility is now able to override its context visibility
  * UTF-8 encoding for the JSON data-file
