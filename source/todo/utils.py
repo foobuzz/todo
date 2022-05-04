@@ -32,11 +32,10 @@ USER_DATE_FORMATS = [
 ]
 
 REMAINING = {
+	'm': 30.5*24*3600,
 	'w': 7*24*3600,
 	'd': 24*3600,
 	'h': 3600,
-	'm': 60,
-	's': 1
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 

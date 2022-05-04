@@ -18,8 +18,7 @@ class TestDatetimeParsing(unittest.TestCase):
 		'2016-02-03': datetime(2016, 2, 3),
 		'2016-02-03T19:30:04': datetime(2016, 2, 3, 19, 30, 4),
 		'03/02/2016': None,
-		'42s': NOW + timedelta(seconds=42),
-		'42m': NOW + timedelta(seconds=42*60),
+		'42m': NOW + timedelta(seconds=42*30.5*24*3600),
 		'42h': NOW + timedelta(days=1, seconds=18*3600),
 		'42d': NOW + timedelta(days=42),
 		'42w': NOW + timedelta(days=42*7),
@@ -27,7 +26,6 @@ class TestDatetimeParsing(unittest.TestCase):
 		'dkfnjdfkfd': None,
 		'lol42n': None,
 		'-42s': None,
-		'1888888s': NOW + timedelta(seconds=1888888),
 		'1.25s': None,
 		'20l5-01-00': None
 	}
@@ -53,7 +51,7 @@ class TestDatetimeParsing(unittest.TestCase):
 		for u_input, expected in TestDatetimeParsing.input_cases.items():
 			result = tutils.get_datetime(u_input, NOW)
 			if expected is not None:
-				# Converting expected manually-entered datetime into UTC
+				# Converting expected manually-entered datetime into UTC
 				expected = datetime.utcfromtimestamp(expected.timestamp())
 				expected = expected.replace(tzinfo=timezone.utc)
 
