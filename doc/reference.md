@@ -179,17 +179,20 @@ Key           |  Behavior                                                       
 `editor`      |  Select the editor to use with `todo edit <id>`                                                  |  The name of the command to launch the text-editor. The command should accept a filename as first argument  |  None (fallback to the `EDITOR` environment variable if no configuration found; fallback to vim if no env variable found)
 `todo_fashion`|  Sets the `--flat` or `--tidy` option of the `todo` command by default                           |  `flat` or `tidy`                                                                                           |  `tidy`
 `show_empty_contexts` |  Whether empty subcontexts should be listed when running `todo`                      | `on` or `off`                                                                                               |  `on`
+`show_content_tag` | Whether to show the ellipsis marker for a task with a body | `on` or `off` | `on`
 
 ### `[Colors]`
 
-Key         |  Behavior                    |  Value format               |  Default value
-------------|------------------------------|-----------------------------|---------------
-`colors`    |  Turns coloring on or off    |  `on` or `off`              |  `on`         
-`palette`   |  Chose how to diplay colors  |  `8`, `xterm-256` or `rgb`  |  `8`          
-`id`        |  Color for tasks' id         |  Color-format*              |  `yellow`     
-`context`   |  Color for context           |  Color-format*              |  `cyan`       
-`deadline`  |  Color for deadline          |  Color-format*              |  `cyan`       
-`priority`  |  Color for priority          |  Color-format*              |  `green`      
+Key           |  Behavior                    |  Value format               |  Default value
+--------------|------------------------------|-----------------------------|---------------
+`colors`      |  Turns coloring on or off    |  `on` or `off`              |  `on`         
+`palette`     |  Chose how to diplay colors  |  `8`, `xterm-256` or `rgb`  |  `8`          
+`id`          |  Color for tasks' id         |  Color-format*              |  `yellow`     
+`context`     |  Color for context           |  Color-format*              |  `cyan`       
+`deadline`    |  Color for deadline          |  Color-format*              |  `cyan`       
+`priority`    |  Color for priority          |  Color-format*              |  `green`      
+`content_tag` |  Color for the ellipsis body marker   |  Color-format*              |  `blue`
+
 
 #### Color-format
 

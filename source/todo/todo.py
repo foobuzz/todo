@@ -53,7 +53,8 @@ else:
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
 	'todo_fashion': 'tidy',
-	'show_empty_contexts': True
+	'show_empty_contexts': True,
+	'show_content_tag': True,
 }
 DEFAULT_CONFIG['Colors'] = {
 	'colors': COLORS,
@@ -61,6 +62,7 @@ DEFAULT_CONFIG['Colors'] = {
 	'id': 'yellow',
 	'content': 'default',
 	'context': 'cyan',
+	'content_tag': 'blue',
 	'deadline': 'cyan',
 	'priority': 'green',
 	'done': 'green',
@@ -615,7 +617,15 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 	result += title
 	end_title = len(result)
 
-	metadata = [c['deadline'], c['priority'], c['context'], c['start']]
+	metadata = [
+		c['deadline'],
+		c['priority'],
+		c['context'],
+		c['start'],
+	]
+	if CONFIG.getboolean('App', 'show_content_tag'):
+		metadata = [c['content_tag']] + metadata
+
 	metatext = ' '.join(stuff for stuff in metadata if stuff != '')
 
 	if len(metatext) > 0:
@@ -677,9 +687,12 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 	if start_date > date.today().isoformat():
 		start_str = cstr('[starts: {}]'.format(start_date), clr('start'))
 
+	content_tag_str = cstr('...', clr('content_tag')) if task['content'] else ''
+
 	return {
 		'id': id_str,
 		'title': content_str,
+		'content_tag': content_tag_str,
 		'deadline': remaining_str,
 		'priority': prio_str,
 		'context': ctx_str,

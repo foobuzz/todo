@@ -9,6 +9,7 @@ User guide
     * [Subcontexts](#subcontexts)
     * [Visibility](#visibility)
     * [Context priority](#context-priority)
+  * [Editing](#editing)
   * [Sort summary](#sort-summary)
   * [History](#history)
   * [Configuration](#configuration)
@@ -221,7 +222,7 @@ The text displayed in `todo`'s listing is actually only the title of the task. Y
 
 	Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
-Only the title `Do the thing` will appear in the task listing. This way of highlighting a title from the rest of the text is called a *settext header* in the [Markdown](https://en.wikipedia.org/wiki/Markdown) format. If you want to read the entire content of a given task, you can simply use the `task` command:
+In the task listing, the title `Do the thing` will appear, marked with an ellipsis (`...`) indicating that the task contains additional content[1]. If you want to read the entire content of a given task, you can simply use the `task` command:
 
 	$ todo task 1
 	     ID: 1
@@ -235,7 +236,7 @@ Only the title `Do the thing` will appear in the task listing. This way of highl
 	Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
 	incididunt ut labore et dolore magna aliqua.
 
-This command first prints a bunch of metadata about the task, then its contents. When using this command, the body of the task is [word-wrapped](https://en.wikipedia.org/wiki/Line_wrap_and_word_wrap) to fit in your terminal. 
+[1] This marker can be disabled with the [`App.show_content_tag`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#app) config key. Furthermore, its colors can be customized with the [`Colors.content_tag`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#colors) key.
 
 
 ## Sort summary
