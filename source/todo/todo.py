@@ -52,7 +52,6 @@ else:
 
 DEFAULT_CONFIG = configparser.ConfigParser()
 DEFAULT_CONFIG['App'] = {
-	'layout': 'basic',
 	'todo_fashion': 'tidy',
 	'show_empty_contexts': True
 }
@@ -471,21 +470,20 @@ def feedback_multiple_tasks_done(not_found):
 
 
 def feedback_todo(context, tasks, subcontexts, highlight=None):
-	layout = CONFIG.get('App', 'layout')
-	if layout == 'multiline':
-		stringyfier = get_multiline_task_string
-	else:
-		stringyfier = get_basic_task_string
-
 	if len(tasks) != 0:
 		id_width = max(len(utils.to_hex(task['id'])) for task in tasks)
 	else:
 		id_width = 1
 
 	for task in tasks:
-		partial = functools.partial(stringyfier, context, id_width, task,
-			highlight=highlight)
-		safe_print(partial)
+		task_string_builder = functools.partial(
+			get_basic_task_string,
+			context,
+			id_width,
+			task,
+			highlight=highlight
+		)
+		safe_print(task_string_builder)
 	if len(subcontexts) > 0:
 		print(TASK_SUBCTX_SEP)
 	for ctx in subcontexts:
@@ -562,15 +560,13 @@ def feedback_show_task(task, full_content):
 	print(full_content)
 
 
-# String building for todo feedback
-
-# Those functions return a string. They accept a boolean `ascii_` argument
-# that indicates whether to build the returned string with ASCII characters
-# only (True) or whether non-ASCII characters are allowed (False). Those
-# functions will then be partially called with all arguments set except the
-# `ascii_` one and the resulting partial will be passed to `safe_print` which
-# will take care of trying to print the non-ASCII version and then fallback to
-# the ASCII version in case of error from the terminal.
+# The following function returns a string. It accepts a boolean `ascii_`
+# argument that indicates whether to build the returned string with ASCII
+# characters only (True) or whether non-ASCII characters are allowed (False).
+# It will then be partially called with all arguments set except the `ascii_`
+# one and the resulting partial will be passed to `safe_print` which will take
+# care of trying to print the non-ASCII version and then fallback to the ASCII
+# version in case of error from the terminal.
 
 def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False):
 	c = get_task_string_components(task, context, ascii_, highlight=highlight)
@@ -631,21 +627,6 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 			result += ' '
 		result += metatext
 
-	return result
-
-
-def get_multiline_task_string(context, id_width, task, highlight=None, ascii_=False):
-	c = get_task_string_components(task, context, ascii_, highlight=highlight)
-	template = ' {id} {done} / {deadline} {priority} {context} {start}\n'
-	result =  template.format(**c)
-
-	wrap_width = CONFIG.getint('Word-wrapping', 'width')
-	if wrap_width == -1:
-		wrap_width = utils.get_terminal_width()
-	title = c['title']
-	if CONFIG.getboolean('Word-wrapping', 'title'):
-		title = '\n'.join(textwrap.wrap(c['title'], width=wrap_width))
-	result += title + '\n'
 	return result
 
 

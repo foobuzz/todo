@@ -176,8 +176,7 @@ What follows is an exhaustive list of all sections recognized, and for each sect
 
 Key           |  Behavior                                                                                        |  Value format                                                                                               |  Default value                                 
 --------------|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|-------------------------------------------------
-`editor`      |  Select the editor to use with `todo edit <id>`                                                  |  The name of the command to launch the text-editor. The command should accept a filename as first argument  |  None (fallback to the `EDITOR` environment variable if no configuration found; fallback to vim if no env variable found)                                
-`layout`      |  Select the layout for the `todo` command  |  `basic` or `multiline`  |  `basic`
+`editor`      |  Select the editor to use with `todo edit <id>`                                                  |  The name of the command to launch the text-editor. The command should accept a filename as first argument  |  None (fallback to the `EDITOR` environment variable if no configuration found; fallback to vim if no env variable found)
 `todo_fashion`|  Sets the `--flat` or `--tidy` option of the `todo` command by default                           |  `flat` or `tidy`                                                                                           |  `tidy`
 `show_empty_contexts` |  Whether empty subcontexts should be listed when running `todo`                      | `on` or `off`                                                                                               |  `on`
 
