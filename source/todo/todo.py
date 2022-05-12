@@ -244,12 +244,17 @@ def edit_task(args, daccess):
 
 
 def do_task(args, daccess):
-	not_found = daccess.set_done_many(args['id'])
+	not_found = daccess.do_many('set_done', args['id'])
 	return 'multiple_tasks_done', not_found
 
 
+def undo_task(args, daccess):
+	not_found = daccess.do_many('set_undone', args['id'])
+	return 'multiple_tasks_undone', not_found
+
+
 def remove_task(args, daccess):
-	not_found = daccess.remove_many(args['id'])
+	not_found = daccess.do_many('remove', args['id'])
 	return 'multiple_tasks_update', not_found
 
 
@@ -394,6 +399,7 @@ DISPATCHER = {
 	'task': manage_task,
 	'edit': edit_task,
 	'done': do_task,
+	'undone': undo_task,
 	'rm': remove_task,
 	'ctx': manage_context,
 	'rmctx': remove_context,
@@ -465,10 +471,18 @@ def feedback_multiple_tasks_update(not_found):
 		print('Task{} not found: {}'.format(s, string))
 
 
-def feedback_multiple_tasks_done(not_found):
-	if len(not_found) > 0:
-		string = ', '.join(utils.to_hex(tid) for tid in not_found)
-		print('Not found or already done: {}'.format(string))
+def feedback_multiple_tasks_done(tasks_ids):
+	return _feedback_multiple_tasks("Not found or already done", tasks_ids)
+
+
+def feedback_multiple_tasks_undone(tasks_ids):
+	return _feedback_multiple_tasks("Not found or not done", tasks_ids)
+
+
+def _feedback_multiple_tasks(message, tasks_ids):
+	if len(tasks_ids) > 0:
+		tasks_ids_list = ', '.join(utils.to_hex(tid) for tid in tasks_ids)
+		print(f'{message}: {tasks_ids_list}')	
 
 
 def feedback_todo(context, tasks, subcontexts, highlight=None):

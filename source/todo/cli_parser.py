@@ -7,7 +7,7 @@ from .utils import NOW
 COMMANDS = {
 	'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge', 'mv', 'rmctx', 'search', 'future', '-h', '--help', '--location',
-	'--version', '--install-autocompletion'}
+	'--version', '--install-autocompletion', 'undone',}
 
 
 ## Argument parsing error messages
@@ -231,6 +231,13 @@ def parse_command(argv):
 	done_parser.set_defaults(command='done')
 	done_parser.add_argument('id', nargs='+',
 		help="The list of tasks' IDs to set as done"
+	)
+
+	done_parser = subparsers.add_parser('undone',
+		help="Cancel the 'done' command on a task")
+	done_parser.set_defaults(command='undone')
+	done_parser.add_argument('id', nargs='+',
+		help="The list of tasks' IDs to set as undone"
 	)
 
 	task_parser = subparsers.add_parser('task',

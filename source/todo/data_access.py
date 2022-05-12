@@ -274,18 +274,21 @@ class DataAccess():
 				missing.append(tid)
 		return missing
 
-	def set_done_many(self, tids):
-		return self.do_many('set_done', tids)
-
-	def remove_many(self, tids):
-		return self.do_many('remove', tids)
-
 	def set_done(self, tid):
 		c = self.connection.cursor()
 		c.execute("""
 			UPDATE Task SET done = datetime('now')
 			WHERE id = ?
 			AND done IS NULL
+		""", (tid,))
+		return c.rowcount
+
+	def set_undone(self, tid):
+		c = self.connection.cursor()
+		c.execute("""
+			UPDATE Task SET done = null
+			WHERE id = ?
+			AND done IS NOT NULL
 		""", (tid,))
 		return c.rowcount
 
