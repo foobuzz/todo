@@ -81,3 +81,9 @@ $ ./todo.py
  # | culture (2)
 $ ./todo.py purge --force
 1 task deleted
+$ ./todo.py done 2
+$ ./todo.py task 2 | grep Status
+ Status: DONE
+$ ./todo.py undone 2
+$ ./todo.py task 2 | grep Status
+ Status: TODO

@@ -41,6 +41,8 @@ Set a task as done using the `done` command, with the task's ID as value:
 	$ todo
 	    2 | Fix the stuff
 
+ℹ️ If you want to cancel the task being done, you can use the `undone` command.
+
 
 ## Deadlines
 
