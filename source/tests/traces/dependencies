@@ -1,0 +1,12 @@
+$ ./todo.py add "Create the API"
+$ ./todo.py add "Add Oauth2 to the API" --depends-on 1
+$ ./todo.py
+ 1 | Create the API
+$ ./todo.py done 1
+$ ./todo.py
+ 2 | Add Oauth2 to the API
+$ ./todo.py add "Should not be depend on anything" --depends-on 3052
+Dependencies not set because not existing: 3052
+$ ./todo.py
+ 2 | Add Oauth2 to the API
+ 3 | Should not be depend on anything

@@ -88,6 +88,12 @@ def parse_new_context_name(name):
 		return True, name
 
 
+def parse_dependencies(dependecies):
+	if dependecies == ['nothing']:
+		return True, []
+	return parse_id(dependecies)
+
+
 PARSERS = [
 	('id', parse_id),
 	('context', parse_context),
@@ -97,7 +103,8 @@ PARSERS = [
 	('start', parse_moment),
 	('before', functools.partial(parse_moment, direction=-1)),
 	('after', functools.partial(parse_moment, direction=-1)),
-	('name', parse_new_context_name)
+	('name', parse_new_context_name),
+	('depends_on', parse_dependencies),
 ]
 
 
@@ -195,6 +202,9 @@ def parse_command(argv):
 	)
 	add_parser.add_argument('-e', '--edit', action='store_true',
 		help="Edit the task in a text editor before adding it"
+	)
+	add_parser.add_argument('--depends-on', nargs='+', default=[],
+		help="Specify which other tasks this task depends on."
 	)
 
 	search_parser = subparsers.add_parser('search',

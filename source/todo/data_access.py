@@ -263,6 +263,35 @@ class DataAccess():
 			return None
 		return row
 
+	def set_task_dependencies(self, tid, dependencies):
+		# Remove any existing dependencies
+		c = self.connection.cursor()
+		c.execute("""
+			DELETE FROM TaskDependency
+			WHERE task_id = ?
+		""", (tid,))
+
+		# Add the new dependencies
+		unexisting_dependencies = []
+		for dependency_id in dependencies:
+			# Check that the dependency actually exists
+			c.execute("""
+				SELECT 1 FROM Task
+				WHERE id = ?
+			""", (dependency_id,))
+			if c.fetchone() is None:
+				unexisting_dependencies.append(dependency_id)
+				continue
+
+			# Add it
+			c.execute("""
+				INSERT INTO TaskDependency (task_id, dependency_id)
+				VALUES (?, ?)
+			""", (tid, dependency_id))
+
+		return unexisting_dependencies
+		
+
 	def do_many(self, function, tids):
 		""" Call the method `function` for each task ID in the `tids` list.
 		`function` should accept only one positional argument (in addition to
@@ -477,12 +506,19 @@ class DataAccess():
 		c = self.connection.cursor()
 		c.execute("""
 			SELECT t.*, c.path as ctx_path
-			FROM Task t JOIN Context c
-			ON t.context = c.id
+			FROM Task t
+			JOIN Context c
+			  ON t.context = c.id
 			WHERE c.path {} ?
 			  AND t.done IS NULL
 			  AND (c.path = ? OR c.visibility = 'normal')
 			  AND (datetime('now')) >= datetime(t.start)
+			  AND NOT EXISTS (
+			  	SELECT * FROM Task as Dependency
+			  	JOIN TaskDependency ON Dependency.id = TaskDependency.dependency_id
+			  	WHERE TaskDependency.task_id = t.id
+			  	  AND Dependency.done is NULL
+			  )
 			ORDER BY
 			  priority DESC,
 			  COALESCE(

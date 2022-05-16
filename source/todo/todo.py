@@ -14,7 +14,7 @@ from .utils import (
 )
 
 
-__version__ = '3.4.2'
+__version__ = '4.0.0'
 
 
 ISO_DATE_LENGTH = 10
@@ -178,8 +178,10 @@ def add_task(args, daccess):
 	else:
 		title, content = args['title'], None
 
-	id_ = daccess.add_task(title, content, context, options)
-	return 'add_task', id_
+	task_id = daccess.add_task(title, content, context, options)
+	unexisting_deps = daccess.set_task_dependencies(task_id, args['depends_on'])
+
+	return 'add_task', task_id, unexisting_deps
 
 
 def manage_task(args, daccess):
@@ -448,8 +450,12 @@ def get_options(args, mutators, converters={}):
 TASK_SUBCTX_SEP = '-'*40
 
 
-def feedback_add_task(id_):
-	pass
+def feedback_add_task(task_id, unexisting_dependencies):
+	if unexisting_dependencies:
+		print(
+			"Dependencies not set because not existing: " +
+			', '.join([utils.to_hex(tid) for tid in unexisting_dependencies])
+		)
 
 
 def feedback_task_not_found(tid):

@@ -41,14 +41,27 @@ INIT_DB = [
 	""",
 	"""
 	ALTER TABLE Task ADD COLUMN `editing` INTEGER NOT NULL DEFAULT 0
+	""",
 	"""
+	CREATE TABLE `TaskDependency` (
+		`task_id`	INTEGER NOT NULL REFERENCES Task(id),
+		`dependency_id`	INTEGER NOT NULL REFERENCES Task(id)
+	);
+	""",
+	"""
+	CREATE INDEX `TaskDependerIndex` ON `TaskDependency` (`task_id`);
+	""",
+	"""
+	CREATE INDEX `TaskDependeeIndex` ON `TaskDependency` (`dependency_id`);
+	""",
 ]
 
 
 VERSIONS_INDEX = [
 	('3.0', 0),
 	('3.1', 4),
-	('3.2', 6)
+	('3.2', 6),
+	('4.0.0', 8),
 ]
 
 
@@ -67,6 +80,7 @@ def update_database(path, current_version):
 		conn = sqlite3.connect(path, isolation_level=None)
 		for stmt in updates:
 			conn.execute(stmt)
+		conn.commit()
 		conn.close()
 
 
