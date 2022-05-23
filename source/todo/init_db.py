@@ -44,8 +44,8 @@ INIT_DB = [
 	""",
 	"""
 	CREATE TABLE `TaskDependency` (
-		`task_id`	INTEGER NOT NULL REFERENCES Task(id),
-		`dependency_id`	INTEGER NOT NULL REFERENCES Task(id)
+		`task_id`	INTEGER NOT NULL REFERENCES Task(id) ON DELETE CASCADE,
+		`dependency_id`	INTEGER NOT NULL REFERENCES Task(id) ON DELETE CASCADE
 	);
 	""",
 	"""
