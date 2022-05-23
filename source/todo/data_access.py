@@ -226,11 +226,19 @@ class DataAccess():
 		c.execute(query, values)
 		return c.lastrowid
 
-	def update_task(self, tid, context=None, options=[]):
+	def update_task(self, tid, context=None, options=None):
 		""" Update the task identified by ID `tid` (int) with the given
 		`options`. If the context of the task needs to be updated as well,
 		then `context` should be passed the dotted path of the new context.
 		Otherwise it should be None."""
+		if options is None:
+			options = []
+
+		if context is None and not options:
+			raise ValueError(
+				"update_task cannot be called without any context of options"
+			)
+
 		check_options(options, TASK_OPTIONS)
 		if context is not None:
 			cid = self.get_or_create_context(context)
@@ -247,6 +255,14 @@ class DataAccess():
 		c = self.connection.cursor()
 		c.execute(query, values)
 		return c.rowcount
+
+	def task_exists(self, tid):
+		c = self.connection.cursor()
+		c.execute("""
+			SELECT 1 FROM Task
+			WHERE id = ?
+		""", (tid,))
+		return c.fetchone() is not None
 
 	def get_task(self, tid):
 		""" Get the task identified by ID `tid` (int). Return a Row-Task object."""

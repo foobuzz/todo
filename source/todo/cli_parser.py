@@ -183,28 +183,9 @@ def parse_command(argv):
 	add_parser.add_argument('title',
 		help="The title of the task"
 	)
-	add_parser.add_argument('-d', '--deadline',
-		help="Deadline of the task, in the YYYY-MM-DD (ISO 8601) format, or "
-		     "as a delay in the <n>(s|m|h|d|w) format, where <n> is an "
-		     "integer and what follows represents respectively seconds, "
-		     "minutes, hours, days or weeks"
-	)
-	add_parser.add_argument('-s', '--start',
-		help="Start line of the task, in the same format than --deadline. "
-		     "Defaults to the moment the task is created."
-	)
-	add_parser.add_argument('-c', '--context',
-		help="Context to put the task in. Defaults to the root context"
-	)
-	add_parser.add_argument('-p', '--priority', type=int,
-		help="Priority of the task, as an integer. Higher the interger, "
-		     "higher the priority"
-	)
+	_add_common_task_arguments_to_command_parser(add_parser)
 	add_parser.add_argument('-e', '--edit', action='store_true',
 		help="Edit the task in a text editor before adding it"
-	)
-	add_parser.add_argument('--depends-on', nargs='+', default=[],
-		help="Specify which other tasks this task depends on."
 	)
 
 	search_parser = subparsers.add_parser('search',
@@ -257,10 +238,7 @@ def parse_command(argv):
 	task_parser.add_argument('id',
 		help="ID of the task to apply modifiers to"
 	)
-	task_parser.add_argument('-d', '--deadline')
-	task_parser.add_argument('-s', '--start')
-	task_parser.add_argument('-c', '--context')
-	task_parser.add_argument('-p', '--priority')
+	_add_common_task_arguments_to_command_parser(task_parser)
 	task_parser.add_argument('-t', '--title',
 		help="Rename the task"
 	)
@@ -356,3 +334,26 @@ def parse_command(argv):
 	future_parser.set_defaults(command='future')
 
 	return vars(parser.parse_args(argv))
+
+
+def _add_common_task_arguments_to_command_parser(command_parser):
+	command_parser.add_argument('-d', '--deadline',
+		help="Deadline of the task, in the YYYY-MM-DD (ISO 8601) format, or "
+		     "as a delay in the <n>(s|m|h|d|w) format, where <n> is an "
+		     "integer and what follows represents respectively seconds, "
+		     "minutes, hours, days or weeks"
+	)
+	command_parser.add_argument('-s', '--start',
+		help="Start line of the task, in the same format than --deadline. "
+		     "Defaults to the moment the task is created."
+	)
+	command_parser.add_argument('-c', '--context',
+		help="Context to put the task in. Defaults to the root context"
+	)
+	command_parser.add_argument('-p', '--priority', type=int,
+		help="Priority of the task, as an integer. Higher the interger, "
+		     "higher the priority"
+	)
+	command_parser.add_argument('--depends-on', nargs='+', default=[],
+		help="Specify which other tasks this task depends on."
+	)

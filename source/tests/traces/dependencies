@@ -10,3 +10,6 @@ Dependencies not set because not existing: 3052
 $ ./todo.py
  2 | Add Oauth2 to the API
  3 | Should not be depend on anything
+$ ./todo.py task 3 --depends-on 2
+$ ./todo.py
+ 2 | Add Oauth2 to the API

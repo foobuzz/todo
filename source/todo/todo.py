@@ -179,9 +179,14 @@ def add_task(args, daccess):
 		title, content = args['title'], None
 
 	task_id = daccess.add_task(title, content, context, options)
-	unexisting_deps = daccess.set_task_dependencies(task_id, args['depends_on'])
+	if args['depends_on']:
+		unexisting_deps = daccess.set_task_dependencies(
+			task_id, args['depends_on']
+		)
+		if unexisting_deps:
+			return 'dependencies_not_found', unexisting_deps
 
-	return 'add_task', task_id, unexisting_deps
+	return 'add_task', task_id
 
 
 def manage_task(args, daccess):
@@ -189,12 +194,19 @@ def manage_task(args, daccess):
 	context = args.get('context')
 	options = get_options(args, TASK_MUTATORS, {'deadline': {'None': None}})
 
-	if len(options) == 0 and context is None:
+	if not daccess.task_exists(tid):
+		return 'task_not_found', tid
+
+	if not options and context is None and not args['depends_on']:
 		return show_task(tid, daccess)
-	else:
-		upt_count = daccess.update_task(tid, context, options)
-		if upt_count == 0:
-			return 'task_not_found', tid
+
+	if options or context is not None:
+		daccess.update_task(tid, context, options)
+
+	if args['depends_on']:
+		unexisting_deps = daccess.set_task_dependencies(tid, args['depends_on'])
+		if unexisting_deps:
+			return 'dependencies_not_found', unexisting_deps
 
 
 def show_task(tid, daccess):
@@ -450,7 +462,11 @@ def get_options(args, mutators, converters={}):
 TASK_SUBCTX_SEP = '-'*40
 
 
-def feedback_add_task(task_id, unexisting_dependencies):
+def feedback_add_task(task_id):
+	pass
+
+
+def feedback_dependencies_not_found(unexisting_dependencies):
 	if unexisting_dependencies:
 		print(
 			"Dependencies not set because not existing: " +
