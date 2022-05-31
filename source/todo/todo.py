@@ -67,6 +67,7 @@ DEFAULT_CONFIG['Colors'] = {
 	'priority': 'green',
 	'done': 'green',
 	'start': 'green',
+	'depends_on': 'green',
 }
 DEFAULT_CONFIG['Word-wrapping'] = {
 	'title': True,
@@ -581,7 +582,7 @@ def feedback_show_task(task, full_content):
 	)
 
 	def print_metaline(ascii_):
-		c = get_task_string_components(task, '', ascii_, highlight=None)
+		c = get_task_string_components(dict(task), '', ascii_, highlight=None)
 		if task['done'] is None:
 			stuff = ['deadline', 'priority', 'context']
 		else:
@@ -607,7 +608,9 @@ def feedback_show_task(task, full_content):
 # version in case of error from the terminal.
 
 def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False):
-	c = get_task_string_components(task, context, ascii_, highlight=highlight)
+	c = get_task_string_components(
+		dict(task), context, ascii_, highlight=highlight
+	)
 
 	if isinstance(c['id'], ColoredStr):
 		ansi_offset = c['id'].lenesc
@@ -658,6 +661,7 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 		c['priority'],
 		c['context'],
 		c['start'],
+		c['dependencies'],
 	]
 	if CONFIG.getboolean('App', 'show_content_tag'):
 		metadata = [c['content_tag']] + metadata
@@ -725,6 +729,16 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 
 	content_tag_str = cstr('...', clr('content_tag')) if task['content'] else ''
 
+	dependencies_str = ''
+	if task.get('dependencies_ids'):
+		# It is the SQL query that controls whether dependencies are loaded
+		# or not. For example, the `future` commands loads dependencies, but
+		# not the bare `todo` command.
+		dependencies_str = cstr(
+			'[depends on: {}]'.format(task['dependencies_ids']),
+			clr('depends_on'),
+		)
+
 	return {
 		'id': id_str,
 		'title': content_str,
@@ -734,6 +748,7 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 		'context': ctx_str,
 		'done': done_str,
 		'start': start_str,
+		'dependencies': dependencies_str,
 	}
 
 

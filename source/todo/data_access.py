@@ -701,13 +701,21 @@ class DataAccess():
 		c = self.connection.cursor()
 		now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 		query = """
-			SELECT t.*, c.path as ctx_path
-			FROM Task t JOIN Context c
-			ON t.context = c.id
+			SELECT
+				t.*,
+				c.path as ctx_path,
+				group_concat(dependee.id, ', ') as dependencies_ids
+			FROM Task t
+			JOIN Context c ON t.context = c.id
+			LEFT JOIN TaskDependency ON TaskDependency.task_id = t.id
+			LEFT JOIN Task dependee ON TaskDependency.dependency_id = dependee.id
 			WHERE t.start > ?
+			OR dependee.id AND dependee.done IS NULL
+			OR dependee.id AND dependee.start > ?
+			GROUP BY t.id
 			ORDER BY t.created
 		"""
-		c.execute(query, (now,))
+		c.execute(query, (now, now))
 		return c.fetchall()
 
 	def take_editing_lock(self, tid):
