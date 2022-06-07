@@ -1,4 +1,5 @@
 import sys, argparse, functools
+from collections import Counter
 
 from . import data_access, utils
 from .utils import NOW
@@ -91,6 +92,14 @@ def parse_new_context_name(name):
 def parse_dependencies(dependecies):
 	if dependecies == ['nothing']:
 		return True, []
+
+	for task_id, nb_occ in Counter(dependecies).items():
+		if nb_occ > 1:
+			return (
+				False,
+				f"Task {task_id} cannot be specified twice as a dependency."
+			)
+
 	return parse_id(dependecies)
 
 
