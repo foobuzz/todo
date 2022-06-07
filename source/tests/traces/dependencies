@@ -16,3 +16,16 @@ $ ./todo.py
 $ ./todo.py rm 2
 $ ./todo.py
  3 | Should not depend on anything
+$ ./todo.py add "Depends on three" --depends-on 3
+$ ./todo.py future
+ 4 | Depends on three [depends on: 3]
+$ ./todo.py add "Some other task"
+$ ./todo.py task 4 --depends-on 3 5
+$ ./todo.py future
+ 4 | Depends on three [depends on: 3, 5]
+$ ./todo.py done 3
+$ ./todo.py
+ 5 | Some other task
+$ ./todo.py done 5
+$ ./todo.py
+ 4 | Depends on three
