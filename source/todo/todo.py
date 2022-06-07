@@ -735,7 +735,7 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 		# or not. For example, the `future` commands loads dependencies, but
 		# not the bare `todo` command.
 		dependencies_str = cstr(
-			'[depends on: {}]'.format(task['dependencies_ids']),
+			f"[depends on: {format_dependencies(task['dependencies_ids'])}]",
 			clr('depends_on'),
 		)
 
@@ -750,6 +750,16 @@ def get_task_string_components(task, ctx, ascii_=False, highlight=None):
 		'start': start_str,
 		'dependencies': dependencies_str,
 	}
+
+
+def format_dependencies(dependencies: str):
+	"""
+	From a comma-separated list of dependencies, return the same
+	comma-separated list but with task IDs in hexadecimal.
+	"""
+	return ', '.join([
+		utils.to_hex(int(task_id)) for task_id in dependencies.split(', ')
+	])
 
 
 def get_context_string(context, id_width, ctx, ascii_=False):
