@@ -198,13 +198,13 @@ def manage_task(args, daccess):
 	if not daccess.task_exists(tid):
 		return 'task_not_found', tid
 
-	if not options and context is None and not args['depends_on']:
+	if not options and context is None and args['depends_on'] is None:
 		return show_task(tid, daccess)
 
 	if options or context is not None:
 		daccess.update_task(tid, context, options)
 
-	if args['depends_on']:
+	if args['depends_on'] is not None:
 		unexisting_deps = daccess.set_task_dependencies(tid, args['depends_on'])
 		if unexisting_deps:
 			return 'dependencies_not_found', unexisting_deps

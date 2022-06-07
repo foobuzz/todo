@@ -363,6 +363,6 @@ def _add_common_task_arguments_to_command_parser(command_parser):
 		help="Priority of the task, as an integer. Higher the interger, "
 		     "higher the priority"
 	)
-	command_parser.add_argument('--depends-on', nargs='+', default=[],
+	command_parser.add_argument('--depends-on', nargs='+',
 		help="Specify which other tasks this task depends on."
 	)

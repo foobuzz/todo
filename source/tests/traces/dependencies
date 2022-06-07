@@ -29,3 +29,8 @@ $ ./todo.py
 $ ./todo.py done 5
 $ ./todo.py
  4 | Depends on three
+$ ./todo.py add "Depends on 4" --depends-on 4
+$ ./todo.py task 6 --depends-on nothing
+$ ./todo.py
+ 4 | Depends on three
+ 6 | Depends on 4
