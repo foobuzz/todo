@@ -4,6 +4,7 @@ User guide
   * [Basic Usage](#basic-usage)
   * [Deadlines](#deadlines)
     * [Long-term scheduling](#long-term-scheduling)
+  * [Dependencies](#dependencies)
   * [Priority](#priority)
   * [Contexts](#contexts)
     * [Subcontexts](#subcontexts)
@@ -84,7 +85,26 @@ You can use the `-s` or `--start` option in order to set a start-point to the ta
 
 The task won't show up until 2016-06-15.
 
-In this example, we used the `task` command to select a task to apply a modifier to. All the modifiers available when creating a task with the `add` command are also available when selecting a task with the `task` command.
+ℹ️ The [`future`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-future) command will list tasks not started yet. Unstarted tasks can also be found with the [`search`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-search-term---context-context---done--undone---before-moment---after-moment---case) command.
+
+ℹ️ In the previous example, we used the `task` command to select a task to apply a modifier to. All the modifiers available when creating a task with the `add` command are also available when selecting a task with the `task` command.
+
+## Dependencies
+
+Sometimes, there is no need to bother with a task as long as another blocking task is not done yet. In this case, you can specify a dependency with the `--depends-on` option:
+
+	$ todo add "Buy an external hard drive"
+	$ todo
+	    1 | Buy an external hard drive
+	$ todo add "Backup family pics on my external hard drive" --depends-on 1
+ 	$ todo
+ 	    1 | Buy an external hard drive
+	$ todo done 1
+	$ todo
+	    2 | Backup family pics on my external hard drive
+
+Task whose dependencies aren't done are not printed in a `todo` listing, but they will be once their dependecy is done. They can also be found with the [`future`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-future) or [`search`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-search-term---context-context---done--undone---before-moment---after-moment---case) commands.
+
 
 ## Priority
 

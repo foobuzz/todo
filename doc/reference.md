@@ -27,7 +27,7 @@ Subcontexts are sorted in the following order:
 **Note:** If `<context>` happens to be the name of one of the built-in todo command, then you can use `todo ctx <context>` instead.
 
 
-### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY]`
+### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--depends-on DEPENDENCY1 DEPENDENCY2...]`
 
 Add a task titled `<title>` and apply to it the options:
 
@@ -73,12 +73,17 @@ An integer indicating the priority of the task. The highest the integer the high
 By default, a task has a priority of 1.
 
 
+#### `--depends-on DEPENDENCY1 DEPENDENCY2...`
+
+A list of task IDs this task depends on. See [Dependencies](https://github.com/foobuzz/todo/blob/master/doc/guide.md#dependencies).
+
+
 ### `todo done <id>...`
 
 Set the tasks identified by `id`s as done. The ID of a task is shown at its left in lists output by `todo`.
 
 
-### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE]`
+### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE] [--depends-on DEPENDENCY1 DEPENDENCY2...]`
 
 Without any option, print the contents of the task (its metadata followed by its body).
 
@@ -141,7 +146,7 @@ Remove the context `<context>`, including all of its tasks (done and undone) and
 
 ### `todo future`
 
-Show tasks that have not yet started. See [#-s---start-moment](--start).
+Show tasks that have not yet started. See [--start](#-s---start-moment).
 
 
 ### `todo --version`
