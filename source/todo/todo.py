@@ -586,6 +586,7 @@ def feedback_show_task(task, full_content):
 		cstr(" Status:", '6'),
 		"DONE" if task['done'] is not None else "TODO"
 	)
+	print(cstr("   Ping:", '6'), task['ping'])
 
 	def print_metaline(ascii_):
 		c = get_task_string_components(dict(task), '', ascii_, highlight=None)
