@@ -546,11 +546,11 @@ class DataAccess():
 			  )
 			ORDER BY
 			  priority DESC,
-			  ping DESC,
 			  COALESCE(
 			      julianday(deadline),
 			      julianday('9999-12-31 23:59:59')
 			    ) - julianday('now') ASC,
+			  ping DESC,
 			  created ASC
 		""".format(operator), (value, path))
 		return c.fetchall()
