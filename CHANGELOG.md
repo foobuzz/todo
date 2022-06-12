@@ -1,3 +1,18 @@
+## 4.0.0 (TBD)
+
+ * Breaking changes:
+   - Drop support for Python 3.5
+   - When specifying a deadline, the `m` unit now means "month", and not "minute". The `s` unit has been removed.
+   - Drop support for multi-line task printing and the associated `App.layout` config flag. Tasks are now always printed with what was known as the `basic` layout.
+ * Features:
+   - Tasks with a [body](https://github.com/foobuzz/todo/blob/master/doc/guide.md#editing) now are marked with an ellipsis (`...`) marker in `todo` listing to indicate that there is more to read. This can be disabled with the `app.show_content_tag` [config flag](https://github.com/foobuzz/todo/blob/master/doc/reference.md#app).
+   - The `undone` command cancels a task being done. Fixes https://github.com/foobuzz/todo/issues/17.
+   - The `--depends-on` option introduces the notion of [dependency](https://github.com/foobuzz/todo/blob/master/doc/guide.md#dependency).
+   - The `ping` command introduces a [new task ranking critetion](https://github.com/foobuzz/todo/blob/master/doc/guide.md#ping-counter).
+ * Fixes:
+   - Fix context autocompletion when a context is renamed.
+
+
 ## 3.4.2 (2022-03-13)
 
  * New command: `todo --install-autocompletion` to install autocompletion in user's shell config.
