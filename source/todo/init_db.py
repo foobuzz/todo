@@ -54,6 +54,9 @@ INIT_DB = [
 	"""
 	CREATE INDEX `TaskDependeeIndex` ON `TaskDependency` (`dependency_id`);
 	""",
+	"""
+	ALTER TABLE Task ADD COLUMN `ping` INTEGER NOT NULL DEFAULT 0
+	""",
 ]
 
 

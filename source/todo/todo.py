@@ -405,6 +405,11 @@ def list_future_tasks(args, daccess):
 	return 'todo', '', tasks, [], None
 
 
+def ping_task(args, daccess):
+	not_found = daccess.do_many('ping', args['id'])
+	return 'multiple_tasks_update', not_found
+
+
 ## DISPATCHING
 
 # Map of the names of the commands to handlers defined above.
@@ -424,6 +429,7 @@ DISPATCHER = {
 	'purge': purge,
 	'search': search,
 	'future': list_future_tasks,
+	'ping': ping_task,
 }
 
 

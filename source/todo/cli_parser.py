@@ -8,7 +8,7 @@ from .utils import NOW
 COMMANDS = {
 	'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge', 'mv', 'rmctx', 'search', 'future', '-h', '--help', '--location',
-	'--version', '--install-autocompletion', 'undone',}
+	'--version', '--install-autocompletion', 'undone', 'ping'}
 
 
 ## Argument parsing error messages
@@ -341,6 +341,14 @@ def parse_command(argv):
 		help="Show tasks that will start in the future"
 	)
 	future_parser.set_defaults(command='future')
+
+	ping_parser = subparsers.add_parser('ping',
+		help="Increase the ping counter of a task."
+	)
+	ping_parser.set_defaults(command='ping')
+	ping_parser.add_argument('id', nargs='+',
+		help="The list of tasks' IDs to ping",
+	)
 
 	return vars(parser.parse_args(argv))
 

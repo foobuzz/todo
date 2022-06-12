@@ -345,6 +345,15 @@ class DataAccess():
 		""", (tid,))
 		return c.rowcount
 
+	def ping(self, tid):
+		c = self.connection.cursor()
+		c.execute("""
+			UPDATE Task
+			SET ping = ping + 1
+			WHERE id = ?
+		""", (tid,))
+		return c.rowcount
+
 	def get_or_create_context(self, path, options=[]):
 		""" Get the context whose path is `path`. If the context
 		doesn't exists, it is created as well as well all necessary
@@ -537,6 +546,7 @@ class DataAccess():
 			  )
 			ORDER BY
 			  priority DESC,
+			  ping DESC,
 			  COALESCE(
 			      julianday(deadline),
 			      julianday('9999-12-31 23:59:59')
