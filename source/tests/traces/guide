@@ -87,3 +87,24 @@ $ ./todo.py task 2 | grep Status
 $ ./todo.py undone 2
 $ ./todo.py task 2 | grep Status
  Status: TODO
+$ ./todo.py add "New task A"
+$ ./todo.py add "New task B"
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 9 | New task A
+ a | New task B
+----------------------------------------
+ # | health (0) ★10
+ # | culture (2)
+$ ./todo.py ping a
+$ ./todo.py 
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ a | New task B
+ 9 | New task A
+----------------------------------------
+ # | health (0) ★10
+ # | culture (2)

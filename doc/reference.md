@@ -118,6 +118,11 @@ Search for tasks whose title contains the substring `<term>`. The search is case
 Remove tasks identified by the given `<id>`s (separated by spaces) from history.
 
 
+### `todo ping <id>...`
+
+Increment the [ping counter](https://github.com/foobuzz/todo/blob/master/doc/guide.md#ping-counter) of the given tasks.
+
+
 ### `todo purge [--force] [--before MOMENT]`
 
 Remove done tasks from history that were created before `MOMENT`. Ask the user for confirmation, unless the `--force` flag is given.

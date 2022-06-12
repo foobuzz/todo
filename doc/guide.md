@@ -6,6 +6,7 @@ User guide
     * [Long-term scheduling](#long-term-scheduling)
   * [Dependencies](#dependencies)
   * [Priority](#priority)
+  * [Ping Counter](#ping-counter)
   * [Contexts](#contexts)
     * [Subcontexts](#subcontexts)
     * [Visibility](#visibility)
@@ -122,6 +123,12 @@ You can assign a priority to a task using the `-p` or `--priority` option. Prior
 	    2 | Fix the stuff ★2
 	    4 | Send the documents for the house ⌛ 6 days remaining
 	    3 | Buy the gift for Stefany ⌛ 16 days remaining
+
+
+## Ping Counter
+
+The ping counter is the second-to-last criterion used to [rank tasks](#sort-summary), having precedence over the added date. By default, tasks have a ping of 0, and whenever you use the [`ping`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-ping-id) command on a task, its ping counter is increased by one. The idea is that whenever you are reminded of the need of a pending task, you "ping" it, organically increasing its importance in comparison to other tasks.
+
 
 ## Contexts
 
@@ -267,7 +274,7 @@ When showing the todolist, tasks are sorted in the following order:
 
  * Priority, descending
  * Remaining time, ascending
- * Context priority, descending
+ * Ping counter, descending
  * Date added, ascending
 
 
