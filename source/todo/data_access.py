@@ -512,6 +512,7 @@ class DataAccess():
 			SET path = ?
 			WHERE ID = ?
 		""", new)
+		self.changed_contexts = True
 		return c2.rowcount
 
 	def todo(self, path='', recursive=False):
