@@ -1,4 +1,4 @@
-## 4.0.0 (TBD)
+## 4.0.0 (2022-06-25)
 
  * Breaking changes:
    - Drop support for Python 3.5
