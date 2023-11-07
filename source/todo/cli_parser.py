@@ -56,10 +56,12 @@ def parse_context(ctx):
 
 
 def parse_moment(moment, direction=1):
-	""" Parse a moment, which can be either a string datetime in the allowed
+	"""
+	Parse a moment, which can be either a string datetime in the allowed
 	datetimes format, either a delay (e.g. 2w). In the case of a delay,
 	direction indicates in which direction in time the delay is applied to the
-	current time. It can either be 1 (future) or -1 (past)."""
+	current time. It can either be 1 (future) or -1 (past).
+	"""
 	dt = utils.get_datetime(moment, NOW, direction)
 	if dt is None:
 		return False, INCORRECT_MOMENT
@@ -68,10 +70,12 @@ def parse_moment(moment, direction=1):
 
 
 def parse_deadline(moment):
-	""" A deadline-specific wrapper around parse_moment. Case-insensitive
-	'none' is accepted and is parsed as 'None' (the string)"""
+	"""
+	A deadline-specific wrapper around parse_moment. Case-insensitive
+	'none' is accepted and is parsed as 'None' (the string)
+	"""
 	# The reason why it returns the string 'None' and not the value None is
-	# that docopt gives the value None to all arguments and options that
+	# that argparse gives the value None to all arguments and options that
 	# weren't used. Using 'None' (the string) allows us the make the difference
 	# between a deadline set as none and no deadline set.
 	if moment.lower() == 'none':
@@ -110,6 +114,7 @@ PARSERS = [
 	('ctx2', parse_context),
 	('deadline', parse_deadline),
 	('start', parse_moment),
+	('period', parse_period),
 	('before', functools.partial(parse_moment, direction=-1)),
 	('after', functools.partial(parse_moment, direction=-1)),
 	('name', parse_new_context_name),
@@ -118,11 +123,12 @@ PARSERS = [
 
 
 def parse_args(args):
-	""" Apply application-level parsing of the values of the args dictionary
-	*in place*. Returns a report which is a list of errors (strings) that
-	might have occured during parsing. There's no waranty that the args
-	dictionary will work with the rest of the application if the report
-	list isn't empty."""
+	"""
+	Apply application-level parsing of the values of the args dictionary *in
+	place*. Returns a report which is a list of errors (strings) that might
+	have occured during parsing. There's no waranty that the args dictionary
+	will work with the rest of the application if the report list isn't empty.
+	"""
 	report = []
 	for arg_name, parser in PARSERS:
 		value = args.get(arg_name)
@@ -363,6 +369,11 @@ def _add_common_task_arguments_to_command_parser(command_parser):
 	command_parser.add_argument('-s', '--start',
 		help="Start line of the task, in the same format than --deadline. "
 		     "Defaults to the moment the task is created."
+	)
+	command_parser.add_argument('--period',
+		help="Make the task recurrent by defining a period for it to redisplay "
+		     "regularly. Accepts the same duration formats than "
+		     "--start and --deadline"
 	)
 	command_parser.add_argument('-c', '--context',
 		help="Context to put the task in. Defaults to the root context"

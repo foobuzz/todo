@@ -119,11 +119,13 @@ def limit_str(string, length):
 
 
 def get_datetime(string, now, direction=1):
-	"""Parse the string `string` representating a datetime. The string can be
-	a delay such `2w` which means "two weeks". In this case, the datetime is
-	the datetime `now` plus/minus the delay. The `direction` option indicates
-	if the delay needs to be added to now (+1) or substracted from now (-1).
-	In any case, this returns a datetime object."""
+	"""
+	Parse the string `string` representating a datetime. The string can be a
+	delay such `2w` which means "two weeks". In this case, the datetime is the
+	datetime `now` plus/minus the delay. The `direction` option indicates if
+	the delay needs to be added to now (+1) or substracted from now (-1). In
+	any case, this returns a datetime object.
+	"""
 	match = REMAINING_RE.match(string)
 	if match is not None:
 		value, unit = match.groups()

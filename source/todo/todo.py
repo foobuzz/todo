@@ -32,6 +32,7 @@ WIDE_HIST_THRESHOLD = 120
 TASK_MUTATORS = {
 	'deadline': datetime.max,
 	'start': None,
+	'period': None,
 	'priority': 1,
 	'title': None,
 	'created': data_access.DATETIME_MIN

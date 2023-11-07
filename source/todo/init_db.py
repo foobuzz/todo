@@ -57,6 +57,9 @@ INIT_DB = [
 	"""
 	ALTER TABLE Task ADD COLUMN `ping` INTEGER NOT NULL DEFAULT 0
 	""",
+	"""
+	ALTER TABLE Task ADD COLUMN `period` INTEGER
+	"""
 ]
 
 
