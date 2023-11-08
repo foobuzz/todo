@@ -38,7 +38,8 @@ INCORRECT_PRIORITY = 'PRIORITY must be an integer.'
 INCORRECT_VISIBILITY = "VISIBILITY must be 'normal' or 'hidden'."
 INCORRECT_MOMENT = "MOMENT must be in the YYYY-MM-DD format, or the "+\
                    "YYYY-MM-DD HH:MM:SS format, or a delay in the "+\
-                   "([0-9]+)([wdhms]) format."
+                   "([0-9]+)([mwdh]) format."
+INCORRECT_PERIOD = "PERIOD must be in the ([0-9]+)([mwdh]) format."
 INCORRECT_CTX_RENAME = "Can't use '.' in context new name "+\
                        "(only right-most context name is updated)."
 CANT_RENAME_ROOT = "Can't rename root context."
@@ -113,8 +114,8 @@ def _parse_datetime(string, now, direction=1):
 	the delay needs to be added to now (+1) or substracted from now (-1). In
 	any case, this returns a datetime object.
 	"""
-	period = parse_period(string)
-	if period is not None:
+	parsing_success, period = parse_period(string)
+	if parsing_success:
 		offset = direction * timedelta(seconds=period)
 		return now + offset
 	else:
@@ -140,8 +141,8 @@ def parse_period(string):
 	match = REMAINING_RE.match(string)
 	if match is not None:
 		value, unit = match.groups()
-		return int(value) * REMAINING[unit]
-	return None
+		return True, int(value) * REMAINING[unit]
+	return False, INCORRECT_PERIOD
 
 
 def parse_new_context_name(name):

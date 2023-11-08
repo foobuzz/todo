@@ -142,6 +142,7 @@ TASK_OPTIONS = {
 	'created',
 	'deadline',
 	'start',
+	'period',
 	'priority',
 	'context',
 	'done'
