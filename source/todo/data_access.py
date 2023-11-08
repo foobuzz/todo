@@ -156,16 +156,18 @@ CONTEXT_OPTIONS = {
 
 class DataAccess():
 
-	""" Wrap SQL operations into an methods-based interface. An instance of
+	"""
+	Wrap SQL operations into an methods-based interface. An instance of
 	DataAccess is created thanks to a DB-API connection object that is
 	connected to a sqlite database setup for todo.
 
 	Some methods return instances of Row objects from the database. Such Row
 	objects support the mapping protocol. More specifically, when the
 	documentation mention Row-task objects, it's a mapping which represent a
-	task with the following keys: id, title, created, deadline, start,
-	priority, done, context, ctx_path where context is the context ID the task
-	belongs to and ctx_path is the path of the same context.
+	task with the following keys:
+	 * All columns from the Task table
+	 * context: the context ID the task
+	 * ctx_path: the path of the task's context.
 
 	Row-context objects represent a context with the following keys: id, path,
 	priority, visibility, own_tasks, total_tasks where own_tasks is the number
@@ -266,7 +268,9 @@ class DataAccess():
 		return c.fetchone() is not None
 
 	def get_task(self, tid):
-		""" Get the task identified by ID `tid` (int). Return a Row-Task object."""
+		"""
+		Get the task identified by ID `tid` (int). Return a Row-Task object.
+		"""
 		query = """
 			SELECT t.*, c.path as ctx_path
 			FROM Task t JOIN Context c

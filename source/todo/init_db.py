@@ -59,7 +59,16 @@ INIT_DB = [
 	""",
 	"""
 	ALTER TABLE Task ADD COLUMN `period` INTEGER
+	""",
 	"""
+	CREATE TABLE `TaskDoneHistory` (
+		`task_id`	INTEGER NOT NULL REFERENCES Task(id) ON DELETE CASCADE,
+		`done_datetime`	TEXT NOT NULL
+	);
+	""",
+	"""
+	CREATE INDEX `TaskDoneHistoryIndex` ON `TaskDoneHistory` (`task_id`);
+	""",
 ]
 
 

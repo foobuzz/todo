@@ -1,4 +1,8 @@
-from . import utils, text_wrap
+from datetime import datetime, timedelta
+
+from . import text_wrap
+from . import utils
+from .types import DoTaskReportType
 
 
 def editor_edit_task(title, content, editor):
@@ -59,3 +63,38 @@ def parse_task_full_content(full_content):
 		title = title[2:]
 
 	return title, content
+
+
+def do_recurring_task(task, daccess):
+	last_occurrence, next_occurrence = get_neighbourhood_occurrences(
+		datetime.strptime(task['start'], utils.SQLITE_DT_FORMAT),
+		task['period'],
+	)
+
+	report = {
+		'task_id': task['id'],
+		'next_occurrence_datetime': next_occurrence,
+	}
+
+	last_done = daccess.get_last_occurrence_done(task['id'])
+
+	if last_done > last_occurrence:
+		report['report_type'] = DoTaskReportType.occurrence_ALREADY_DONE
+		return report
+
+	daccess.add_done_occurrence(task['id'])
+	report['report_type'] = DoTaskReportType.OK
+
+	return report
+
+
+def get_neighbourhood_occurrences(start: datetime, period: int):
+	"""
+	From a start datetime and a period (in seconds), return the last and next
+	occurrence of the period around the current datetime.
+	"""
+	next_occurrence = start
+	now = datetime.utcnow()
+	while next_occurrence <= now:
+		next_occurrence += timedelta(seconds=period)
+	return next_occurrence - timedelta(seconds=period), next_occurrence

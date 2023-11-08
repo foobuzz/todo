@@ -3,11 +3,13 @@
 import os, sys, sqlite3, functools, configparser, textwrap
 import os.path as op
 from datetime import date, datetime, timezone
+from typing import List
 
 from . import cli_parser, utils, data_access, core
 from .bash_completion import installation as bash_completion_installation
-from .rainbow import ColoredStr, cstr
 from .data_access import DataAccess
+from .rainbow import ColoredStr, cstr
+from .types import DoTasksReport, DoTaskReportType
 from .utils import (
 	DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW,
 	CannotOpenEditorError
@@ -259,9 +261,29 @@ def edit_task(args, daccess):
 		daccess.release_editing_lock(tid)
 
 
-def do_task(args, daccess):
-	not_found = daccess.do_many('set_done', args['id'])
-	return 'multiple_tasks_done', not_found
+def do_tasks(args: dict, daccess: DataAccess) -> List[DoTasksReport]:
+	reports = []
+
+	for task_id in args['id']:
+		report = {
+			'task_id': task_id,
+			'next_occurrence_datetime': None,
+		}
+
+		task = daccess.get_task(task_id)
+		if task is None:
+			report['report_type'] = DoTaskReportType.NOT_FOUND
+		elif task['done']:
+			report['report_type'] = DoTaskReportType.ALREADY_DONE
+		elif task['period'] is not None:
+			report = core.do_recurring_task(task, daccess)
+		else:
+			daccess.set_done(task_id)
+			report['report_type'] = DoTaskReportType.OK
+
+		reports.append(report)
+
+	return 'multiple_tasks_done', reports
 
 
 def undo_task(args, daccess):
@@ -419,7 +441,7 @@ DISPATCHER = {
 	'add': add_task,
 	'task': manage_task,
 	'edit': edit_task,
-	'done': do_task,
+	'done': do_tasks,
 	'undone': undo_task,
 	'rm': remove_task,
 	'ctx': manage_context,
@@ -501,8 +523,23 @@ def feedback_multiple_tasks_update(not_found):
 		print('Task{} not found: {}'.format(s, string))
 
 
-def feedback_multiple_tasks_done(tasks_ids):
-	return _feedback_multiple_tasks("Not found or already done", tasks_ids)
+def feedback_multiple_tasks_done(reports: List[DoTasksReport]):
+	for report in reports:
+		if report['report_type'] == DoTaskReportType.NOT_FOUND:
+			print(f"Task not found: {report['task_id']}")
+		elif report['report_type'] == DoTaskReportType.ALREADY_DONE:
+			print(f"Task already done: {report['task_id']}")
+		elif report['report_type'] == DoTaskReportType.RECURRENCE_ALREADY_DONE:
+			print(
+				f"Scheduled occurrence for task {report['task_id']} "
+				"is already done."
+			)
+
+		if report['next_occurrence_datetime'] is not None:
+			print(
+				f"Next occurrence for task {report['task_id']} is scheduled at "
+				f"{report['next_occurrence_datetime']}"
+			)
 
 
 def feedback_multiple_tasks_undone(tasks_ids):
