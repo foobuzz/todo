@@ -1,8 +1,29 @@
-import sys, argparse, functools
+import argparse
+import functools
+import re
+import sys
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 
 from . import data_access, utils
 from .utils import NOW
+
+
+REMAINING = {
+	'm': 30.5*24*3600,
+	'w': 7*24*3600,
+	'd': 24*3600,
+	'h': 3600,
+}
+REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
+
+ISO_SHORT = '%Y-%m-%d'
+ISO_DATE = ISO_SHORT+'T%H:%M:%SZ'
+USER_DATE_FORMATS = [
+	ISO_SHORT,
+	ISO_SHORT+'T%H:%M:%S',
+	ISO_SHORT+' %H:%M:%S'
+]
 
 
 COMMANDS = {
@@ -62,7 +83,7 @@ def parse_moment(moment, direction=1):
 	direction indicates in which direction in time the delay is applied to the
 	current time. It can either be 1 (future) or -1 (past).
 	"""
-	dt = utils.get_datetime(moment, NOW, direction)
+	dt = _parse_datetime(moment, NOW, direction)
 	if dt is None:
 		return False, INCORRECT_MOMENT
 	else:
@@ -82,6 +103,45 @@ def parse_deadline(moment):
 		return True, 'None'
 	else:
 		return parse_moment(moment)
+
+
+def _parse_datetime(string, now, direction=1):
+	"""
+	Parse the string `string` representating a datetime. The string can be a
+	delay such `2w` which means "two weeks". In this case, the datetime is the
+	datetime `now` plus/minus the delay. The `direction` option indicates if
+	the delay needs to be added to now (+1) or substracted from now (-1). In
+	any case, this returns a datetime object.
+	"""
+	period = parse_period(string)
+	if period is not None:
+		offset = direction * timedelta(seconds=period)
+		return now + offset
+	else:
+		dt = None
+		for pattern in USER_DATE_FORMATS:
+			try:
+				dt = datetime.strptime(string, pattern)
+			except ValueError:
+				continue
+			else:
+				dt = datetime.utcfromtimestamp(dt.timestamp())
+				dt = dt.replace(tzinfo=timezone.utc)
+				break
+		return dt
+
+	return None
+
+
+def parse_period(string):
+	"""
+	Parse the `string` as a period of time, returned in seconds.
+	"""
+	match = REMAINING_RE.match(string)
+	if match is not None:
+		value, unit = match.groups()
+		return int(value) * REMAINING[unit]
+	return None
 
 
 def parse_new_context_name(name):

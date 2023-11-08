@@ -15,7 +15,7 @@ from .test_bash_completion import test_installation
 sys.path.insert(0, op.abspath('.'))
 
 import todo.todo as todo
-import todo.utils as tutils
+import todo.cli_parser as cli_parser
 from todo.data_access import DB_PATH as DATA_LOCATION
 from todo.todo import CONFIG_FILE
 
@@ -59,7 +59,7 @@ class TestSetup:
 
 def test_trace(trace_file, print_commands=False):
 	with TestSetup() as setup:
-		get_dt = functools.partial(tutils.get_datetime, now=NOW)
+		get_dt = functools.partial(cli_parser._parse_datetime, now=NOW)
 		errors = utils.test_trace(trace_file, get_dt, print_commands)
 		if errors['clash'] == 0 and errors['crash'] == 0:
 			print('OK')
