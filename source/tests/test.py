@@ -18,12 +18,12 @@ import todo.todo as todo
 import todo.cli_parser as cli_parser
 from todo.data_access import DB_PATH as DATA_LOCATION
 from todo.todo import CONFIG_FILE
+from todo.utils import VERSION_PATH
 
 
 NOW = todo.NOW
 
 TEST_CONFIG = 'tests/.toduhrc'
-TEST_DATA_FILE = 'tests/empty_data.sqlite'
 
 UNIT_TESTS = [
 	'tests.test_todo',
@@ -36,7 +36,8 @@ UNIT_TESTS = [
 TRACES_DIR = 'tests/traces'
 
 TEST_REPLACEMENTS = [
-	(DATA_LOCATION, TEST_DATA_FILE),
+	(DATA_LOCATION, None),
+	(VERSION_PATH, None),
 	(CONFIG_FILE, TEST_CONFIG)
 ]
 
