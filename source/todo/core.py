@@ -72,14 +72,14 @@ def do_recurring_task(task, daccess):
 	)
 
 	report = {
-		'task_id': task['id'],
+		'task_id': utils.to_hex(task['id']),
 		'next_occurrence_datetime': next_occurrence,
 	}
 
 	last_done = daccess.get_last_occurrence_done(task['id'])
 
-	if last_done > last_occurrence:
-		report['report_type'] = DoTaskReportType.occurrence_ALREADY_DONE
+	if last_done is not None and last_done > last_occurrence:
+		report['report_type'] = DoTaskReportType.RECURRENCE_ALREADY_DONE
 		return report
 
 	daccess.add_done_occurrence(task['id'])

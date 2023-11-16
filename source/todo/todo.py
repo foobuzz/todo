@@ -266,7 +266,7 @@ def do_tasks(args: dict, daccess: DataAccess) -> List[DoTasksReport]:
 
 	for task_id in args['id']:
 		report = {
-			'task_id': task_id,
+			'task_id': utils.to_hex(task_id),
 			'next_occurrence_datetime': None,
 		}
 

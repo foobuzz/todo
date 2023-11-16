@@ -734,6 +734,32 @@ class DataAccess():
 		c.execute(query, (now, now))
 		return c.fetchall()
 
+	def get_last_occurrence_done(self, task_id):
+		"""
+		Return the datetime a recurring task was last set as done.
+		"""
+		c = self.connection.cursor()
+		query = """
+			SELECT max(done_datetime) as last_occurrence FROM TaskDoneHistory
+			WHERE task_id = ?
+		"""
+		c.execute(query, (task_id,))
+		row = c.fetchone()
+		if row is None or row['last_occurrence'] is None:
+			return None
+		return datetime.strptime(row['last_occurrence'], utils.SQLITE_DT_FORMAT)
+
+	def add_done_occurrence(self, task_id):
+		c = self.connection.cursor()
+		query = """
+			INSERT INTO TaskDoneHistory (task_id, done_datetime)
+			VALUES (?, ?)
+		"""
+		c.execute(
+			query,
+			(task_id, datetime.utcnow().strftime(utils.SQLITE_DT_FORMAT))
+		)
+
 	def take_editing_lock(self, tid):
 		"""
 		Set the column `editing` to 1 iff it's 0. Return True if the column was effectively set, False otherwise.
