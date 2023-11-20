@@ -21,6 +21,7 @@ setup(
     ],
     extras_require={
         'tests': {
+            'freezegun==1.2.2',
             'pyfakefs==4.5.5',
         },
     },
