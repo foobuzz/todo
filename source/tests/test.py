@@ -5,6 +5,8 @@ import os.path as op
 
 from . import utils
 from . import (
+	test_cli_parser,
+	test_get_neighbourhood_occurrences,
 	test_todo,
 	test_utils,
 	test_rainbow,
@@ -18,14 +20,13 @@ import todo.todo as todo
 import todo.cli_parser as cli_parser
 from todo.data_access import DB_PATH as DATA_LOCATION
 from todo.todo import CONFIG_FILE
-from todo.utils import VERSION_PATH
+from todo.utils import NOW, VERSION_PATH
 
-
-NOW = todo.NOW
 
 TEST_CONFIG = 'tests/.toduhrc'
 
 UNIT_TESTS = [
+	'tests.test_get_neighbourhood_occurrences',
 	'tests.test_todo',
 	'tests.test_utils',
 	'tests.test_rainbow',

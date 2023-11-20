@@ -7,9 +7,10 @@ sys.path.insert(1, op.abspath('./todo'))
 
 import todo.todo as todo
 import todo.cli_parser
+import todo.utils
 
 
-NOW = todo.NOW
+NOW = todo.utils.NOW
 
 
 class TestDatetimeParsing(unittest.TestCase):
