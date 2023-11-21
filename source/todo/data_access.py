@@ -166,8 +166,9 @@ class DataAccess():
 	documentation mention Row-task objects, it's a mapping which represent a
 	task with the following keys:
 	 * All columns from the Task table
-	 * context: the context ID the task
 	 * ctx_path: the path of the task's context.
+	 * last_done: if the task is a recurring one, the last time the task was done
+	 * [Optional] dependencies_ids: comma-separated list of dependencies
 
 	Row-context objects represent a context with the following keys: id, path,
 	priority, visibility, own_tasks, total_tasks where own_tasks is the number
@@ -210,6 +211,32 @@ class DataAccess():
 		c = self.connection.cursor()
 		c.execute('PRAGMA case_sensitive_like = {};'.format(value))
 		self.case_sensitive_like = switch
+
+	def return_row_task(method):
+		"""
+		Add custom deserialization from the database for "Row-Task" objects or
+		a list of such.
+		"""
+		def deserialized_method(self, *args, **kwargs):
+			result = method(self, *args, **kwargs)
+			if isinstance(result, list):
+				return [self._deserialize_row_task(t) for t in result]
+			else:
+				return self._deserialize_row_task(result)
+		return deserialized_method
+
+	@staticmethod
+	def _deserialize_row_task(row_task: dict):
+		row_task = dict(row_task)
+
+		if row_task['last_done'] is None:
+			return row_task
+
+		row_task['last_done'] = datetime.strptime(
+			row_task['last_done'],
+			utils.SQLITE_DT_FORMAT,
+		)
+		return row_task
 
 	def add_task(self, title, content, context='', options=[]):
 		""" Add a task titled `title` and associated to the given `context`,
@@ -267,12 +294,20 @@ class DataAccess():
 		""", (tid,))
 		return c.fetchone() is not None
 
+	@return_row_task
 	def get_task(self, tid):
 		"""
 		Get the task identified by ID `tid` (int). Return a Row-Task object.
 		"""
 		query = """
-			SELECT t.*, c.path as ctx_path
+			SELECT
+			  t.*,
+			  c.path as ctx_path,
+			  (
+			  	SELECT max(done_datetime)
+			  	FROM TaskDoneHistory
+			  	WHERE task_id = t.id
+			  ) as last_done
 			FROM Task t JOIN Context c
 			ON t.context = c.id
 			WHERE t.id = ?
@@ -520,6 +555,7 @@ class DataAccess():
 		self.changed_contexts = True
 		return c2.rowcount
 
+	@return_row_task
 	def todo(self, path='', recursive=False):
 		""" Return a list of Row-tasks which belong the the context pointed to
 		by `path`. If `recursive` is False, then the list only contains tasks
@@ -536,7 +572,14 @@ class DataAccess():
 			operator, value = '=', path
 		c = self.connection.cursor()
 		c.execute("""
-			SELECT t.*, c.path as ctx_path
+			SELECT
+			  t.*,
+			  c.path as ctx_path,
+			  (
+			  	SELECT max(done_datetime)
+			  	FROM TaskDoneHistory
+			  	WHERE task_id = t.id
+			  ) as last_done
 			FROM Task t
 			JOIN Context c
 			  ON t.context = c.id
@@ -713,6 +756,7 @@ class DataAccess():
 		self.set_case_sensitive_like(original)
 		return c.fetchall()
 
+	@return_row_task
 	def get_future_tasks(self):
 		c = self.connection.cursor()
 		now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -720,7 +764,12 @@ class DataAccess():
 			SELECT
 				t.*,
 				c.path as ctx_path,
-				group_concat(dependee.id, ', ') as dependencies_ids
+				group_concat(dependee.id, ', ') as dependencies_ids,
+				(
+					SELECT max(done_datetime)
+					FROM TaskDoneHistory
+					WHERE task_id = t.id
+				) as last_done
 			FROM Task t
 			JOIN Context c ON t.context = c.id
 			LEFT JOIN TaskDependency ON TaskDependency.task_id = t.id
@@ -728,6 +777,7 @@ class DataAccess():
 			WHERE t.start > ?
 			OR dependee.id AND dependee.done IS NULL
 			OR dependee.id AND dependee.start > ?
+			OR t.period IS NOT NULL
 			GROUP BY t.id
 			ORDER BY t.created
 		"""

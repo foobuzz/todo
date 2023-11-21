@@ -357,7 +357,12 @@ def todo(args, daccess):
 	ctx = args.get('context', '')
 	if ctx is None:
 		ctx = ''
+
 	tasks = daccess.todo(ctx, recursive=(fashion == 'flat'))
+
+	# Filter out recurring task whose next undone occcurrence is in the future
+	tasks = [t for t in tasks if not core.current_period_is_done(t)]
+
 	if fashion == 'tidy':
 		get_empty = CONFIG.getboolean('App', 'show_empty_contexts')
 		subcontexts = daccess.get_subcontexts(ctx, get_empty)
@@ -425,6 +430,16 @@ def search(args, daccess):
 
 def list_future_tasks(args, daccess):
 	tasks = daccess.get_future_tasks()
+
+	# Filter out recurring tasks whose current period is not done
+	tasks = [
+		t for t in tasks
+		if (
+			t['period'] is None
+			or core.current_period_is_done(t)
+		)
+	]
+
 	return 'todo', '', tasks, [], None
 
 

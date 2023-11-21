@@ -66,17 +66,14 @@ def parse_task_full_content(full_content):
 
 
 def do_recurring_task(task, daccess):
-	last_occurrence, next_occurrence = get_neighbourhood_occurrences(
-		datetime.strptime(task['start'], utils.SQLITE_DT_FORMAT),
-		task['period'],
-	)
+	last_occurrence, next_occurrence = get_task_neighbourhood_occurrences(task)
 
 	report = {
 		'task_id': utils.to_hex(task['id']),
 		'next_occurrence_datetime': next_occurrence,
 	}
 
-	last_done = daccess.get_last_occurrence_done(task['id'])
+	last_done = task['last_done']
 
 	if last_done is not None and last_done > last_occurrence:
 		report['report_type'] = DoTaskReportType.RECURRENCE_ALREADY_DONE
@@ -86,6 +83,17 @@ def do_recurring_task(task, daccess):
 	report['report_type'] = DoTaskReportType.OK
 
 	return report
+
+
+def get_task_neighbourhood_occurrences(task: dict):
+	"""
+	Return the latest and next occurrence of the task around the current
+	datetime.
+	"""
+	return get_neighbourhood_occurrences(
+		datetime.strptime(task['start'], utils.SQLITE_DT_FORMAT),
+		task['period'],
+	)
 
 
 def get_neighbourhood_occurrences(start: datetime, period: int):
@@ -98,3 +106,19 @@ def get_neighbourhood_occurrences(start: datetime, period: int):
 	while next_occurrence <= now:
 		next_occurrence += timedelta(seconds=period)
 	return next_occurrence - timedelta(seconds=period), next_occurrence
+
+
+def current_period_is_done(task: dict):
+	"""
+	Return a boolean indicating whether a recurring task has its ongoing
+	period done or not. Return false if the task is not recurring.
+	"""
+	if task['period'] is None:
+		# Not a recurring task
+		return False
+
+	last_occurrence, _ = get_task_neighbourhood_occurrences(task)
+
+	# The task has been set as done since its latest occurrence, so it's done
+	# for the current period.
+	return task['last_done'] > last_occurrence
