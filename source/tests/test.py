@@ -83,6 +83,12 @@ def main():
 	parser.add_argument('-o', '--out', action='store',
 		dest='out',
 		help="Destination of a trace build")
+	parser.add_argument('-t', '--traces', nargs='+',
+		help=(
+			"For functional tests, specific trace files to use "
+			"(just specify filenames, not paths)"
+		)
+	)
 	args = parser.parse_args()
 
 	if args.build is not None:
@@ -103,7 +109,10 @@ def main():
 		unittest.TextTestRunner().run(suite)
 	if args.func or args.all:
 		print('* Fonctional tests')
+		allow_list = set(args.traces) if args.traces else None
 		for filename in sorted(os.listdir(TRACES_DIR)):
+			if allow_list is not None and filename not in args.traces:
+				continue
 			path = op.join(TRACES_DIR, filename)
 			print('[{}]'.format(filename))
 			test_trace(path, args.verbose)
