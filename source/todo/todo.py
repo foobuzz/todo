@@ -11,7 +11,7 @@ from .data_access import DataAccess
 from .rainbow import ColoredStr, cstr
 from .types import DoTasksReport, DoTaskReportType
 from .utils import (
-	DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW,
+	DATA_DIR, DB_PATH, VERSION_PATH, DATAFILE_PATH, NOW, ISO_SHORT,
 	CannotOpenEditorError
 )
 
@@ -553,7 +553,7 @@ def feedback_multiple_tasks_done(reports: List[DoTasksReport]):
 		if report['next_occurrence_datetime'] is not None:
 			print(
 				f"Next occurrence for task {report['task_id']} is scheduled at "
-				f"{report['next_occurrence_datetime']}"
+				f"{report['next_occurrence_datetime'].strftime(ISO_SHORT)}"
 			)
 
 

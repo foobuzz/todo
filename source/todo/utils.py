@@ -22,6 +22,7 @@ DB_PATH = op.join(DATA_DIR, DATABASE_NAME)
 VERSION_PATH = op.join(DATA_DIR, VER_FILE_NAME)
 DATAFILE_PATH = op.join(DATA_DIR, DATAFILE_NAME)
 
+ISO_SHORT = '%Y-%m-%d'
 SQLITE_DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 NOW = datetime.utcnow().replace(tzinfo=timezone.utc)

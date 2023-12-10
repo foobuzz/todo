@@ -6,7 +6,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from . import data_access, utils
-from .utils import NOW
+from .utils import NOW, ISO_SHORT
 
 
 REMAINING = {
@@ -17,7 +17,6 @@ REMAINING = {
 }
 REMAINING_RE = re.compile('\A([0-9]+)([wdhms])\Z')
 
-ISO_SHORT = '%Y-%m-%d'
 ISO_DATE = ISO_SHORT+'T%H:%M:%SZ'
 USER_DATE_FORMATS = [
 	ISO_SHORT,
