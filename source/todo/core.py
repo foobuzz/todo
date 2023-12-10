@@ -117,6 +117,9 @@ def current_period_is_done(task: dict):
 		# Not a recurring task
 		return False
 
+	if task['last_done'] is None:
+		return False
+
 	last_occurrence, _ = get_task_neighbourhood_occurrences(task)
 
 	# The task has been set as done since its latest occurrence, so it's done
