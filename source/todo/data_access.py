@@ -154,6 +154,20 @@ CONTEXT_OPTIONS = {
 }
 
 
+def return_row_task(method):
+	"""
+	Add custom deserialization from the database for "Row-Task" objects or
+	a list of such.
+	"""
+	def deserialized_method(self, *args, **kwargs):
+		result = method(self, *args, **kwargs)
+		if isinstance(result, list):
+			return [self._deserialize_row_task(t) for t in result]
+		else:
+			return self._deserialize_row_task(result)
+	return deserialized_method
+
+
 class DataAccess():
 
 	"""
@@ -212,30 +226,18 @@ class DataAccess():
 		c.execute('PRAGMA case_sensitive_like = {};'.format(value))
 		self.case_sensitive_like = switch
 
-	def return_row_task(method):
-		"""
-		Add custom deserialization from the database for "Row-Task" objects or
-		a list of such.
-		"""
-		def deserialized_method(self, *args, **kwargs):
-			result = method(self, *args, **kwargs)
-			if isinstance(result, list):
-				return [self._deserialize_row_task(t) for t in result]
-			else:
-				return self._deserialize_row_task(result)
-		return deserialized_method
-
 	@staticmethod
 	def _deserialize_row_task(row_task: dict):
 		row_task = dict(row_task)
 
-		if row_task['last_done'] is None:
-			return row_task
+		if row_task['last_done'] is not None:
+			row_task['last_done'] = datetime.strptime(
+				row_task['last_done'],
+				utils.SQLITE_DT_FORMAT,
+			)
 
-		row_task['last_done'] = datetime.strptime(
-			row_task['last_done'],
-			utils.SQLITE_DT_FORMAT,
-		)
+		row_task['user_task_id'] = utils.to_hex(row_task['id'])
+
 		return row_task
 
 	def add_task(self, title, content, context='', options=[]):

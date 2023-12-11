@@ -265,12 +265,13 @@ def do_tasks(args: dict, daccess: DataAccess) -> List[DoTasksReport]:
 	reports = []
 
 	for task_id in args['id']:
+		task = daccess.get_task(task_id)
+
 		report = {
-			'task_id': utils.to_hex(task_id),
+			'task': task,
 			'next_occurrence_datetime': None,
 		}
 
-		task = daccess.get_task(task_id)
 		if task is None:
 			report['report_type'] = DoTaskReportType.NOT_FOUND
 		elif task['done']:
@@ -540,19 +541,26 @@ def feedback_multiple_tasks_update(not_found):
 
 def feedback_multiple_tasks_done(reports: List[DoTasksReport]):
 	for report in reports:
+		task_id = report['task']['user_task_id']
+
 		if report['report_type'] == DoTaskReportType.NOT_FOUND:
-			print(f"Task not found: {report['task_id']}")
+			print(f"Task not found: {task_id}")
 		elif report['report_type'] == DoTaskReportType.ALREADY_DONE:
-			print(f"Task already done: {report['task_id']}")
+			print(f"Task already done: {task_id}")
 		elif report['report_type'] == DoTaskReportType.RECURRENCE_ALREADY_DONE:
 			print(
-				f"Scheduled occurrence for task {report['task_id']} "
+				f"Scheduled occurrence for task {task_id} "
 				"is already done."
 			)
+		elif (
+			report['report_type'] == DoTaskReportType.OK
+			and report['task']['period'] is not None
+		):
+			print(f"Task {task_id}: current occurrence now done.")
 
 		if report['next_occurrence_datetime'] is not None:
 			print(
-				f"Next occurrence for task {report['task_id']} is scheduled at "
+				f"Next occurrence for task {task_id} is scheduled at "
 				f"{report['next_occurrence_datetime'].strftime(ISO_SHORT)}"
 			)
 

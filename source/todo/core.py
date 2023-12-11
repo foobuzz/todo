@@ -69,7 +69,7 @@ def do_recurring_task(task, daccess):
 	last_occurrence, next_occurrence = get_task_neighbourhood_occurrences(task)
 
 	report = {
-		'task_id': utils.to_hex(task['id']),
+		'task': task,
 		'next_occurrence_datetime': next_occurrence,
 	}
 
