@@ -59,10 +59,12 @@ class TestSetup:
 			os.rename(backup, source)
 
 
-def test_trace(trace_file, print_commands=False):
+def test_trace(trace_file, print_commands=False, print_per_command_perf=False):
 	with TestSetup() as setup:
 		get_dt = functools.partial(cli_parser._parse_datetime, now=NOW)
-		errors = utils.test_trace(trace_file, get_dt, print_commands)
+		errors = utils.test_trace(
+			trace_file, get_dt, print_commands, print_per_command_perf,
+		)
 		if errors['clash'] == 0 and errors['crash'] == 0:
 			print('OK')
 		else:
@@ -88,6 +90,9 @@ def main():
 			"For functional tests, specific trace files to use "
 			"(just specify filenames, not paths)"
 		)
+	)
+	parser.add_argument('-p', '--perf', action='store_true',
+		help="For functional tests, print per-command execution time."
 	)
 	args = parser.parse_args()
 
@@ -115,7 +120,7 @@ def main():
 				continue
 			path = op.join(TRACES_DIR, filename)
 			print('[{}]'.format(filename))
-			test_trace(path, args.verbose)
+			test_trace(path, args.verbose, args.perf)
 
 
 if __name__ == '__main__':

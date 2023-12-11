@@ -65,13 +65,16 @@ def run_trace(filename, out):
 				trace_file.write(stdout)
 
 
-def test_trace(filename, get_datetime, print_commands=False):
+def test_trace(
+	filename, get_datetime, print_commands=False, print_per_command_perf=False
+):
 	with open(filename) as trace_file:
 		sequence = parse_trace(trace_file, get_datetime)
 	errors = {'crash': 0, 'clash': 0}
 	counter = 0
 	start = time.time()
 	for command, out in sequence:
+		command_start = time.time()
 		counter += 1
 		if print_commands:
 			print(command)
@@ -96,6 +99,11 @@ def test_trace(filename, get_datetime, print_commands=False):
 		if passed:
 			print('.', end='')
 			sys.stdout.flush()
+
+			if print_per_command_perf:
+				command_time = time.time() - command_start
+				print(' {:.3}s'.format(command_time))
+
 	total = time.time() - start
 	print('\nRan {} commands in {:.3} seconds'.format(counter, total))
 	return errors
