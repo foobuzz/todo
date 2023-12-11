@@ -28,6 +28,7 @@ ISO_DATE_LENGTH = 10
 CONTEXT_ICON = {True: '#', False: '#'}
 TIME_ICON = {True: '~', False: '⌛'}
 PRIORITY_ICON = {True: '!', False: '★'}
+RECURRENCE_ICON = {True: '~', False: '🗓 '}
 
 WIDE_HIST_THRESHOLD = 120
 
@@ -684,22 +685,25 @@ def get_basic_task_string(context, id_width, task, highlight=None, ascii_=False)
 		ansi_offset = c['id'].lenesc
 	else:
 		ansi_offset = 0
-	result = ' {id:>{width}} | '.format(width=id_width + ansi_offset, **c)
+	result = ' {id:>{width}} | '.format(id=c['id'], width=id_width + ansi_offset)
 	left_width = id_width + 4
 	init_indent = left_width
 
 	if c['done']:
 		adding = c['done'] + ' '
 		result += adding
-		init_indent += len(DONE_STR) + 1 # [DONE] followed by space
+		init_indent += len(adding)
+
+	if task['period'] is not None:
+		adding = '{} '.format(RECURRENCE_ICON[ascii_])
+		result += adding
+		init_indent += len(adding)
 
 	wrap_width = CONFIG.getint('Word-wrapping', 'width')
 	if wrap_width == -1:
 		wrap_width = utils.get_terminal_width()
 
 	if CONFIG.getboolean('Word-wrapping', 'title'):
-		title_subindent = ' '*left_width
-
 		# The correct way to wrap would be to order textwrap to wrap the whole
 		# ` {id} | {title}` with the subsequent indent being the length of `
 		# {id} | `. However, {id} containing ANSI escape characters for

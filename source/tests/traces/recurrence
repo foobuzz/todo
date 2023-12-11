@@ -1,6 +1,6 @@
 $ faketime '2023-01-01' ./todo.py add "Check backup" --period 6m
 $ faketime '2023-01-01 01:00:00' ./todo.py
- 1 | Check backup
+ 1 | 🗓  Check backup
 $ faketime '2023-01-03 00:00:00' ./todo.py done 1
 Task 1: current occurrence now done.
 Next occurrence for task 1 is scheduled at 2023-07-02
@@ -10,7 +10,7 @@ Scheduled occurrence for task 1 is already done.
 Next occurrence for task 1 is scheduled at 2023-07-02
 $ faketime '2023-07-01' ./todo.py
 $ faketime '2023-07-04' ./todo.py
- 1 | Check backup
+ 1 | 🗓  Check backup
 $ faketime '2023-07-05' ./todo.py done 1
 Task 1: current occurrence now done.
 Next occurrence for task 1 is scheduled at 2024-01-01
