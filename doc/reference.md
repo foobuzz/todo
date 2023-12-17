@@ -27,7 +27,7 @@ Subcontexts are sorted in the following order:
 **Note:** If `<context>` happens to be the name of one of the built-in todo command, then you can use `todo ctx <context>` instead.
 
 
-### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--depends-on DEPENDENCY1 DEPENDENCY2...]`
+### `todo add <title> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--depends-on DEPENDENCY1 DEPENDENCY2...] [--period PERIOD]`
 
 Add a task titled `<title>` and apply to it the options:
 
@@ -78,12 +78,17 @@ By default, a task has a priority of 1.
 A list of task IDs this task depends on. See [Dependencies](https://github.com/foobuzz/todo/blob/master/doc/guide.md#dependencies).
 
 
+#### `--period PERIOD`
+
+Make the task recurring every given `PERIOD`. The format for `PERIOD` is the same as for the delays accepted by the `--deadline` option. See [Recurring tasks](https://github.com/foobuzz/todo/blob/master/doc/guide.md#recurring-tasks).
+
+
 ### `todo done <id>...`
 
 Set the tasks identified by `id`s as done. The ID of a task is shown at its left in lists output by `todo`.
 
 
-### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE] [--depends-on DEPENDENCY1 DEPENDENCY2...]`
+### `todo task <id> [--deadline MOMENT] [--start MOMENT] [--context CONTEXT] [--priority PRIORITY] [--title TITLE] [--depends-on DEPENDENCY1 DEPENDENCY2...] [--period PERIOD]`
 
 Without any option, print the contents of the task (its metadata followed by its body).
 

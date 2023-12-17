@@ -5,6 +5,7 @@ User guide
   * [Deadlines](#deadlines)
     * [Long-term scheduling](#long-term-scheduling)
   * [Dependencies](#dependencies)
+  * [Recurring tasks](#recurring-tasks)
   * [Priority](#priority)
   * [Ping Counter](#ping-counter)
   * [Contexts](#contexts)
@@ -105,6 +106,17 @@ Sometimes, there is no need to bother with a task as long as another blocking ta
 	    2 | Backup family pics on my external hard drive
 
 Task whose dependencies aren't done are not printed in a `todo` listing, but they will be once their dependecy is done. They can also be found with the [`future`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-future) or [`search`](https://github.com/foobuzz/todo/blob/master/doc/reference.md#todo-search-term---context-context---done--undone---before-moment---after-moment---case) commands.
+
+
+## Recurring tasks
+
+Some tasks are meant to reccur every other time. For such tasks, you can define a period for the task to reappear after it has been done a first time. For example, if you want a task to appear every 7 days starting on January 1st, 2024, you would use:
+
+  $ todo add "Weekly cleaning of the Desktop directory" --start 2024-01-01 --period 1w
+
+The task will appear for the first time on January 1st. Then, if you set it as done (with `todo done`) during the week, it will disappear for the remaining of the week, and will appear again on January 7th. If you never do it, it will stay there. A recurring task is always the same task, identified by the same ID; it just "respawns" when a new period starts, and will disappear whenever (if ever) it is done during that period.
+
+ℹ️ Support for recurring tasks can be considered experimental. If you want to report bugs or suggestions, don't hesitate to open an issue.
 
 
 ## Priority
