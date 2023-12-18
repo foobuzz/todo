@@ -36,15 +36,17 @@ def parse_task_full_content(full_content):
 	edited through `todo edit` or `todo add [<title>] --edit`
 	"""
 	title, content = '', None
-	state = 'title'
+	state = 'number_title' if full_content.startswith('# ') else 'title'
 	lines = full_content.splitlines(keepends=True)
 	for i, line in enumerate(lines):
 		if state == 'title' and line.startswith('==='):
 			state = 'content'
 			continue
-		if state == 'title':
+		if state == 'number_title' and line.startswith('\n'):
+			state = 'content'
+		if state in ['title', 'number_title']:
 			title += line
-		elif state == 'content':
+		if state == 'content':
 			if content is None:
 				content = ''
 			content += line
@@ -52,5 +54,8 @@ def parse_task_full_content(full_content):
 	# Removes blank characters at the right of the title (newline leading to
 	# settext heading underlining and potential newline added by text editors)
 	title = title.rstrip()
+
+	if title.startswith('# '):
+		title = title[2:]
 
 	return title, content

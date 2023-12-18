@@ -251,6 +251,8 @@ The text displayed in `todo`'s listing is actually only the title of the task. Y
 
 	Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
+ℹ️ Alternatively, the number sign is also accepted as a Markdown first-level header: `# Do the thing` will also yield `Do the thing` as the task's title.
+
 In the task listing, the title `Do the thing` will appear, marked with an ellipsis (`...`) indicating that the task contains additional content[1]. If you want to read the entire content of a given task, you can simply use the `task` command:
 
 	$ todo task 1
