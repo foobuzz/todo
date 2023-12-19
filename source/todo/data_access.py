@@ -145,7 +145,8 @@ TASK_OPTIONS = {
 	'period',
 	'priority',
 	'context',
-	'done'
+	'done',
+	'front',
 }
 
 CONTEXT_OPTIONS = {
@@ -568,10 +569,11 @@ class DataAccess():
 		    ascending
 		  * datetime created, ascending
 		"""
+		context_like_value = '{}%'.format(path)
 		if recursive:
-			operator, value = 'LIKE', '{}%'.format(path)
+			operator, context_value = 'LIKE', context_like_value
 		else:
-			operator, value = '=', path
+			operator, context_value = '=', path
 		c = self.connection.cursor()
 		c.execute("""
 			SELECT
@@ -585,7 +587,11 @@ class DataAccess():
 			FROM Task t
 			JOIN Context c
 			  ON t.context = c.id
-			WHERE c.path {} ?
+			WHERE
+			  (
+				c.path {} ?
+				OR (t.front = 1 AND c.path LIKE ?)
+			  )
 			  AND t.done IS NULL
 			  AND (c.path = ? OR c.visibility = 'normal')
 			  AND (datetime('now')) >= datetime(t.start)
@@ -603,7 +609,7 @@ class DataAccess():
 			    ) - julianday('now') ASC,
 			  ping DESC,
 			  created ASC
-		""".format(operator), (value, path))
+		""".format(operator), (context_value, context_like_value, path))
 		return c.fetchall()
 
 	def get_subcontexts(self, path='', get_empty=True):

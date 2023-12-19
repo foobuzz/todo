@@ -38,7 +38,8 @@ TASK_MUTATORS = {
 	'period': None,
 	'priority': 1,
 	'title': None,
-	'created': data_access.DATETIME_MIN
+	'created': data_access.DATETIME_MIN,
+	'front': None,
 }
 
 CONTEXT_MUTATORS = {

@@ -69,6 +69,9 @@ INIT_DB = [
 	"""
 	CREATE INDEX `TaskDoneHistoryIndex` ON `TaskDoneHistory` (`task_id`);
 	""",
+	"""
+	ALTER TABLE Task ADD COLUMN `front` INTEGER
+	"""
 ]
 
 

@@ -167,6 +167,14 @@ def parse_dependencies(dependecies):
 	return parse_id(dependecies)
 
 
+def parse_toggle(value):
+	return True, {
+		'true': 1,
+		'false': 0,
+		None: None,
+	}[value]
+
+
 PARSERS = [
 	('id', parse_id),
 	('context', parse_context),
@@ -179,6 +187,7 @@ PARSERS = [
 	('after', functools.partial(parse_moment, direction=-1)),
 	('name', parse_new_context_name),
 	('depends_on', parse_dependencies),
+	('front', parse_toggle),
 ]
 
 
@@ -444,4 +453,9 @@ def _add_common_task_arguments_to_command_parser(command_parser):
 	)
 	command_parser.add_argument('--depends-on', nargs='+',
 		help="Specify which other tasks this task depends on."
+	)
+	command_parser.add_argument('--front',
+		nargs='?', choices=['true', 'false'], const='true',
+		help="Show the task in any todo listing that is in an ascendant context "
+		     "of the task's context",
 	)
