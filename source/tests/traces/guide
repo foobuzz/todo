@@ -70,6 +70,31 @@ $ ./todo.py
  3 | Buy the gift for Stefany ⌛ 15 days remaining
 ----------------------------------------
  # | culture (2)
+$ ./todo.py culture --flat
+ 7 | Read the article about chemistry #chemistry
+ 8 | Listen to the podcast about movies #cinema
+$ ./todo.py --flat
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 7 | Read the article about chemistry #culture.chemistry
+ 8 | Listen to the podcast about movies #culture.cinema
+$ ./todo.py task 8 --front
+$ ./todo.py
+ 6 | Fix the window ★3
+ 2 | Fix the stuff ★2
+ 4 | Send the documents for the house ⌛ 6 days remaining
+ 3 | Buy the gift for Stefany ⌛ 15 days remaining
+ 8 | Listen to the podcast about movies #culture.cinema
+----------------------------------------
+ # | culture (2)
+$ ./todo.py culture
+ 8 | Listen to the podcast about movies #cinema
+----------------------------------------
+ # | chemistry (1)
+ # | cinema (1)
+$ ./todo.py task 8 --front false
 $ ./todo.py ctx health -p 10
 $ ./todo.py rm 3
 $ ./todo.py 

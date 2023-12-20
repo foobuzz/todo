@@ -10,6 +10,7 @@ User guide
   * [Ping Counter](#ping-counter)
   * [Contexts](#contexts)
     * [Subcontexts](#subcontexts)
+    * [Front tasks](#front-tasks)
     * [Visibility](#visibility)
     * [Context priority](#context-priority)
   * [Editing](#editing)
@@ -165,7 +166,7 @@ To see the todolist of a specific context, you need to indicate the name of the 
 Another way to accomplish that is though the `ctx` command:
 
 	$ todo ctx culture
-	    7 | Read the article about chemistry #culture
+	    7 | Read the article about chemistry
 
 This helps removing any ambiguity if you ever have a context whose name happens to be the name of a command (a command wins over a context).
 
@@ -206,6 +207,31 @@ Since contexts are equivalent to directories, you can also create a hierarchy of
 	 3 | Buy the gift for Stefany ⌛ 16 days remaining
 	 7 | Read the article about chemistry #culture.chemistry
 	 8 | Listen to the podcast about movies #culture.cinema
+
+
+### Front tasks
+
+Sometimes, you want a specific task in a specific context to always appear on the main `todo` listing, as it would with the `--flat` display, but while keeping other tasks tidied in their context. To accomplish this, you can use the `--front` flag on the task to make it always appear in all its context hierarchy:
+
+	 $ todo task 8 --front
+	 $ todo
+	 6 | Fix the window ★3
+	 2 | Fix the stuff ★2
+	 4 | Send the documents for the house ⌛ 6 days remaining
+	 3 | Buy the gift for Stefany ⌛ 16 days remaining
+	 8 | Listen to the podcast about movies #culture.cinema
+	 ----------------------------------------
+	 # | culture (2)
+
+	$ todo culture
+	 8 | Listen to the podcast about movies #cinema
+	----------------------------------------
+	 # | chemistry (1)
+	 # | cinema (1)
+
+To stop a task from being "front", use the value `false` to the `front` option:
+
+	 $ todo task 8 --front false
 
 
 ### Visibility
