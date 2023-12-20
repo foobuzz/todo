@@ -1,3 +1,13 @@
+## 5.0.0 (TBD)
+
+ * Breaking changes:
+   - Drop support for Python 3.7 and lesser
+ * Features:
+   - Recurring tasks (https://github.com/foobuzz/todo/issues/20)
+   - In task edition, the Markdown header format `# ` can also be used to define a task's title.
+   - Added the `--front` option to tasks.
+
+
 ## 4.0.0 (2022-06-25)
 
  * Breaking changes:
