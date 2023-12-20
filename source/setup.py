@@ -8,7 +8,7 @@ from setuptools.command.install import install
 setup(
 	name='todocli',
 	version='4.0.0',
-	python_requires='>=3.6',
+	python_requires='>=3.8',
 	packages=['todo', 'todo.bash_completion'],
 	entry_points={
 		'console_scripts': [
