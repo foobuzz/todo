@@ -1,4 +1,4 @@
-## 5.0.0 (TBD)
+## 5.0.0 (2024-01-18)
 
  * Breaking changes:
    - Drop support for Python 3.7 and lesser
