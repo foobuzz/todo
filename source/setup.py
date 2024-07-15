@@ -17,7 +17,7 @@ setup(
 	},
 	include_package_data=True,
     install_requires=[
-        'setuptools==65.5.1',
+        'setuptools==70.0.0',
     ],
     extras_require={
         'tests': {
