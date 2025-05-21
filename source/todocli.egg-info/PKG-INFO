@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: todocli
+Version: 5.0.0
+Summary: A command line todo list manager
+Home-page: https://github.com/foobuzz/todo
+Author: foobuzz
+Author-email: foobuzz@fastmail.com
+License: MIT
+Keywords: command line todo list
+Requires-Python: >=3.8
+Provides-Extra: tests
