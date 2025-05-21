@@ -4,6 +4,8 @@ import os, sys, sqlite3, functools, configparser, textwrap
 import os.path as op
 from datetime import date, datetime, timezone
 from typing import List
+import csv
+import json
 
 from . import cli_parser, utils, data_access, core
 from .bash_completion import installation as bash_completion_installation
@@ -451,6 +453,61 @@ def ping_task(args, daccess):
 	return 'multiple_tasks_update', not_found
 
 
+def export_tasks(args, daccess):
+    """
+    Export all tasks (including subcontexts) to csv/json/md.
+    """
+    fmt = args.get('format', 'csv')
+    out_path = args.get('output')
+    # get all tasks
+    tasks = daccess.todo(path='', recursive=True)
+
+    # open the output
+    fout = open(out_path, 'w', newline='', encoding='utf-8') if out_path else sys.stdout
+
+    if fmt == 'csv':
+        fieldnames = ['ID','Title','Context','Deadline','Start','Period','Priority','Status']
+        writer = csv.DictWriter(fout, fieldnames=fieldnames)
+        writer.writeheader()
+        for t in tasks:
+            writer.writerow({
+                'ID':      t['user_task_id'],
+                'Title':   t.get('title',''),
+                'Context': t.get('ctx_path',''),
+                'Deadline':t.get('deadline') or '',
+                'Start':   t.get('start')    or '',
+                'Period':  t.get('period')   or '',
+                'Priority':t.get('priority') or '',
+                'Status':  'done' if core.current_period_is_done(t) else 'todo'
+            })
+
+    elif fmt == 'json':
+        json.dump(tasks, fout, default=str, indent=2)
+
+    elif fmt == 'md':
+        headers = ['ID','Title','Context','Deadline','Start','Period','Priority','Status']
+        fout.write('| ' + ' | '.join(headers) + ' |\n')
+        fout.write('| ' + ' | '.join(['---']*len(headers)) + ' |\n')
+        for t in tasks:
+            row = [
+                str(t['user_task_id']),
+                t.get('title',''),
+                t.get('ctx_path',''),
+                str(t.get('deadline') or ''),
+                str(t.get('start')    or ''),
+                str(t.get('period')   or ''),
+                str(t.get('priority') or ''),
+                'done' if core.current_period_is_done(t) else 'todo'
+            ]
+            fout.write('| ' + ' | '.join(row) + ' |\n')
+
+    else:
+        print(f"Unsupported format: {fmt}", file=sys.stderr)
+
+    if out_path:
+        fout.close()
+
+
 ## DISPATCHING
 
 # Map of the names of the commands to handlers defined above.
@@ -471,6 +528,7 @@ DISPATCHER = {
 	'search': search,
 	'future': list_future_tasks,
 	'ping': ping_task,
+	'export': export_tasks,
 }
 
 

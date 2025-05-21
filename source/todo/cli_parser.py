@@ -28,7 +28,7 @@ USER_DATE_FORMATS = [
 COMMANDS = {
 	'add', 'done', 'task', 'edit', 'rm', 'ctx', 'contexts', 'history',
 	'purge', 'mv', 'rmctx', 'search', 'future', '-h', '--help', '--location',
-	'--version', '--install-autocompletion', 'undone', 'ping'}
+	'--version', '--install-autocompletion', 'undone', 'ping', 'export'}
 
 
 ## Argument parsing error messages
@@ -423,6 +423,22 @@ def parse_command(argv):
 	ping_parser.set_defaults(command='ping')
 	ping_parser.add_argument('id', nargs='+',
 		help="The list of tasks' IDs to ping",
+	)
+
+	export_parser = subparsers.add_parser(
+	    'export',
+	    help="Export tasks in various formats (csv, json, md)"
+	)
+	export_parser.set_defaults(command='export')
+	export_parser.add_argument(
+	    '-f', '--format',
+	    choices=['csv', 'json', 'md'],
+	    default='csv',
+	    help="Export format: csv (default), json, or md"
+	)
+	export_parser.add_argument(
+	    '-o', '--output',
+	    help="Output file path (default is stdout)"
 	)
 
 	return vars(parser.parse_args(argv))
